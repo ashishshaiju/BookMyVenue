@@ -49,7 +49,7 @@ jobs:
           cache: "pnpm"
           cache-dependency-path: ${{ matrix.component }}/pnpm-lock.yaml
 
-      - run: pnpm install --frozen-lockfile
+      - run: pnpm install --frozen-lockfile --recursive
 
       - name: Type check (server only)
         if: matrix.component == 'server'
