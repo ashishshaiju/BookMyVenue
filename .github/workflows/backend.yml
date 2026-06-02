@@ -13,9 +13,6 @@ on:
 jobs:
   check:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: server
     
     steps:
       - uses: actions/checkout@v4
@@ -27,16 +24,15 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          # cache removed for server
           
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile --ignore-workspace
+        run: pnpm install --frozen-lockfile
         
       - name: Type check
-        run: pnpm run typecheck
+        run: pnpm --filter server run typecheck
         
       - name: Lint
-        run: pnpm run lint
+        run: pnpm --filter server run lint
         
       - name: Build
-        run: pnpm run build
+        run: pnpm --filter server run build
