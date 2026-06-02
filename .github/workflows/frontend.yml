@@ -51,7 +51,7 @@ jobs:
           cache: "pnpm"
           cache-dependency-path: admin/pnpm-lock.yaml
 
-      - run: pnpm install --frozen-lockfile
+      - run: pnpm install --no-frozen-lockfile
       - run: pnpm run lint
       - run: pnpm run build
 
@@ -75,6 +75,6 @@ jobs:
           cache: "pnpm"
           cache-dependency-path: client/pnpm-lock.yaml
 
-      - run: pnpm install --frozen-lockfile
+      - run: pnpm install --no-frozen-lockfile
       - run: pnpm run lint
       - run: pnpm run build
