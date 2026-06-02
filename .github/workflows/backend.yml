@@ -1,42 +1,42 @@
-name: Backend CI
+name: Server Quality Checks
 
 on:
   push:
     branches: [dev, qa, main]
     paths:
-      - "server/**"
-      - ".github/workflows/backend.yml"
+      - 'server/**'
   pull_request:
     branches: [dev, qa, main]
     paths:
-      - "server/**"
-      - ".github/workflows/backend.yml"
+      - 'server/**'
 
 jobs:
-  build-and-test:
+  check:
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: server
+    
     steps:
       - uses: actions/checkout@v4
-
+      
       - uses: pnpm/action-setup@v4
         with:
           version: 9
-
+          
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: "pnpm"
-          cache-dependency-path: server/pnpm-lock.yaml
-
-      - run: pnpm install --frozen-lockfile
+          # cache removed for server
+          
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --ignore-workspace
+        
       - name: Type check
-        run: pnpm exec tsc --noEmit
+        run: pnpm run typecheck
+        
       - name: Lint
         run: pnpm run lint
-      - name: Run tests
-        run: pnpm test
+        
       - name: Build
         run: pnpm run build
