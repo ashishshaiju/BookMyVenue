@@ -11,6 +11,7 @@ export interface IRefreshToken extends Document {
   active: boolean;
   deleted: boolean;
   revokedAt?: Date;
+  revokedReason?: string | null;
 }
 
 const RefreshTokenSchema = new Schema<IRefreshToken>(
@@ -22,6 +23,7 @@ const RefreshTokenSchema = new Schema<IRefreshToken>(
     active: { type: Boolean, default: true },
     deleted: { type: Boolean, default: false },
     revokedAt: { type: Date, default: null },
+    revokedReason: { type: String, default: null },
   },
   { timestamps: true }
 );

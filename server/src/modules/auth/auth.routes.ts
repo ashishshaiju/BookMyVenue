@@ -6,8 +6,9 @@ const router: Router = Router();
 
 router.route('/register').post(controller.register);
 router.route('/login').post(controller.login);
-router.route('/refresh').get(verifyRefreshToken, controller.refreshToken);
-router.route('/logout').get(verifyAccessToken, controller.logout);
-router.route('/profile').get(verifyAccessToken, controller.getProfile);
+router.route('/refresh').post(verifyRefreshToken, controller.refreshToken);
+router.route('/logout').post(verifyAccessToken, controller.logout);
+router.route('/forgot-password').post(controller.forgotPassword);
+router.route('/reset-password').post(controller.resetPassword);
 
 export { router as authRouter };

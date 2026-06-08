@@ -30,3 +30,19 @@ export const loginSchema = z
     message: 'Either username or email is required',
     path: ['username', 'email'],
   });
+
+export const forgotPasswordSchema = z.object({
+  email: z.email('Invalid email format'),
+});
+
+export const resetPasswordSchema = z.object({
+  token: z.string().min(1, 'Token is required'),
+  password: z
+    .string()
+    .min(8, 'Password must be at least 8 characters')
+    .regex(
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$/,
+      'Password must contain at least one uppercase letter, one lowercase letter, one number and one special character'
+    )
+    .max(100),
+});

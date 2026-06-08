@@ -2,17 +2,14 @@ import type { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import type { RefreshTokenPayload, TokenPayload } from '../types/express';
 import { ResponseUtil } from '../utils/responseUtils';
-import { RefreshTokenModel } from '../models/refresh-token.model';
+import { RefreshTokenModel } from '../modules/auth/models/refresh-token.model';
 import crypto from 'crypto';
-
-const jwtIssuer = process.env.JWT_ISSUER ?? 'BookMyVenue';
-const jwtAudience = process.env.JWT_AUDIENCE ?? 'BookMyVenue';
-const jwtAlgorithm = (process.env.JWT_ALGORITHM ?? 'HS256') as jwt.Algorithm;
+import { jwtConfig } from '../constants/env';
 
 export const tokenVerifyOptions: jwt.VerifyOptions = {
-  issuer: jwtIssuer,
-  audience: jwtAudience,
-  algorithms: [jwtAlgorithm],
+  issuer: jwtConfig.issuer,
+  audience: jwtConfig.audience,
+  algorithms: [jwtConfig.algorithm],
 };
 
 export const verifyAccessToken = (req: Request, res: Response, next: NextFunction): void => {
