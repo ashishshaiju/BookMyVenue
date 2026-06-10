@@ -1,18 +1,24 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router";
 import HomePage from "./pages/home";
-import SearchPage from "./pages/search";
+import ExplorePage from "./pages/explore";
 import RegisterPage from "./pages/register";
 import LoginPage from "./pages/login"
 import ForgotPasswordPage from "./pages/forgotPassword"
 import ResetPasswordPage from "./pages/resetPassword"
+import MainLayout from "./layout/MainLayout";
+import ListVenue from "./pages/listVenue"
+
 export function AppRouter() {
 	return (
 		<BrowserRouter>
 			<Routes>
-				<Route path="/" element={<HomePage />} />
-				<Route path="/search" element={<SearchPage />} />
+				 <Route element={<MainLayout />}>
+					<Route path="/" element={<HomePage />} />
+					<Route path="/explore" element={<ExplorePage />} />
+        </Route>
 
-
+				<Route path="/list-venue" element={<ListVenue />} />
+				
 				<Route path="/register" element={<RegisterPage />} />
 				<Route path="/login" element={<LoginPage />} />
 				<Route path="/forgot-password" element={<ForgotPasswordPage />} />
