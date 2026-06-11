@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router";
 import { signupSchema } from "./validation";
 import { useAuth } from "../../hooks/useAuth";
 import { useToast } from "../../hooks/useToast";
+import { extractErrorMessage } from "../../utils/toast";
 
 const RegisterPage = () => {
 	const { register } = useAuth();
@@ -46,9 +47,9 @@ const RegisterPage = () => {
 							setTimeout(() => {
 								navigate("/login");
 							}, 2000);
-						} catch (err: any) {
+						} catch (err: unknown) {
 							toast.error(
-								err.message || "Registration failed. Please try again.",
+								extractErrorMessage(err) || "Registration failed. Please try again.",
 							);
 						} finally {
 							setSubmitting(false);

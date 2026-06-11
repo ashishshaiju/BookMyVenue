@@ -6,6 +6,13 @@ import { resetPasswordSchema } from "./validation";
 import { axiosInstance } from "../../config/axios";
 import { API_ENDPOINTS } from "../../constants";
 import { useToast } from "../../hooks/useToast";
+import { extractErrorMessage } from "../../utils/toast";
+import type { FormikHelpers } from "formik";
+
+interface ResetFormValues {
+  password: string;
+  confirmPassword: string;
+}
 
 const ResetPasswordPage = () => {
   const toast = useToast();
@@ -19,9 +26,13 @@ const ResetPasswordPage = () => {
     if (!token) {
       toast.error("Reset token is missing from the URL. Please request a new link.");
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
-  const handleSubmit = async (values: any, { resetForm }: any) => {
+  const handleSubmit = async (
+    values: ResetFormValues,
+    { resetForm }: FormikHelpers<ResetFormValues>,
+  ) => {
     if (!token) {
       toast.error("Cannot reset password without a valid token.");
       return;
@@ -41,9 +52,8 @@ const ResetPasswordPage = () => {
       setTimeout(() => {
         navigate("/login");
       }, 3000);
-    } catch (error: any) {
-      const msg = error.response?.data?.message || error.message || "Failed to reset password. Please request a new link.";
-      toast.error(msg);
+    } catch (error: unknown) {
+      toast.error(extractErrorMessage(error) || "Failed to reset password. Please request a new link.");
     } finally {
       setLoading(false);
     }

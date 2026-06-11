@@ -52,16 +52,17 @@ export function useApiMutation<T = unknown, TVariables = unknown>(
 ) {
   return useMutation<T, Error, TVariables>({
     mutationFn: async (variables: TVariables) => {
-      const response = await axiosInstance({
-        ...config,
-        data: variables,
-      });
-      return response.data?.data ?? response.data;
+      try {
+        const response = await axiosInstance({
+          ...config,
+          data: variables,
+        });
+        return response.data?.data ?? response.data;
+      } catch (error) {
+        showError(getErrorMessage(error));
+        throw error;
+      }
     },
     ...options,
-    onError: (error: Error, variables: TVariables, context: unknown) => {
-      showError(getErrorMessage(error));
-      options?.onError?.(error, variables, context);
-    },
   });
 }

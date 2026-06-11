@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router";
 import { signinSchema } from "./validation";
 import { useAuth } from "../../hooks/useAuth";
 import { useToast } from "../../hooks/useToast";
+import { extractErrorMessage } from "../../utils/toast";
 
 const LoginPage = () => {
   const { login } = useAuth();
@@ -35,8 +36,8 @@ const LoginPage = () => {
               await login(values.email, values.password);
               toast.success("Welcome back! You're now signed in.");
               navigate("/");
-            } catch (err: any) {
-              toast.error(err.message || "Invalid email or password");
+            } catch (err: unknown) {
+              toast.error(extractErrorMessage(err) || "Invalid email or password");
             } finally {
               setSubmitting(false);
             }

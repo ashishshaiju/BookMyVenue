@@ -1,33 +1,34 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Navigate, Outlet, useLocation } from "react-router";
 import { useAuth } from "../../hooks/useAuth";
-import { useToast } from "../../hooks/useToast";
+import { showError } from "../../utils/toast";
 
 const AuthGuard: React.FC = () => {
   const { isAuthenticated, loading, verifySession } = useAuth();
-  const toast = useToast();
   const [checking, setChecking] = useState(true);
   const location = useLocation();
+  const checkedRef = useRef(false);
 
   useEffect(() => {
-    if (loading) return;
-
-    if (isAuthenticated) {
-      setChecking(false);
-      return;
-    }
+    if (loading || checkedRef.current) return;
 
     const performCheck = async () => {
+      if (isAuthenticated) {
+        setChecking(false);
+        return;
+      }
+
       try {
         await verifySession();
-      } catch (err) {
-        toast.error("Session expired. Please log in again.");
+      } catch {
+        showError("Session expired. Please log in again.");
       } finally {
         setChecking(false);
+        checkedRef.current = true;
       }
     };
     performCheck();
-  }, [location.pathname, loading]);
+  }, [location.pathname, loading, isAuthenticated, verifySession]);
 
   if (loading || checking) {
     return (

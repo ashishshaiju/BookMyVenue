@@ -50,3 +50,20 @@ export const showInfo = (message: string) => {
     duration: 3000,
   });
 };
+
+export const extractErrorMessage = (
+  error: unknown,
+  fallback = "An unexpected error occurred",
+): string => {
+  if (error && typeof error === "object") {
+    const err = error as Record<string, unknown>;
+    const response = err.response as Record<string, unknown> | undefined;
+    const data = response?.data as Record<string, unknown> | undefined;
+    if (data) {
+      if (typeof data.message === "string") return data.message;
+      if (typeof data.error === "string") return data.error;
+    }
+    if (typeof err.message === "string") return err.message;
+  }
+  return fallback;
+};

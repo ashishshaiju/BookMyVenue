@@ -19,7 +19,18 @@ interface AuthContextType {
   verifySession: () => Promise<void>;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+const clearAuthData = (
+  setUser: React.Dispatch<React.SetStateAction<User | null>>,
+) => {
+  setUser(null);
+  localStorage.removeItem(STORAGE_KEYS.IS_LOGGED_IN);
+  localStorage.removeItem(STORAGE_KEYS.USER_ID);
+  localStorage.removeItem(STORAGE_KEYS.USER_NAME);
+  localStorage.removeItem(STORAGE_KEYS.USER_ROLE);
+};
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -46,11 +57,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
       } catch (error) {
         console.error("Failed to verify session", error);
-        clearAuthData();
+        clearAuthData(setUser);
         throw error;
       }
     } else {
-      clearAuthData();
+      clearAuthData(setUser);
     }
   };
 
@@ -59,7 +70,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const checkAuth = async () => {
       try {
         await verifySession();
-      } catch (error) {
+      } catch {
+        // Initial session check failed; user is not authenticated
       } finally {
         setLoading(false);
       }
@@ -69,7 +81,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     // Listen to global auth:logout events from axios interceptor
     const handleLogoutEvent = () => {
-      clearAuthData();
+      clearAuthData(setUser);
     };
 
     window.addEventListener("auth:logout", handleLogoutEvent);
@@ -78,49 +90,33 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
   }, []);
 
-  const clearAuthData = () => {
-    setUser(null);
-    localStorage.removeItem(STORAGE_KEYS.IS_LOGGED_IN);
-    localStorage.removeItem(STORAGE_KEYS.USER_ID);
-    localStorage.removeItem(STORAGE_KEYS.USER_NAME);
-    localStorage.removeItem(STORAGE_KEYS.USER_ROLE);
-  };
-
   const login = async (email: string, password: string) => {
-    try {
-      const response = await axiosInstance.post(API_ENDPOINTS.LOGIN, { email, password });
-      const data = response.data?.data || response.data;
-      if (data) {
-        setUser({
-          id: data.userId || data.id,
-          username: data.username,
-          email: data.email,
-        });
-        localStorage.setItem(STORAGE_KEYS.IS_LOGGED_IN, "true");
-        localStorage.setItem(STORAGE_KEYS.USER_ID, data.userId || data.id);
-        localStorage.setItem(STORAGE_KEYS.USER_NAME, data.username);
-      }
-    } catch (error) {
-      throw error;
+    const response = await axiosInstance.post(API_ENDPOINTS.LOGIN, { email, password });
+    const data = response.data?.data || response.data;
+    if (data) {
+      setUser({
+        id: data.userId || data.id,
+        username: data.username,
+        email: data.email,
+      });
+      localStorage.setItem(STORAGE_KEYS.IS_LOGGED_IN, "true");
+      localStorage.setItem(STORAGE_KEYS.USER_ID, data.userId || data.id);
+      localStorage.setItem(STORAGE_KEYS.USER_NAME, data.username);
     }
   };
 
   const register = async (username: string, email: string, password: string) => {
-    try {
-      await axiosInstance.post(API_ENDPOINTS.REGISTER, { username, email, password });
-    } catch (error) {
-      throw error;
-    }
+    await axiosInstance.post(API_ENDPOINTS.REGISTER, { username, email, password });
   };
 
   const logout = async () => {
     try {
       await axiosInstance.post(API_ENDPOINTS.LOGOUT);
       showSuccess("Logged out successfully.");
-    } catch (error) {
+    } catch {
       showError("Failed to log out. Please try again.");
     } finally {
-      clearAuthData();
+      clearAuthData(setUser);
     }
   };
 

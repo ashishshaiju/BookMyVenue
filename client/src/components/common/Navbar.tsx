@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 import { Link  } from "react-router";
-import ProfileDropdown from "./ProfileDropDown";
+import ProfileDropdown from "./ProfileDropdown";
 import { useAuth } from "../../hooks/useAuth";
 import { FiUser } from "react-icons/fi";
 

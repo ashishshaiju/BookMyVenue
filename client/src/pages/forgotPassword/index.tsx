@@ -6,12 +6,16 @@ import { forgotPasswordSchema } from "./validation";
 import { axiosInstance } from "../../config/axios";
 import { API_ENDPOINTS } from "../../constants";
 import { useToast } from "../../hooks/useToast";
+import type { FormikHelpers } from "formik";
 
 const ForgotPasswordPage = () => {
   const toast = useToast();
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (values: { email: string }, { resetForm }: any) => {
+  const handleSubmit = async (
+    values: { email: string },
+    { resetForm }: FormikHelpers<{ email: string }>,
+  ) => {
     setLoading(true);
     try {
       const response = await axiosInstance.post(API_ENDPOINTS.FORGOT_PASSWORD, {
@@ -19,8 +23,9 @@ const ForgotPasswordPage = () => {
       });
       toast.success(response.data?.message || "If an account exists, a reset link has been sent.");
       resetForm();
-    } catch (error: any) {
-      const msg = error.response?.data?.message || error.message || "Failed to request reset link. Please try again.";
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } }; message?: string };
+      const msg = err.response?.data?.message || err.message || "Failed to request reset link. Please try again.";
       toast.error(msg);
     } finally {
       setLoading(false);
