@@ -52,6 +52,10 @@ export const ResponseUtil = {
     sendError(res, message, error, 409);
   },
 
+  rateLimitExceeded(res: Response, message = 'Too many requests. Please try again later', error?: string): void {
+    sendError(res, message, error, 429);
+  },
+
   validationError(res: Response, message: string, error?: string): void {
     sendError(res, message, error, 422);
   },
@@ -63,44 +67,6 @@ export const ResponseUtil = {
   serverUnavailable(res: Response, message = 'Service Unavailable', error?: string): void {
     sendError(res, message, error, 503);
   },
-};
-
-// Standalone named exports — implemented directly to avoid unbound-method issues
-// when callers destructure or pass these as callbacks.
-export const success = (res: Response, message: string, data?: unknown, statusCode = 200): void => {
-  sendSuccess(res, message, data, statusCode);
-};
-
-export const error = (res: Response, message: string, err?: string, statusCode = 500): void => {
-  sendError(res, message, err, statusCode);
-};
-
-export const created = (res: Response, message: string, data: unknown): void => {
-  sendSuccess(res, message, data, 201);
-};
-
-export const notFound = (res: Response, message = 'Resource not found'): void => {
-  sendError(res, message, undefined, 404);
-};
-
-export const badRequest = (res: Response, message: string, err?: string): void => {
-  sendError(res, message, err, 400);
-};
-
-export const unauthorized = (res: Response, message = 'Unauthorized'): void => {
-  sendError(res, message, undefined, 401);
-};
-
-export const forbidden = (res: Response, message = 'Forbidden'): void => {
-  sendError(res, message, undefined, 403);
-};
-
-export const conflict = (res: Response, message: string, err?: string): void => {
-  sendError(res, message, err, 409);
-};
-
-export const validationError = (res: Response, message: string, err?: string): void => {
-  sendError(res, message, err, 422);
 };
 
 export const internalServerError = (

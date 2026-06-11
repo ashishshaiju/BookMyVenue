@@ -1,5 +1,5 @@
 // API Configuration
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3005/api';
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3003';
 
 // Storage Keys
 export const STORAGE_KEYS = {
@@ -14,9 +14,11 @@ export const API_ENDPOINTS = {
     LOGIN: '/auth/login',
     REGISTER: '/auth/register',
     REFRESH: '/auth/refresh',
-    PROFILE: '/auth/profile',
     LOGOUT: '/auth/logout',
     DASHBOARD: '/dashboard',
-    VENUES: '/venues',
+    PROFILE: '/user/profile',
     SEARCH: '/search',
+    VENUES: '/venues',
+    FORGOT_PASSWORD: '/auth/forgot-password',
+    RESET_PASSWORD: '/auth/reset-password',
 } as const;

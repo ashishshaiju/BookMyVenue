@@ -1,9 +1,37 @@
+import { useState } from "react";
 import { FaBuilding } from "react-icons/fa";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import { Link } from "react-router";
 import { forgotPasswordSchema } from "./validation";
+import { axiosInstance } from "../../config/axios";
+import { API_ENDPOINTS } from "../../constants";
+import { useToast } from "../../hooks/useToast";
+import type { FormikHelpers } from "formik";
 
 const ForgotPasswordPage = () => {
+  const toast = useToast();
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (
+    values: { email: string },
+    { resetForm }: FormikHelpers<{ email: string }>,
+  ) => {
+    setLoading(true);
+    try {
+      const response = await axiosInstance.post(API_ENDPOINTS.FORGOT_PASSWORD, {
+        email: values.email,
+      });
+      toast.success(response.data?.message || "If an account exists, a reset link has been sent.");
+      resetForm();
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } }; message?: string };
+      const msg = err.response?.data?.message || err.message || "Failed to request reset link. Please try again.";
+      toast.error(msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col justify-center items-center p-5">
       <div className="flex flex-col items-center gap-4">
@@ -21,7 +49,7 @@ const ForgotPasswordPage = () => {
           Forgot Password
         </h2>
 
-        <p className="text-[var(--text-secondary)] mt-2">
+        <p className="text-[var(--text-secondary)] mt-2 text-center max-w-md">
           Enter your email and we’ll send you a reset link.
         </p>
 
@@ -30,12 +58,9 @@ const ForgotPasswordPage = () => {
             email: "",
           }}
           validationSchema={forgotPasswordSchema}
-          onSubmit={(values, { resetForm }) => {
-            console.log(values);
-            resetForm();
-          }}
+          onSubmit={handleSubmit}
         >
-          <Form className="flex flex-col gap-5 w-full mt-10">
+          <Form className="flex flex-col gap-5 w-full mt-6">
 
             <div className="flex flex-col gap-2">
               <label className="text-[var(--text-secondary)] text-sm" htmlFor="email">
@@ -48,6 +73,7 @@ const ForgotPasswordPage = () => {
                 name="email"
                 placeholder="Enter your email"
                 className="w-120 p-3 border border-[var(--text-secondary)] rounded-xl bg-[var(--bg-tertiary)] text-[var(--text-primary)]"
+                disabled={loading}
               />
 
               <div className="h-2">
@@ -57,9 +83,10 @@ const ForgotPasswordPage = () => {
 
             <button
               type="submit"
-              className="w-120 mt-6 bg-[var(--bg-secondary)] border-2 border-transparent hover:bg-[var(--bg-primary)] hover:border-2 hover:text-[var(--text-primary)] hover:border-[var(--bg-secondary)] transition-all duration-200 p-3 rounded-xl text-white font-medium"
+              disabled={loading}
+              className="w-120 mt-6 bg-[var(--bg-secondary)] border-2 border-transparent hover:bg-[var(--bg-primary)] hover:border-2 hover:text-[var(--text-primary)] hover:border-[var(--bg-secondary)] transition-all duration-200 p-3 rounded-xl text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Send Reset Link
+              {loading ? "Sending..." : "Send Reset Link"}
             </button>
 
           </Form>

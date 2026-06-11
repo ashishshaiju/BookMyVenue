@@ -1,11 +1,14 @@
 import { useState } from "react";
 
 import { Link  } from "react-router";
-import ProfileDropdown from "./ProfileDropDown";
+import ProfileDropdown from "./ProfileDropdown";
+import { useAuth } from "../../hooks/useAuth";
+import { FiUser } from "react-icons/fi";
 
 
 const Navbar = () => {
   const [openProfile, setOpenProfile] = useState(false);
+  const { isAuthenticated, loading } = useAuth();
 
   return (
     <header className="fixed top-0 left-0 z-50 w-full border-b bg-[var(--bg-primary)] shadow-sm ">
@@ -51,22 +54,31 @@ const Navbar = () => {
 
         </nav>
 
-        {/*  profile */}
-        <div className="relative">
-          <button  
-            type="button"
-            onClick={() => setOpenProfile(!openProfile)}
-            className="w-10 h-10 rounded-full overflow-hidden border-2 border-[var(--bg-grey)] hover:scale-105 transition cursor-pointer">
-            <div className="w-full h-full bg-[var(--bg-green)]"></div>
-          </button>
-          {openProfile && (
-            <ProfileDropdown
-              onClose={() =>
-                setOpenProfile(false)
-              }
-            />
-          )}
-        </div>
+        {/* profile / login */}
+        {!loading && (
+          isAuthenticated ? (
+            <div className="relative">
+              <button  
+                type="button"
+                onClick={() => setOpenProfile(!openProfile)}
+                className="w-10 h-10 rounded-full overflow-hidden border-2 border-[var(--bg-grey)] bg-[var(--bg-grey)] flex items-center justify-center hover:scale-105 transition cursor-pointer text-[var(--text-secondary)]">
+                <FiUser className="text-lg" />
+              </button>
+              {openProfile && (
+                <ProfileDropdown
+                  onClose={() => setOpenProfile(false)}
+                />
+              )}
+            </div>
+          ) : (
+            <Link
+              to="/login"
+              className="px-5 py-2 rounded-xl bg-[var(--bg-secondary)] border-2 border-transparent hover:bg-[var(--bg-primary)] hover:border hover:text-[var(--text-primary)] hover:border-[var(--bg-secondary)] transition-all font-medium text-white text-sm"
+            >
+              Login
+            </Link>
+          )
+        )}
       </div>
     </header>
   );
