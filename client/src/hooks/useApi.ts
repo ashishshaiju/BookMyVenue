@@ -7,6 +7,22 @@ import {
 import { axiosInstance } from "../config/axios";
 import { AxiosError } from "axios";
 import type { AxiosRequestConfig } from "axios";
+import { showError } from "../utils/toast";
+
+// Error message helper 
+const getErrorMessage = (error: unknown): string => {
+  if (error instanceof AxiosError) {
+    const data = error.response?.data as Record<string, unknown> | undefined;
+    return (
+      (data?.message as string) ||
+      (data?.error as string) ||
+      error.message ||
+      "Request failed"
+    );
+  }
+  if (error instanceof Error) return error.message;
+  return "An unexpected error occurred";
+};
 
 // Generic query hook
 export function useApiQuery<T = unknown>(
@@ -36,11 +52,16 @@ export function useApiMutation<T = unknown, TVariables = unknown>(
 ) {
   return useMutation<T, Error, TVariables>({
     mutationFn: async (variables: TVariables) => {
-      const response = await axiosInstance({
-        ...config,
-        data: variables,
-      });
-      return response.data?.data ?? response.data;
+      try {
+        const response = await axiosInstance({
+          ...config,
+          data: variables,
+        });
+        return response.data?.data ?? response.data;
+      } catch (error) {
+        showError(getErrorMessage(error));
+        throw error;
+      }
     },
     ...options,
   });

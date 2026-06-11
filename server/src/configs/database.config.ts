@@ -1,5 +1,7 @@
 import mongoose from 'mongoose';
 
+export let dbSupportsTransactions = false;
+
 export const connectDatabase = async (): Promise<typeof mongoose> => {
   const mongodburi = process.env.MONGODB_URI;
 
@@ -13,6 +15,15 @@ export const connectDatabase = async (): Promise<typeof mongoose> => {
       autoIndex: process.env.NODE_ENV !== 'production',
     });
     console.log('Connected to MongoDB');
+
+    // Check if deployment topology supports transactions (requires replica set or sharded cluster)
+    const client = mongoose.connection.getClient();
+    const topologyType = (client as unknown as { topology: { description: { type: string } } }).topology?.description?.type;
+    dbSupportsTransactions = typeof topologyType === 'string' && 
+      (topologyType.includes('ReplicaSet') || topologyType.includes('Sharded'));
+    
+    console.log(`MongoDB topology type: ${String(topologyType)}. Transactions supported: ${String(dbSupportsTransactions)}`);
+
     return connection;
   } catch (error) {
     console.error('Failed to connect to MongoDB', { error: (error as Error).message });
