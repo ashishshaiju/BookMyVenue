@@ -1,9 +1,54 @@
+import { useState, useEffect } from "react";
 import { FaBuilding } from "react-icons/fa";
 import { Formik, Form, Field, ErrorMessage } from "formik";
-import { Link } from "react-router";
+import { Link, useNavigate, useSearchParams } from "react-router";
 import { resetPasswordSchema } from "./validation";
+import { axiosInstance } from "../../config/axios";
+import { API_ENDPOINTS } from "../../constants";
+import { useToast } from "../../hooks/useToast";
 
 const ResetPasswordPage = () => {
+  const toast = useToast();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const token = searchParams.get("token");
+
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!token) {
+      toast.error("Reset token is missing from the URL. Please request a new link.");
+    }
+  }, [token]);
+
+  const handleSubmit = async (values: any, { resetForm }: any) => {
+    if (!token) {
+      toast.error("Cannot reset password without a valid token.");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await axiosInstance.post(API_ENDPOINTS.RESET_PASSWORD, {
+        token,
+        password: values.password,
+      });
+
+      toast.success(response.data?.message || "Password reset successful!");
+      resetForm();
+
+      setTimeout(() => {
+        navigate("/login");
+      }, 3000);
+    } catch (error: any) {
+      const msg = error.response?.data?.message || error.message || "Failed to reset password. Please request a new link.";
+      toast.error(msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col justify-center items-center p-5">
       <div className="flex flex-col items-center gap-4">
@@ -17,6 +62,11 @@ const ResetPasswordPage = () => {
       </div>
 
       <div className="flex flex-col justify-center items-center">
+        {!token && (
+          <div className="w-120 mt-6 p-4 rounded-xl bg-red-500/10 border border-red-500 text-red-500 text-sm text-center">
+            Reset token is missing. Please request a new password reset link.
+          </div>
+        )}
         <h2 className="text-3xl text-[var(--text-primary)] mt-10 font-semibold">
           Reset Password
         </h2>
@@ -31,12 +81,9 @@ const ResetPasswordPage = () => {
             confirmPassword: "",
           }}
           validationSchema={resetPasswordSchema}
-          onSubmit={(values, { resetForm }) => {
-            console.log(values);
-            resetForm();
-          }}
+          onSubmit={handleSubmit}
         >
-          <Form className="flex flex-col gap-5 w-full mt-10">
+          <Form className="flex flex-col gap-5 w-full mt-6">
 
             <div className="flex flex-col gap-2">
               <label className="text-[var(--text-secondary)] text-sm" htmlFor="password">
@@ -49,6 +96,7 @@ const ResetPasswordPage = () => {
                 name="password"
                 placeholder="Enter new password"
                 className="w-120 p-3 border border-[var(--text-secondary)] rounded-xl bg-[var(--bg-tertiary)] text-[var(--text-primary)]"
+                disabled={loading || !token}
               />
 
               <div className="h-2">
@@ -67,6 +115,7 @@ const ResetPasswordPage = () => {
                 name="confirmPassword"
                 placeholder="Confirm new password"
                 className="w-120 p-3 border border-[var(--text-secondary)] rounded-xl bg-[var(--bg-tertiary)] text-[var(--text-primary)]"
+                disabled={loading || !token}
               />
 
               <div className="h-2">
@@ -76,9 +125,10 @@ const ResetPasswordPage = () => {
 
             <button
               type="submit"
-              className="w-120 mt-6 bg-[var(--bg-secondary)] border-2 border-transparent hover:bg-[var(--bg-primary)] hover:border-2 hover:text-[var(--text-primary)] hover:border-[var(--bg-secondary)] transition-all duration-200 p-3 rounded-xl text-white font-medium"
+              disabled={loading || !token}
+              className="w-120 mt-6 bg-[var(--bg-secondary)] border-2 border-transparent hover:bg-[var(--bg-primary)] hover:border-2 hover:text-[var(--text-primary)] hover:border-[var(--bg-secondary)] transition-all duration-200 p-3 rounded-xl text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Reset Password
+              {loading ? "Resetting..." : "Reset Password"}
             </button>
 
           </Form>

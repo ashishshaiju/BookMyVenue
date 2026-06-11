@@ -42,3 +42,38 @@ select:-webkit-autofill {
   -webkit-box-shadow: 0 0 0px 1000px var(--bg-tertiary) inset;
   transition: background-color 5000s ease-in-out 0s;
 }
+
+@keyframes slide-in-right {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes dropdown-open {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Mobile: slide in from right */
+.animate-slide-in-right {
+  animation: slide-in-right 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Desktop: drop down smoothly from icon */
+@media (min-width: 768px) {
+  .animate-slide-in-right {
+    animation: dropdown-open 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    transform-origin: top right;
+  }
+}
