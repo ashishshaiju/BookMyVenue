@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 import { Link  } from "react-router";
-import ProfileDropdown from "./ProfileDropDown";
+import ProfileDropdown from "./ProfileDropdown";
 
 
 const Navbar = () => {
@@ -35,7 +35,7 @@ const Navbar = () => {
             after:transition-all after:duration-300 
             hover:after:w-full"
           >
-            List Venue
+            List Your Venue
           </Link>
 
           <Link

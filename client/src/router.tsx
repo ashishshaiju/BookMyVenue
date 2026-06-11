@@ -6,7 +6,9 @@ import LoginPage from "./pages/login"
 import ForgotPasswordPage from "./pages/forgotPassword"
 import ResetPasswordPage from "./pages/resetPassword"
 import MainLayout from "./layout/MainLayout";
-import ListVenue from "./pages/listVenue"
+import ListVenueLayout from "./layout/ListVenueLayout";
+import MyVenues from "./pages/listVenue/MyVenues";
+import AddVenue from "./pages/listVenue/Addvenue";
 
 export function AppRouter() {
 	return (
@@ -17,7 +19,12 @@ export function AppRouter() {
 					<Route path="/explore" element={<ExplorePage />} />
         </Route>
 
-				<Route path="/list-venue" element={<ListVenue />} />
+				 <Route path="/list-venue" element={<ListVenueLayout />}>
+					<Route path="add-venue" element={<AddVenue />} />
+					<Route path="my-venues" element={<MyVenues />} />
+					<Route index element={<MyVenues />} />
+        </Route>
+
 				
 				<Route path="/register" element={<RegisterPage />} />
 				<Route path="/login" element={<LoginPage />} />
