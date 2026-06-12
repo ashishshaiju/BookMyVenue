@@ -31,7 +31,7 @@ export const verifyAccessToken = (req: Request, res: Response, next: NextFunctio
 
     const decoded = jwt.verify(accessToken, accessSecret, tokenVerifyOptions) as TokenPayload;
 
-    if (!decoded.id || !decoded.username || !decoded.email || !decoded.jti) {
+    if (!decoded.id || !decoded.username || !decoded.email ) {
       console.warn('Invalid access token payload', { path: req.path });
       ResponseUtil.unauthorized(res, 'Invalid access token');
       return;
@@ -41,6 +41,7 @@ export const verifyAccessToken = (req: Request, res: Response, next: NextFunctio
       userId: decoded.id,
       username: decoded.username,
       email: decoded.email,
+      role: {}, // permissions resolved lazily by loadPermissions when a guard runs
     };
 
     next();

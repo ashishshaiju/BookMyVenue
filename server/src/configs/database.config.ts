@@ -18,11 +18,11 @@ export const connectDatabase = async (): Promise<typeof mongoose> => {
 
     // Check if deployment topology supports transactions (requires replica set or sharded cluster)
     const client = mongoose.connection.getClient();
-    const topologyType = (client as unknown as { topology: { description: { type: string } } }).topology?.description?.type;
+    const topologyType = (client as unknown as { topology?: { description?: { type?: string } } }).topology?.description?.type;
     dbSupportsTransactions = typeof topologyType === 'string' && 
       (topologyType.includes('ReplicaSet') || topologyType.includes('Sharded'));
     
-    console.log(`MongoDB topology type: ${String(topologyType)}. Transactions supported: ${String(dbSupportsTransactions)}`);
+    console.log(`MongoDB topology type: ${topologyType ?? 'unknown'}. Transactions supported: ${String(dbSupportsTransactions)}`);
 
     return connection;
   } catch (error) {

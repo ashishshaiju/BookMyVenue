@@ -61,7 +61,6 @@ const ForgotPasswordPage = () => {
           onSubmit={handleSubmit}
         >
           <Form className="flex flex-col gap-5 w-full mt-6">
-
             <div className="flex flex-col gap-2">
               <label className="text-[var(--text-secondary)] text-sm" htmlFor="email">
                 Email
@@ -88,7 +87,6 @@ const ForgotPasswordPage = () => {
             >
               {loading ? "Sending..." : "Send Reset Link"}
             </button>
-
           </Form>
         </Formik>
 
