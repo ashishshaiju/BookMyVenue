@@ -1,15 +1,21 @@
 import { FaBuilding } from "react-icons/fa";
 import { Formik, Form, Field, ErrorMessage } from "formik";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate, useLocation } from "react-router";
 import { signinSchema } from "./validation";
 import { useAuth } from "../../hooks/useAuth";
 import { useToast } from "../../hooks/useToast";
 import { extractErrorMessage } from "../../utils/toast";
+import { getSafeRedirectUrl } from "../../utils/redirect";
 
 const LoginPage = () => {
   const { login } = useAuth();
   const toast = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const searchParams = new URLSearchParams(location.search);
+  const redirectParam = searchParams.get("redirect");
+  const registerLink = redirectParam ? `/register?redirect=${encodeURIComponent(redirectParam)}` : "/register";
 
   return (
     <div className="min-h-screen flex flex-col justify-center items-center p-5">
@@ -35,7 +41,25 @@ const LoginPage = () => {
             try {
               await login(values.email, values.password);
               toast.success("Welcome back! You're now signed in.");
-              navigate("/");
+
+              const localRedirect = localStorage.getItem("redirectUrl");
+              let finalRedirect = "/";
+
+              if (redirectParam && localRedirect && redirectParam === localRedirect) {
+                finalRedirect = getSafeRedirectUrl(redirectParam);
+              } else if (redirectParam) {
+                finalRedirect = getSafeRedirectUrl(redirectParam);
+              } else if (localRedirect) {
+                finalRedirect = getSafeRedirectUrl(localRedirect);
+              }
+
+              try {
+                localStorage.removeItem("redirectUrl");
+              } catch {
+                // Ignore localStorage errors
+              }
+
+              navigate(finalRedirect);
             } catch (err: unknown) {
               toast.error(extractErrorMessage(err) || "Invalid email or password");
             } finally {
@@ -95,7 +119,7 @@ const LoginPage = () => {
         <div className="mt-10">
           <p className="text-[var(--text-secondary)]">
             Don't have an account?
-            <Link to="/register" className="text-[var(--text-primary)] ml-2 font-medium hover:underline transition-all">
+            <Link to={registerLink} className="text-[var(--text-primary)] ml-2 font-medium hover:underline transition-all">
               Register
             </Link>
           </p>

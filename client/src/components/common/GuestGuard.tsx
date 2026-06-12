@@ -1,9 +1,11 @@
 import React from "react";
-import { Navigate, Outlet } from "react-router";
+import { Navigate, Outlet, useLocation } from "react-router";
+import { getSafeRedirectUrl } from "../../utils/redirect";
 import { useAuth } from "../../hooks/useAuth";
 
 const GuestGuard: React.FC = () => {
   const { isAuthenticated, loading } = useAuth();
+  const location = useLocation();
 
   if (loading) {
     return (
@@ -13,7 +15,14 @@ const GuestGuard: React.FC = () => {
     );
   }
 
-  return isAuthenticated ? <Navigate to="/" replace /> : <Outlet />;
+  if (isAuthenticated) {
+    const searchParams = new URLSearchParams(location.search);
+    const redirectParam = searchParams.get("redirect");
+    const safeRedirect = getSafeRedirectUrl(redirectParam);
+    return <Navigate to={safeRedirect} replace />;
+  }
+
+  return <Outlet />;
 };
 
 export default GuestGuard;

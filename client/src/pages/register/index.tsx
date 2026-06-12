@@ -1,6 +1,6 @@
 import { FaBuilding } from "react-icons/fa";
 import { Formik, Form, Field, ErrorMessage } from "formik";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate, useLocation } from "react-router";
 import { signupSchema } from "./validation";
 import { useAuth } from "../../hooks/useAuth";
 import { useToast } from "../../hooks/useToast";
@@ -10,6 +10,11 @@ const RegisterPage = () => {
 	const { register } = useAuth();
 	const toast = useToast();
 	const navigate = useNavigate();
+	const location = useLocation();
+
+	const searchParams = new URLSearchParams(location.search);
+	const redirectParam = searchParams.get("redirect");
+	const loginLink = redirectParam ? `/login?redirect=${encodeURIComponent(redirectParam)}` : "/login";
 
 	return (
 		<div className="min-h-screen flex flex-col justify-center items-center p-10 ">
@@ -45,7 +50,7 @@ const RegisterPage = () => {
 							);
 							resetForm();
 							setTimeout(() => {
-								navigate("/login");
+								navigate(loginLink);
 							}, 2000);
 						} catch (err: unknown) {
 							toast.error(
@@ -164,7 +169,7 @@ const RegisterPage = () => {
 					<p className="text-[var(--text-secondary)]">
 						Already have an account?
 						<Link
-							to="/login"
+							to={loginLink}
 							className="text-[var(--text-primary)] font-medium hover:underline transition-all "
 						>
 							{" "}
