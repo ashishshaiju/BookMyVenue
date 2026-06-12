@@ -18,7 +18,7 @@ export const parseDurationToMs = (duration: string | number): number => {
     return parseInt(duration, 10);
   }
 
-  const match = duration.match(/^(\d+)([smhd])$/i);
+  const match = /^(\d+)([smhd])$/i.exec(duration);
   if (!match) {
     throw new Error(`Invalid duration format: "${duration}". Expected format like "60s", "30m", "24h", "7d".`);
   }

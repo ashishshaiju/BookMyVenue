@@ -9,7 +9,7 @@ export type CreateVenueData = Omit<
   keyof mongoose.Document | 'status' | 'createdAt' | 'updatedAt' | 'active' | 'deleted' | 'rejectionReason'
 >;
 
-export type UpdateVenueData = Partial<Omit<CreateVenueData, 'createdBy' | 'ownerUserId'>> & {
+export type UpdateVenueData = Partial<Omit<CreateVenueData, 'createdBy' | 'ownerUserId' | 'updatedBy'>> & {
   updatedBy: string;
 };
 
@@ -39,7 +39,7 @@ export async function existsByOwnerAndName(
   name: string,
   excludeVenueId?: string
 ): Promise<boolean> {
-  const query: Record<string, any> = {
+  const query: Record<string, unknown> = {
     ownerUserId: toObjectId(ownerUserId),
     name: { $regex: new RegExp(`^${name}$`, 'i') }, // Case-insensitive exact match
     deleted: false,

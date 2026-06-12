@@ -10,10 +10,10 @@ let getServerFn: (() => Server | null) | null = null;
  * Prevents any single shutdown step from blocking the rest of the sequence.
  */
 const withTimeout = async <T>(promise: Promise<T>, ms: number, name: string): Promise<void> => {
-  let timeoutHandle: NodeJS.Timeout;
+  let timeoutHandle: NodeJS.Timeout | undefined;
   const timeoutPromise = new Promise<never>((_, reject) => {
     timeoutHandle = setTimeout(
-      () => { reject(new Error(`[Timeout] ${name} shutdown exceeded ${Number(ms)}ms`)); },
+      () => { reject(new Error(`[Timeout] ${name} shutdown exceeded ${ms.toString()}ms`)); },
       ms
     );
   });
@@ -23,7 +23,9 @@ const withTimeout = async <T>(promise: Promise<T>, ms: number, name: string): Pr
   } catch (err) {
     console.error(`[server] ${name} failed to shut down cleanly:`, (err as Error).message);
   } finally {
-    clearTimeout(timeoutHandle!);
+    if (timeoutHandle) {
+      clearTimeout(timeoutHandle);
+    }
   }
 };
 

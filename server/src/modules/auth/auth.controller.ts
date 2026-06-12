@@ -259,7 +259,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
           revokedReason: TokenRevocationReason.USER_LOGIN,
         },
       }
-    ).catch((err: Error) => { console.error('Failed to cleanup reset tokens on login', { error: err.message }); });
+    ).catch((err: unknown) => { console.error('Failed to cleanup reset tokens on login', { error: err instanceof Error ? err.message : String(err) }); });
 
     if (!authEnvs.accessTokenSecret || !authEnvs.refreshTokenSecret) {
       console.error('JWT secrets not configured');
@@ -376,7 +376,7 @@ export const forgotPassword = async (req: Request, res: Response): Promise<void>
     // Validate input
     const parseResult = authScheme.forgotPasswordSchema.safeParse(req.body);
     if (!parseResult.success) {
-      ResponseUtil.validationError(res, 'Invalid request', parseResult.error?.message); return;
+      ResponseUtil.validationError(res, 'Invalid request', parseResult.error.message); return;
     }
 
     const { email } = parseResult.data;
@@ -387,9 +387,9 @@ export const forgotPassword = async (req: Request, res: Response): Promise<void>
     // Uses the compound index { emailHash: 1, createdAt: -1 } for efficiency.
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
     const [rateLimitData] = await PasswordResetRequestModel.aggregate<{
-      totalRequests: { n: number }[];
-      emailsSent: { n: number }[];
-      lastEmailSent: { createdAt: Date }[];
+      totalRequests: ({ n: number } | undefined)[];
+      emailsSent: ({ n: number } | undefined)[];
+      lastEmailSent: ({ createdAt: Date } | undefined)[];
     }>([
       { $match: { emailHash, createdAt: { $gte: oneHourAgo } } },
       {
@@ -404,7 +404,14 @@ export const forgotPassword = async (req: Request, res: Response): Promise<void>
           ],
         },
       },
-    ]);
+    ]) as (
+      | {
+          totalRequests: ({ n: number } | undefined)[];
+          emailsSent: ({ n: number } | undefined)[];
+          lastEmailSent: ({ createdAt: Date } | undefined)[];
+        }
+      | undefined
+    )[];
 
     const totalCount = rateLimitData?.totalRequests[0]?.n ?? 0;
     const emailCount = rateLimitData?.emailsSent[0]?.n ?? 0;
@@ -437,7 +444,7 @@ export const forgotPassword = async (req: Request, res: Response): Promise<void>
         });
         ResponseUtil.rateLimitExceeded(
           res,
-          `Please wait ${Number(secondsRemaining)} seconds before resending reset link`
+          `Please wait ${secondsRemaining.toString()} seconds before resending reset link`
         ); return;
       }
     }

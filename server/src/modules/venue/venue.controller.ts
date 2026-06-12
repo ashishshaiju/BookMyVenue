@@ -40,7 +40,7 @@ function handleError(res: Response, error: unknown, context: string): void {
   }
 
   const err = error as Error;
-  // eslint-disable-next-line no-console
+   
   console.error(`${context}: unexpected error`, { error: err.message, stack: err.stack });
   ResponseUtil.internalServerError(res, 'Server error');
 }

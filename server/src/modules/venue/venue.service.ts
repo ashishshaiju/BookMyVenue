@@ -72,7 +72,7 @@ export async function updateVenue(
     }
   }
 
-  const patch = {
+  const patch: UpdateVenueData = {
     updatedBy: userId,
     ...(dto.name !== undefined && { name: dto.name }),
     ...(dto.description !== undefined && { description: dto.description }),
@@ -83,7 +83,7 @@ export async function updateVenue(
     ...(dto.state !== undefined && { state: dto.state }),
     ...(dto.country !== undefined && { country: dto.country }),
     ...(dto.pincode !== undefined && { pincode: dto.pincode }),
-    ...(dto.coordinates !== undefined && { location: { type: 'Point', coordinates: dto.coordinates } }),
+    ...(dto.coordinates !== undefined && { location: { type: 'Point' as const, coordinates: dto.coordinates } }),
     ...(dto.googleMapsUrl !== undefined && { googleMapsUrl: dto.googleMapsUrl }),
     ...(dto.spaceAttributes !== undefined && { spaceAttributes: dto.spaceAttributes }),
     ...(dto.seatingConfigurations !== undefined && { seatingConfigurations: dto.seatingConfigurations }),

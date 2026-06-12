@@ -119,7 +119,7 @@ const emailAddressSchema = z.email('Invalid recipient email address');
 
 function validateRecipient(email: string): string {
   if (process.env.NODE_ENV === "development") {
-    const res = resendConfig.devToEmail!;
+    const res = resendConfig.devToEmail ?? '';
     if (!emailAddressSchema.safeParse(res).success) {
       throw new Error('Invalid development recipient email address');
     }
@@ -135,7 +135,7 @@ async function sendEmail(
   html: string,
   intent: EmailIntentType
 ): Promise<SendEmailResult> {
-  const from = `${resendConfig.fromName!} <${resendConfig.fromEmail!}>`; // guaranteed non-null after validateEmailConfig
+  const from = `${resendConfig.fromName ?? ''} <${resendConfig.fromEmail ?? ''}>`; // guaranteed non-null after validateEmailConfig
 
   try {
     const resend = getResendClient();
@@ -153,10 +153,10 @@ async function sendEmail(
     console.log('Email sent successfully', {
       intent,
       recipient: to,
-      messageId: data?.id,
+      messageId: data.id,
     });
 
-    return { success: true, messageId: data?.id };
+    return { success: true, messageId: data.id };
   } catch (e) {
     const err = e as Error;
     console.error('Email service encountered an unexpected error', {
