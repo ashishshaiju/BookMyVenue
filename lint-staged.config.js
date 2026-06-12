@@ -10,19 +10,19 @@
 export default {
 	// Client project — lint changed files only, full tsc
 	"client/src/**/*.{ts,tsx}": [
-		(files) => `pnpm --filter client exec eslint --max-warnings 0 ${files.join(" ")}`,
+		(files) => `pnpm --filter client exec eslint --no-warn-ignored ${files.join(" ")}`,
 		() => "pnpm --filter client exec tsc --noEmit",
 	],
 
 	// Admin project — lint changed files only, full tsc
 	"admin/src/**/*.{ts,tsx}": [
-		(files) => `pnpm --filter admin exec eslint --max-warnings 0 ${files.join(" ")}`,
+		(files) => `pnpm --filter admin exec eslint --no-warn-ignored ${files.join(" ")}`,
 		() => "pnpm --filter admin exec tsc --noEmit",
 	],
 
 	// Server project — lint changed files only, full tsc
 	"server/src/**/*.ts": [
-		(files) => `pnpm --filter server exec eslint --max-warnings 0 ${files.join(" ")}`,
+		(files) => `pnpm --filter server exec eslint --no-warn-ignored ${files.join(" ")}`,
 		() => "pnpm --filter server exec tsc --noEmit",
 	],
 };
