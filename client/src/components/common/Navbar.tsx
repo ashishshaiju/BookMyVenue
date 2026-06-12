@@ -38,7 +38,7 @@ const Navbar = () => {
             after:transition-all after:duration-300 
             hover:after:w-full"
           >
-            List Venue
+            List Your Venue
           </Link>
 
           <Link
