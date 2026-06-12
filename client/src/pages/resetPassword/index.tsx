@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { FaBuilding } from "react-icons/fa";
 import { Formik, Form, Field, ErrorMessage } from "formik";
+import { Link, useNavigate, useSearchParams } from "react-router";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { resetPasswordSchema } from "./validation";
 import { axiosInstance } from "../../config/axios";
@@ -85,6 +87,18 @@ const ResetPasswordPage = () => {
           Create a new secure password for your account.
         </p>
 
+        {successMessage && (
+          <div className="w-120 mt-6 p-4 rounded-xl bg-green-500/10 border border-green-500 text-green-500 text-sm text-center">
+            {successMessage}
+          </div>
+        )}
+
+        {errorMessage && (
+          <div className="w-120 mt-6 p-4 rounded-xl bg-red-500/10 border border-red-500 text-red-500 text-sm text-center">
+            {errorMessage}
+          </div>
+        )}
+
         <Formik
           initialValues={{
             password: "",
@@ -92,7 +106,9 @@ const ResetPasswordPage = () => {
           }}
           validationSchema={resetPasswordSchema}
           onSubmit={handleSubmit}
+          onSubmit={handleSubmit}
         >
+          <Form className="flex flex-col gap-5 w-full mt-6">
           <Form className="flex flex-col gap-5 w-full mt-6">
 
             <div className="flex flex-col gap-2">
@@ -106,6 +122,7 @@ const ResetPasswordPage = () => {
                 name="password"
                 placeholder="Enter new password"
                 className="w-120 p-3 border border-[var(--text-secondary)] rounded-xl bg-[var(--bg-tertiary)] text-[var(--text-primary)]"
+                disabled={loading || !token}
                 disabled={loading || !token}
               />
 
@@ -126,6 +143,7 @@ const ResetPasswordPage = () => {
                 placeholder="Confirm new password"
                 className="w-120 p-3 border border-[var(--text-secondary)] rounded-xl bg-[var(--bg-tertiary)] text-[var(--text-primary)]"
                 disabled={loading || !token}
+                disabled={loading || !token}
               />
 
               <div className="h-2">
@@ -137,7 +155,10 @@ const ResetPasswordPage = () => {
               type="submit"
               disabled={loading || !token}
               className="w-120 mt-6 bg-[var(--bg-secondary)] border-2 border-transparent hover:bg-[var(--bg-primary)] hover:border-2 hover:text-[var(--text-primary)] hover:border-[var(--bg-secondary)] transition-all duration-200 p-3 rounded-xl text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={loading || !token}
+              className="w-120 mt-6 bg-[var(--bg-secondary)] border-2 border-transparent hover:bg-[var(--bg-primary)] hover:border-2 hover:text-[var(--text-primary)] hover:border-[var(--bg-secondary)] transition-all duration-200 p-3 rounded-xl text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
+              {loading ? "Resetting..." : "Reset Password"}
               {loading ? "Resetting..." : "Reset Password"}
             </button>
 

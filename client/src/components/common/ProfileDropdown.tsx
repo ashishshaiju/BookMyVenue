@@ -4,6 +4,7 @@ import { FiLogOut, FiUser, FiX } from "react-icons/fi";
 import { LuCalendarDays } from "react-icons/lu";
 import { MdOutlineMeetingRoom } from "react-icons/md";
 import { useAuth } from "../../hooks/useAuth";
+import { useAuth } from "../../hooks/useAuth";
 
 type ProfileDropdownProps = {
   onClose: () => void;

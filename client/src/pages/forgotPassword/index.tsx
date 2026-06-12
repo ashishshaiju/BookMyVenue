@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useState } from "react";
 import { FaBuilding } from "react-icons/fa";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import { Link } from "react-router";
@@ -50,8 +51,21 @@ const ForgotPasswordPage = () => {
         </h2>
 
         <p className="text-[var(--text-secondary)] mt-2 text-center max-w-md">
+        <p className="text-[var(--text-secondary)] mt-2 text-center max-w-md">
           Enter your email and we’ll send you a reset link.
         </p>
+
+        {successMessage && (
+          <div className="w-120 mt-6 p-4 rounded-xl bg-green-500/10 border border-green-500 text-green-500 text-sm">
+            {successMessage}
+          </div>
+        )}
+
+        {errorMessage && (
+          <div className="w-120 mt-6 p-4 rounded-xl bg-red-500/10 border border-red-500 text-red-500 text-sm">
+            {errorMessage}
+          </div>
+        )}
 
         <Formik
           initialValues={{
@@ -59,7 +73,9 @@ const ForgotPasswordPage = () => {
           }}
           validationSchema={forgotPasswordSchema}
           onSubmit={handleSubmit}
+          onSubmit={handleSubmit}
         >
+          <Form className="flex flex-col gap-5 w-full mt-6">
           <Form className="flex flex-col gap-5 w-full mt-6">
 
             <div className="flex flex-col gap-2">
@@ -74,6 +90,7 @@ const ForgotPasswordPage = () => {
                 placeholder="Enter your email"
                 className="w-120 p-3 border border-[var(--text-secondary)] rounded-xl bg-[var(--bg-tertiary)] text-[var(--text-primary)]"
                 disabled={loading}
+                disabled={loading}
               />
 
               <div className="h-2">
@@ -85,7 +102,10 @@ const ForgotPasswordPage = () => {
               type="submit"
               disabled={loading}
               className="w-120 mt-6 bg-[var(--bg-secondary)] border-2 border-transparent hover:bg-[var(--bg-primary)] hover:border-2 hover:text-[var(--text-primary)] hover:border-[var(--bg-secondary)] transition-all duration-200 p-3 rounded-xl text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={loading}
+              className="w-120 mt-6 bg-[var(--bg-secondary)] border-2 border-transparent hover:bg-[var(--bg-primary)] hover:border-2 hover:text-[var(--text-primary)] hover:border-[var(--bg-secondary)] transition-all duration-200 p-3 rounded-xl text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
+              {loading ? "Sending..." : "Send Reset Link"}
               {loading ? "Sending..." : "Send Reset Link"}
             </button>
 

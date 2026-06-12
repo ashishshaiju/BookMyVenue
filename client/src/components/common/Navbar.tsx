@@ -9,6 +9,7 @@ import { FiUser } from "react-icons/fi";
 const Navbar = () => {
   const [openProfile, setOpenProfile] = useState(false);
   const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
 
   return (
     <header className="fixed top-0 left-0 z-50 w-full border-b bg-[var(--bg-primary)] shadow-sm ">
