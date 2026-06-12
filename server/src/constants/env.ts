@@ -16,8 +16,8 @@ export const jwtConfig = {
 } as const;
 
 export const authEnvs = {
-  accessTokenExpiry: process.env.ACCESS_TOKEN_EXPIRY ?? '15m',
-  refreshTokenExpiry: process.env.REFRESH_TOKEN_EXPIRY ?? '7d',
+  accessTokenExpiry: process.env.ACCESS_TOKEN_EXPIRY ?? '60s',
+  refreshTokenExpiry: process.env.REFRESH_TOKEN_EXPIRY ?? '30m',
   accessTokenSecret: process.env.JWT_ACCESS_SECRET,
   refreshTokenSecret: process.env.JWT_REFRESH_SECRET,
 } as const;

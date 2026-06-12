@@ -33,11 +33,11 @@ async function gracefulShutdown(signal: string, exitCode = 0): Promise<void> {
 
   console.log(`\n[server] ${signal} received. Initiating graceful shutdown...`);
 
-  // Global Hard Timeout: If everything completely locks up, OS kills it after 15s.
+  // Global Hard Timeout: If everything completely locks up, OS kills it after 30s.
   const forceExitTimer = setTimeout(() => {
-    console.error('[server] GLOBAL shutdown timeout reached (15s). Forcing exit.');
+    console.error('[server] GLOBAL shutdown timeout reached (30s). Forcing exit.');
     process.exit(exitCode);
-  }, 15_000);
+  }, 30_000);
   forceExitTimer.unref();
 
   try {

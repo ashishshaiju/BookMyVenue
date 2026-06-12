@@ -1,10 +1,25 @@
 import type { IRefreshToken } from '../modules/auth/models/refresh-token.model';
+import type { IPermission } from '../constants/permissions';
+
+// ── RBAC ─────────────────────────────────────────────────────────────────────
+
+export interface VerifiedRole {
+  id?: string;                     // roleId (ObjectId string)
+  name?: string;                   // 'user' | 'owner' | 'admin' | 'superAdmin' | future roles
+  isSuperAdmin?: boolean;          // true → requirePermission short-circuits to next()
+  permissions?: Set<IPermission>;  // full effective set, including inherited
+}
+
+// ── Auth ──────────────────────────────────────────────────────────────────────
 
 export interface AuthenticatedUser {
   userId: string;
   username: string;
   email: string;
+  role: VerifiedRole; // populated by verifyAccessToken; permissions loaded lazily by loadPermissions
 }
+
+export type Permission = IPermission;
 
 export interface DecodedToken {
   id: string;
@@ -16,7 +31,7 @@ export interface TokenPayload {
   username: string;
   email: string;
   iat: number;
-  jti: string;
+  jti?: string;
 }
 
 export interface RefreshTokenPayload {
