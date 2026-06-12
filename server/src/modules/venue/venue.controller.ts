@@ -1,0 +1,243 @@
+import type { Request, Response } from 'express';
+import { z } from 'zod';
+import { ResponseUtil } from '../../utils/responseUtils';
+import { AppError, NotFoundError, ForbiddenError, ConflictError, WorkflowError, ValidationError } from '../../utils/errors';
+import * as service from './venue.service';
+import {
+  createVenueSchema,
+  updateVenueSchema,
+  rejectVenueSchema,
+  adminVenueFiltersSchema,
+  venueIdParamSchema,
+} from './venue.validator';
+
+// ── Error mapper ──────────────────────────────────────────────────────────────
+
+function handleError(res: Response, error: unknown, context: string): void {
+  if (error instanceof z.ZodError) {
+    ResponseUtil.validationError(res, 'Validation failed', error.issues[0]?.message);
+    return;
+  }
+  if (error instanceof NotFoundError) {
+    ResponseUtil.notFound(res, error.message);
+    return;
+  }
+  if (error instanceof ForbiddenError) {
+    ResponseUtil.forbidden(res, error.message);
+    return;
+  }
+  if (error instanceof ConflictError) {
+    ResponseUtil.conflict(res, error.message);
+    return;
+  }
+  if (error instanceof WorkflowError || error instanceof ValidationError) {
+    ResponseUtil.validationError(res, error.message);
+    return;
+  }
+  if (error instanceof AppError) {
+    ResponseUtil.error(res, error.message, undefined, error.statusCode);
+    return;
+  }
+
+  const err = error as Error;
+  // eslint-disable-next-line no-console
+  console.error(`${context}: unexpected error`, { error: err.message, stack: err.stack });
+  ResponseUtil.internalServerError(res, 'Server error');
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function isCallerAdmin(req: Request): boolean {
+  return (
+    req.user?.role.isSuperAdmin === true ||
+    req.user?.role.permissions?.has('approve:venues') === true
+  );
+}
+
+// ── Owner Handlers ────────────────────────────────────────────────────────────
+
+export const createVenue = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.userId;
+    if (!userId) { ResponseUtil.unauthorized(res, 'Unauthorized'); return; }
+    const dto = createVenueSchema.parse(req.body);
+    const venue = await service.createVenue(userId, dto);
+    ResponseUtil.created(res, 'Venue created successfully', venue);
+  } catch (e) {
+    handleError(res, e, 'createVenue');
+  }
+};
+
+export const getMyVenues = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.userId;
+    if (!userId) { ResponseUtil.unauthorized(res, 'Unauthorized'); return; }
+    const venues = await service.getMyVenues(userId);
+    ResponseUtil.success(res, 'Venues retrieved successfully', {
+      count: venues.length,
+      venues,
+    });
+  } catch (e) {
+    handleError(res, e, 'getMyVenues');
+  }
+};
+
+export const getVenueById = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const paramResult = venueIdParamSchema.safeParse(req.params);
+    if (!paramResult.success) {
+      ResponseUtil.badRequest(res, 'Invalid venue ID');
+      return;
+    }
+    const userId = req.user?.userId;
+    if (!userId) { ResponseUtil.unauthorized(res, 'Unauthorized'); return; }
+    const admin = isCallerAdmin(req);
+    const venue = await service.getVenueById(paramResult.data.id, userId, admin);
+    ResponseUtil.success(res, 'Venue retrieved successfully', venue);
+  } catch (e) {
+    handleError(res, e, 'getVenueById');
+  }
+};
+
+export const updateVenue = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const paramResult = venueIdParamSchema.safeParse(req.params);
+    if (!paramResult.success) {
+      ResponseUtil.badRequest(res, 'Invalid venue ID');
+      return;
+    }
+    const userId = req.user?.userId;
+    if (!userId) { ResponseUtil.unauthorized(res, 'Unauthorized'); return; }
+    const dto = updateVenueSchema.parse(req.body);
+    const venue = await service.updateVenue(paramResult.data.id, userId, dto);
+    ResponseUtil.success(res, 'Venue updated successfully', venue);
+  } catch (e) {
+    handleError(res, e, 'updateVenue');
+  }
+};
+
+export const deleteVenue = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const paramResult = venueIdParamSchema.safeParse(req.params);
+    if (!paramResult.success) {
+      ResponseUtil.badRequest(res, 'Invalid venue ID');
+      return;
+    }
+    const userId = req.user?.userId;
+    if (!userId) { ResponseUtil.unauthorized(res, 'Unauthorized'); return; }
+    await service.deleteVenue(paramResult.data.id, userId);
+    ResponseUtil.success(res, 'Venue deleted successfully');
+  } catch (e) {
+    handleError(res, e, 'deleteVenue');
+  }
+};
+
+export const submitVenue = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const paramResult = venueIdParamSchema.safeParse(req.params);
+    if (!paramResult.success) {
+      ResponseUtil.badRequest(res, 'Invalid venue ID');
+      return;
+    }
+    const userId = req.user?.userId;
+    if (!userId) { ResponseUtil.unauthorized(res, 'Unauthorized'); return; }
+    const venue = await service.submitVenue(paramResult.data.id, userId);
+    ResponseUtil.success(res, 'Venue submitted for review successfully', venue);
+  } catch (e) {
+    handleError(res, e, 'submitVenue');
+  }
+};
+
+// ── Admin Handlers ────────────────────────────────────────────────────────────
+
+export const getPendingVenues = async (_req: Request, res: Response): Promise<void> => {
+  try {
+    const venues = await service.getPendingVenues();
+    ResponseUtil.success(res, 'Pending venues retrieved successfully', {
+      count: venues.length,
+      venues,
+    });
+  } catch (e) {
+    handleError(res, e, 'getPendingVenues');
+  }
+};
+
+export const getAllVenues = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const filtersResult = adminVenueFiltersSchema.safeParse(req.query);
+    if (!filtersResult.success) {
+      ResponseUtil.badRequest(res, 'Invalid query parameters', filtersResult.error.issues[0]?.message);
+      return;
+    }
+
+    const result = await service.getAllVenues(filtersResult.data);
+    ResponseUtil.success(res, 'Venues retrieved successfully', result);
+  } catch (e) {
+    handleError(res, e, 'getAllVenues');
+  }
+};
+
+export const approveVenue = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const paramResult = venueIdParamSchema.safeParse(req.params);
+    if (!paramResult.success) {
+      ResponseUtil.badRequest(res, 'Invalid venue ID');
+      return;
+    }
+    const adminId = req.user?.userId;
+    if (!adminId) { ResponseUtil.unauthorized(res, 'Unauthorized'); return; }
+    const venue = await service.approveVenue(paramResult.data.id, adminId);
+    ResponseUtil.success(res, 'Venue approved successfully', venue);
+  } catch (e) {
+    handleError(res, e, 'approveVenue');
+  }
+};
+
+export const rejectVenue = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const paramResult = venueIdParamSchema.safeParse(req.params);
+    if (!paramResult.success) {
+      ResponseUtil.badRequest(res, 'Invalid venue ID');
+      return;
+    }
+    const adminId = req.user?.userId;
+    if (!adminId) { ResponseUtil.unauthorized(res, 'Unauthorized'); return; }
+    const dto = rejectVenueSchema.parse(req.body);
+    const venue = await service.rejectVenue(paramResult.data.id, adminId, dto);
+    ResponseUtil.success(res, 'Venue rejected', venue);
+  } catch (e) {
+    handleError(res, e, 'rejectVenue');
+  }
+};
+
+export const activateVenue = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const paramResult = venueIdParamSchema.safeParse(req.params);
+    if (!paramResult.success) {
+      ResponseUtil.badRequest(res, 'Invalid venue ID');
+      return;
+    }
+    const adminId = req.user?.userId;
+    if (!adminId) { ResponseUtil.unauthorized(res, 'Unauthorized'); return; }
+    const venue = await service.activateVenue(paramResult.data.id, adminId);
+    ResponseUtil.success(res, 'Venue activated successfully', venue);
+  } catch (e) {
+    handleError(res, e, 'activateVenue');
+  }
+};
+
+export const deactivateVenue = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const paramResult = venueIdParamSchema.safeParse(req.params);
+    if (!paramResult.success) {
+      ResponseUtil.badRequest(res, 'Invalid venue ID');
+      return;
+    }
+    const adminId = req.user?.userId;
+    if (!adminId) { ResponseUtil.unauthorized(res, 'Unauthorized'); return; }
+    const venue = await service.deactivateVenue(paramResult.data.id, adminId);
+    ResponseUtil.success(res, 'Venue suspended successfully', venue);
+  } catch (e) {
+    handleError(res, e, 'deactivateVenue');
+  }
+};
