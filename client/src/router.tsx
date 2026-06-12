@@ -30,11 +30,14 @@ export function AppRouter() {
 					<Route path="/reset-password" element={<ResetPasswordPage />} />
 				</Route>
 				
-			  <Route path="/list-venue" element={<ListVenueLayout />}>
-					<Route path="add-venue" element={<AddVenue />} />
-					<Route path="my-venues" element={<MyVenues />} />
-					<Route index element={<MyVenues />} />
-        </Route>
+				{/* Protected Routes */}
+				<Route element={<AuthGuard />}>
+					<Route path="/list-venue" element={<ListVenueLayout />}>
+						<Route path="add-venue" element={<AddVenue />} />
+						<Route path="my-venues" element={<MyVenues />} />
+						<Route index element={<MyVenues />} />
+					</Route>
+				</Route>
 
 				
 

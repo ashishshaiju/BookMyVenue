@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { FaBuilding } from "react-icons/fa";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import { Link, useNavigate } from "react-router";
@@ -177,7 +176,5 @@ const RegisterPage = () => {
 		</div>
 	);
 };
-
-export default RegisterPage;
 
 export default RegisterPage;
