@@ -94,7 +94,6 @@ const ResetPasswordPage = () => {
           onSubmit={handleSubmit}
         >
           <Form className="flex flex-col gap-5 w-full mt-6">
-
             <div className="flex flex-col gap-2">
               <label className="text-[var(--text-secondary)] text-sm" htmlFor="password">
                 New Password
@@ -140,7 +139,6 @@ const ResetPasswordPage = () => {
             >
               {loading ? "Resetting..." : "Reset Password"}
             </button>
-
           </Form>
         </Formik>
 

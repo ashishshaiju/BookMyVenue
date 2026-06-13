@@ -2,6 +2,7 @@ import type { Request, Response } from 'express';
 import * as bcrypt from 'bcrypt';
 import { z } from 'zod';
 import { ResponseUtil } from '../../utils/responseUtils';
+import { parseDurationToMs } from '../../utils/timeUtils';
 import * as authScheme from './auth.validator';
 import { UserModel } from '../user/user.models';
 import jwt from 'jsonwebtoken';
@@ -18,16 +19,16 @@ import {
   type TokenRevocationReasonType,
 } from '../../constants/auth.constants';
 import type { RefreshTokenPayload, TokenPayload } from '../../types/express';
+import { RoleModel } from '../../models/role.model';
+import { UserRoleModel } from '../../models/user-role.model';
 
 const generateAccessToken = (userId: string, username: string, email: string): string => {
   try {
-    const jti = `${userId}-${String(Date.now())}-${crypto.randomBytes(16).toString('hex')}`;
     const payload: TokenPayload = {
       id: userId,
       username,
       email,
       iat: Math.floor(Date.now() / 1000),
-      jti,
     };
 
     const jwtOptions: jwt.SignOptions = {
@@ -73,7 +74,7 @@ const generateRefreshToken = async (userId: string): Promise<string> => {
 
     const token = jwt.sign(payload, authEnvs.refreshTokenSecret, jwtOptions);
     const tokenHash = crypto.createHash('sha256').update(jti).digest('hex');
-    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    const expiresAt = new Date(Date.now() + parseDurationToMs(authEnvs.refreshTokenExpiry));
 
     await RefreshTokenModel.create({
       userId: new mongoose.Types.ObjectId(userId),
@@ -118,8 +119,8 @@ const revokeRefreshToken = async (
 
 const setTokenCookies = (res: Response, accessToken: string, refreshToken: string): Response => {
   const isProduction = process.env.NODE_ENV === 'production';
-  const accessTokenMaxAge = 15 * 60 * 1000; // 15 minutes
-  const refreshTokenMaxAge = 7 * 24 * 60 * 60 * 1000; // 7 days
+  const accessTokenMaxAge = parseDurationToMs(authEnvs.accessTokenExpiry);
+  const refreshTokenMaxAge = parseDurationToMs(authEnvs.refreshTokenExpiry);
 
   res.cookie('accessToken', accessToken, {
     httpOnly: true,
@@ -176,6 +177,25 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     });
 
     await newUser.save();
+
+    // Assign the default 'user' role — every registrant starts as a user
+    const defaultRole = await RoleModel.findOne({ name: 'user', active: true, deleted: false }).lean();
+    if (defaultRole) {
+      await UserRoleModel.updateOne(
+        { userId: newUser._id, roleId: defaultRole._id },
+        {
+          $set: {
+            userId: newUser._id,
+            roleId: defaultRole._id,
+            active: true,
+            deleted: false,
+          },
+        },
+        { upsert: true }
+      );
+    } else {
+      console.warn('register: default "user" role not found — skipping role assignment', { username });
+    }
 
     console.log('New user registered successfully', { username, email });
 
@@ -239,7 +259,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
           revokedReason: TokenRevocationReason.USER_LOGIN,
         },
       }
-    ).catch((err: Error) => { console.error('Failed to cleanup reset tokens on login', { error: err.message }); });
+    ).catch((err: unknown) => { console.error('Failed to cleanup reset tokens on login', { error: err instanceof Error ? err.message : String(err) }); });
 
     if (!authEnvs.accessTokenSecret || !authEnvs.refreshTokenSecret) {
       console.error('JWT secrets not configured');
@@ -356,7 +376,7 @@ export const forgotPassword = async (req: Request, res: Response): Promise<void>
     // Validate input
     const parseResult = authScheme.forgotPasswordSchema.safeParse(req.body);
     if (!parseResult.success) {
-      ResponseUtil.validationError(res, 'Invalid request', parseResult.error?.message); return;
+      ResponseUtil.validationError(res, 'Invalid request', parseResult.error.message); return;
     }
 
     const { email } = parseResult.data;
@@ -367,9 +387,9 @@ export const forgotPassword = async (req: Request, res: Response): Promise<void>
     // Uses the compound index { emailHash: 1, createdAt: -1 } for efficiency.
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
     const [rateLimitData] = await PasswordResetRequestModel.aggregate<{
-      totalRequests: { n: number }[];
-      emailsSent: { n: number }[];
-      lastEmailSent: { createdAt: Date }[];
+      totalRequests: ({ n: number } | undefined)[];
+      emailsSent: ({ n: number } | undefined)[];
+      lastEmailSent: ({ createdAt: Date } | undefined)[];
     }>([
       { $match: { emailHash, createdAt: { $gte: oneHourAgo } } },
       {
@@ -384,7 +404,14 @@ export const forgotPassword = async (req: Request, res: Response): Promise<void>
           ],
         },
       },
-    ]);
+    ]) as (
+      | {
+          totalRequests: ({ n: number } | undefined)[];
+          emailsSent: ({ n: number } | undefined)[];
+          lastEmailSent: ({ createdAt: Date } | undefined)[];
+        }
+      | undefined
+    )[];
 
     const totalCount = rateLimitData?.totalRequests[0]?.n ?? 0;
     const emailCount = rateLimitData?.emailsSent[0]?.n ?? 0;
@@ -417,7 +444,7 @@ export const forgotPassword = async (req: Request, res: Response): Promise<void>
         });
         ResponseUtil.rateLimitExceeded(
           res,
-          `Please wait ${Number(secondsRemaining)} seconds before resending reset link`
+          `Please wait ${secondsRemaining.toString()} seconds before resending reset link`
         ); return;
       }
     }

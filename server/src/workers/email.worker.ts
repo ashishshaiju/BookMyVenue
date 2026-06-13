@@ -81,7 +81,7 @@ async function processNextTask(): Promise<void> {
         const backoffMs = 2 ** task.retries * 30000; // 30s, 60s, 120s...
         task.lockedAt = new Date(Date.now() + backoffMs);
         console.warn(
-          `[email-worker] Task ${task._id.toString()} failed. Retrying in ${backoffMs / 1000}s.`,
+          `[email-worker] Task ${task._id.toString()} failed. Retrying in ${(backoffMs / 1000).toString()}s.`,
           { error: error.message }
         );
       }
@@ -97,7 +97,7 @@ async function processNextTask(): Promise<void> {
 
 export function startEmailWorker(): void {
   if (pollingInterval) return;
-  console.log(`[email-worker] Started, polling every ${EmailConstants.POLL_INTERVAL_MS / 1000}s.`);
+  console.log(`[email-worker] Started, polling every ${(EmailConstants.POLL_INTERVAL_MS / 1000).toString()}s.`);
   pollingInterval = setInterval(() => void processNextTask(), EmailConstants.POLL_INTERVAL_MS);
 }
 

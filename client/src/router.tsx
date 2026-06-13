@@ -9,6 +9,7 @@ import MainLayout from "./layout/MainLayout";
 import ListVenueLayout from "./layout/ListVenueLayout";
 import MyVenues from "./pages/listVenue/MyVenues";
 import AddVenue from "./pages/listVenue/Addvenue";
+import AuthGuard from "./components/common/AuthGuard";
 import GuestGuard from "./components/common/GuestGuard";
 import VenueDetails from "./pages/venueDetails";
 
@@ -36,7 +37,16 @@ export function AppRouter() {
 					<Route path="/forgot-password" element={<ForgotPasswordPage />} />
 					<Route path="/reset-password" element={<ResetPasswordPage />} />
 				</Route>
-		
+				
+				{/* Protected Routes */}
+			  <Route element={<AuthGuard />}>
+					<Route path="/list-venue" element={<ListVenueLayout />}>
+						<Route path="add-venue" element={<AddVenue />} />
+						<Route path="my-venues" element={<MyVenues />} />
+						<Route index element={<MyVenues />} />
+					</Route>
+				</Route>
+				
 
 				<Route path="*" element={<Navigate to="/not-found" replace />} />
 			</Routes>

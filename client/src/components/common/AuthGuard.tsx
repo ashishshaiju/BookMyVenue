@@ -38,7 +38,17 @@ const AuthGuard: React.FC = () => {
     );
   }
 
-  return isAuthenticated ? <Outlet /> : <Navigate to="/login" replace />;
+  if (!isAuthenticated) {
+    const redirectUrl = `${location.pathname}${location.search}`;
+    try {
+      localStorage.setItem("redirectUrl", redirectUrl);
+    } catch {
+      // Ignore localStorage errors
+    }
+    return <Navigate to={`/login?redirect=${encodeURIComponent(redirectUrl)}`} replace />;
+  }
+
+  return <Outlet />;
 };
 
 export default AuthGuard;
