@@ -1,4 +1,4 @@
-import type { IVenue } from './venue.model';
+import type { IVenue } from './venue.types';
 import { ForbiddenError, NotFoundError } from '../../utils/errors';
 import { findVenueById } from './venue.repository';
 

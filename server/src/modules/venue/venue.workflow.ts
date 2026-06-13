@@ -1,4 +1,5 @@
-import type { IVenue, VenueStatus } from './venue.model';
+import type { IVenue, VenueStatus } from './venue.types';
+import { SUBMISSION_REQUIRED_FIELDS } from '../../constants/venue.constants';
 import { WorkflowError, ValidationError } from '../../utils/errors';
 
 /**
@@ -24,28 +25,7 @@ const ALLOWED_TRANSITIONS: TransitionMap = {
   Suspended: ['Approved'],
 };
 
-// ── Required Fields for Submission ───────────────────────────────────────────
-
-const SUBMISSION_REQUIRED_FIELDS: (keyof IVenue)[] = [
-  'name',
-  'description',
-  'venueType',
-  'address',
-  'city',
-  'district',
-  'state',
-  'country',
-  'pincode',
-  'bookingType',
-  'pricingType',
-  'cancellationPolicy',
-  'contactName',
-  'contactPhone',
-  'coverImage',
-];
-
-// ── Core Guard ────────────────────────────────────────────────────────────────
-
+// Core Guard
 export function assertTransition(venue: IVenue, targetStatus: VenueStatus): void {
   const allowed = ALLOWED_TRANSITIONS[venue.status] ?? [];
   if (!allowed.includes(targetStatus)) {
@@ -53,8 +33,7 @@ export function assertTransition(venue: IVenue, targetStatus: VenueStatus): void
   }
 }
 
-// ── Named Transition Guards ───────────────────────────────────────────────────
-
+// Named Transition Guards
 export function canSubmit(venue: IVenue): void {
   assertTransition(venue, 'PendingReview');
 
@@ -76,15 +55,15 @@ export function canSubmit(venue: IVenue): void {
   }
 
   // Dependent field validation
-  if (venue.bookingType === 'fixed' && venue.fixedPackages.length === 0) {
+  if (venue.bookingType === 'fixedBooking' && venue.fixedPackages.length === 0) {
     throw new ValidationError('Cannot submit: at least one fixed package is required for fixed booking type');
   }
 
-  if (venue.bookingType === 'flexible') {
+  if (venue.bookingType === 'flexibleBooking') {
     if (!venue.workingHours.open || !venue.workingHours.close) {
       throw new ValidationError('Cannot submit: working hours are required for flexible booking type');
     }
-    if (venue.pricingType === 'timeBased' && venue.pricingRules.length === 0) {
+    if (venue.pricingType === 'timeBasedPricing' && venue.pricingRules.length === 0) {
       throw new ValidationError('Cannot submit: pricing rules are required for time-based pricing');
     }
   }

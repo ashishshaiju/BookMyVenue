@@ -1,18 +1,17 @@
-import type { IVenue } from './venue.model';
 import * as repo from './venue.repository';
-import type { CreateVenueData, UpdateVenueData, AdminVenueFilters } from './venue.repository';
+import type { CreateVenueData, UpdateVenueData, AdminVenueFilters, IVenue, VenueKey } from './venue.types';
 import { requireOwnVenue } from './venue.ownership';
 import * as workflow from './venue.workflow';
 import { NotFoundError, ConflictError } from '../../utils/errors';
-import type { CreateVenueDTO, UpdateVenueDTO, RejectVenueDTO, AdminVenueFiltersDTO } from './venue.validator';
+import type {
+  CreateVenueDTO,
+  UpdateVenueDTO,
+  RejectVenueDTO,
+  AdminVenueFiltersDTO,
+} from './venue.validator';
+import {VenueFields} from '../../constants/venue.constants';
 
-/**
- * Venue Service
- *
- * Orchestrates the repository, ownership validation, and workflow state machine.
- */
-
-// ── Owner Operations ──────────────────────────────────────────────────────────
+// Owner Operations
 
 export async function createVenue(userId: string, dto: CreateVenueDTO): Promise<IVenue> {
   const nameExists = await repo.existsByOwnerAndName(userId, dto.name);
@@ -28,8 +27,7 @@ export async function createVenue(userId: string, dto: CreateVenueDTO): Promise<
     createdBy: userId,
     updatedBy: userId,
   } as unknown as CreateVenueData;
-  // @ts-expect-error DTO vs Model type mapping for coordinates
-  delete data.coordinates;
+  delete (data as unknown as Record<string, unknown>).coordinates;
 
   return repo.createVenue(data);
 }
@@ -61,6 +59,7 @@ export async function updateVenue(
   userId: string,
   dto: UpdateVenueDTO
 ): Promise<IVenue> {
+
   const venue = await requireOwnVenue(venueId, userId);
 
   workflow.canEdit(venue);
@@ -74,38 +73,12 @@ export async function updateVenue(
 
   const patch: UpdateVenueData = {
     updatedBy: userId,
-    ...(dto.name !== undefined && { name: dto.name }),
-    ...(dto.description !== undefined && { description: dto.description }),
-    ...(dto.venueType !== undefined && { venueType: dto.venueType }),
-    ...(dto.address !== undefined && { address: dto.address }),
-    ...(dto.city !== undefined && { city: dto.city }),
-    ...(dto.district !== undefined && { district: dto.district }),
-    ...(dto.state !== undefined && { state: dto.state }),
-    ...(dto.country !== undefined && { country: dto.country }),
-    ...(dto.pincode !== undefined && { pincode: dto.pincode }),
-    ...(dto.coordinates !== undefined && { location: { type: 'Point' as const, coordinates: dto.coordinates } }),
-    ...(dto.googleMapsUrl !== undefined && { googleMapsUrl: dto.googleMapsUrl }),
-    ...(dto.spaceAttributes !== undefined && { spaceAttributes: dto.spaceAttributes }),
-    ...(dto.seatingConfigurations !== undefined && { seatingConfigurations: dto.seatingConfigurations }),
-    ...(dto.maxCapacity !== undefined && { maxCapacity: dto.maxCapacity }),
-    ...(dto.bookingType !== undefined && { bookingType: dto.bookingType }),
-    ...(dto.pricingType !== undefined && { pricingType: dto.pricingType }),
-    ...(dto.fixedPackages !== undefined && { fixedPackages: dto.fixedPackages }),
-    ...(dto.workingHours !== undefined && { workingHours: dto.workingHours }),
-    ...(dto.slotDuration !== undefined && { slotDuration: dto.slotDuration }),
-    ...(dto.bufferTime !== undefined && { bufferTime: dto.bufferTime }),
-    ...(dto.samePrice !== undefined && { samePrice: dto.samePrice }),
-    ...(dto.pricingRules !== undefined && { pricingRules: dto.pricingRules }),
-    ...(dto.blockedTimes !== undefined && { blockedTimes: dto.blockedTimes }),
-    ...(dto.amenities !== undefined && { amenities: dto.amenities }),
-    ...(dto.coverImage !== undefined && { coverImage: dto.coverImage }),
-    ...(dto.galleryImages !== undefined && { galleryImages: dto.galleryImages }),
-    ...(dto.contactName !== undefined && { contactName: dto.contactName }),
-    ...(dto.contactPhone !== undefined && { contactPhone: dto.contactPhone }),
-    ...(dto.contactEmail !== undefined && { contactEmail: dto.contactEmail }),
-    ...(dto.cancellationPolicy !== undefined && { cancellationPolicy: dto.cancellationPolicy }),
-    ...(dto.refundType !== undefined && { refundType: dto.refundType }),
-    ...(dto.refundRules !== undefined && { refundRules: dto.refundRules }),
+    ...(Object.fromEntries(
+      VenueFields.filter((key) => dto[key] !== undefined).map((key) => [key, dto[key]])
+    ) as Pick<UpdateVenueData, VenueKey>),
+    ...(dto.coordinates !== undefined && {
+      location: { type: 'Point', coordinates: dto.coordinates },
+    }),
   };
 
   const updated = await repo.updateVenue(venueId, patch);
@@ -128,7 +101,7 @@ export async function submitVenue(venueId: string, userId: string): Promise<IVen
   return updated;
 }
 
-// ── Admin Operations ──────────────────────────────────────────────────────────
+// Admin Operations
 
 export async function getPendingVenues(): Promise<IVenue[]> {
   return repo.findPendingVenues();
