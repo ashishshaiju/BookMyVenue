@@ -1,6 +1,7 @@
 import { EmailTaskModel, type IEmailTask } from '../models/email-task.model';
 import { emailService } from '../services/email.service';
 import { EmailIntent, EmailTaskStatus, EmailConstants } from '../constants/email.constants';
+import { logError, logWarn, logInfo } from '../utils/logger';
 
 let isShuttingDown = false;
 let pollingInterval: NodeJS.Timeout | null = null;
@@ -64,7 +65,7 @@ async function processNextTask(): Promise<void> {
       await dispatch(task);
       task.status = EmailTaskStatus.COMPLETED;
       await task.save();
-      console.log(`[email-worker] Task ${task._id.toString()} completed successfully.`);
+      logInfo(`Email task completed`, { taskId: task._id.toString() });
     } catch (e) {
       const error = e as Error;
       task.retries += 1;
@@ -72,7 +73,8 @@ async function processNextTask(): Promise<void> {
 
       if (task.retries >= EmailConstants.MAX_RETRIES) {
         task.status = EmailTaskStatus.FAILED;
-        console.error(`[email-worker] Task ${task._id.toString()} failed permanently.`, {
+        logError(`Email task failed permanently`, {
+          taskId: task._id.toString(),
           error: error.message,
         });
       } else {
@@ -80,10 +82,11 @@ async function processNextTask(): Promise<void> {
         // Exponential backoff
         const backoffMs = 2 ** task.retries * 30000; // 30s, 60s, 120s...
         task.lockedAt = new Date(Date.now() + backoffMs);
-        console.warn(
-          `[email-worker] Task ${task._id.toString()} failed. Retrying in ${(backoffMs / 1000).toString()}s.`,
-          { error: error.message }
-        );
+        logWarn(`Email task failed, scheduling retry`, {
+          taskId: task._id.toString(),
+          retryInSeconds: backoffMs / 1000,
+          error: error.message,
+        });
       }
 
       await task.save();
@@ -91,18 +94,20 @@ async function processNextTask(): Promise<void> {
       activeTasks--;
     }
   } catch (err) {
-    console.error('[email-worker] Polling loop encountered an error:', err);
+    logError('Email worker polling loop encountered an error', {
+      error: (err as Error).message,
+    });
   }
 }
 
 export function startEmailWorker(): void {
   if (pollingInterval) return;
-  console.log(`[email-worker] Started, polling every ${(EmailConstants.POLL_INTERVAL_MS / 1000).toString()}s.`);
+  logInfo('Email worker started', { pollIntervalSeconds: EmailConstants.POLL_INTERVAL_MS / 1000 });
   pollingInterval = setInterval(() => void processNextTask(), EmailConstants.POLL_INTERVAL_MS);
 }
 
 export async function stopEmailWorker(): Promise<void> {
-  console.log('[email-worker] Shutdown initiated...');
+  logInfo('Email worker shutdown initiated');
   isShuttingDown = true;
 
   if (pollingInterval) {
@@ -121,10 +126,8 @@ export async function stopEmailWorker(): Promise<void> {
   }
 
   if (activeTasks > 0) {
-    console.warn(
-      `[email-worker] Shutdown complete, but ${String(activeTasks)} tasks were left incomplete.`
-    );
+    logWarn('Email worker shutdown complete with incomplete tasks', { activeTasks });
   } else {
-    console.log('[email-worker] Shutdown complete gracefully.');
+    logInfo('Email worker shutdown complete gracefully');
   }
 }

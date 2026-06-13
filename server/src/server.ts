@@ -16,6 +16,7 @@ import { ResponseUtil } from './utils/responseUtils';
 import { validateEmailConfig } from './services/email.service';
 import { startEmailWorker } from './workers/email.worker';
 import { setupGracefulShutdown } from './utils/shutdownUtils';
+import { requestLogger, logInfo } from './utils/logger';
 
 const PORT = parseInt(process.env.PORT ?? '3000', 10);
 
@@ -55,23 +56,8 @@ app.use((_req, res, next) => {
   next();
 });
 
-// Request logging
-// [ ] TODO: Winston
-
-// Router
-// app.use('/health', healthRouter);
-
-// Shutdown debugging routes
-// app.get('/dev/pid', (_req: Request, res: Response) => res.send(String(process.pid)));
-// app.get('/dev/crash', () => {
-//   setTimeout(() => {
-//     throw new Error('Simulated fatal database connection loss');
-//   }, 100);
-// });
-// app.get('/dev/slow', async (_req: Request, res: Response) => {
-//   await new Promise((r) => setTimeout(r, 8000));
-//   res.send('Finished!');
-// });
+// HTTP request logging
+app.use(requestLogger);
 
 // Router
 app.use('/api/v1', router);
@@ -94,7 +80,7 @@ async function startServer(): Promise<void> {
   await connectDatabase();
   startEmailWorker();
   server = app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server Started on Port ${String(PORT)}`);
+    logInfo(`Server started on port ${String(PORT)}`);
   });
   // Register shutdown handlers AFTER server is assigned so the getter returns the live instance
   setupGracefulShutdown(() => server);

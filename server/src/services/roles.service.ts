@@ -1,16 +1,13 @@
 import mongoose from 'mongoose';
 import { UserRoleModel } from '../models/user-role.model';
 import { RoleModel } from '../models/role.model';
+import { logError } from '../utils/logger';
 
 export interface UserRoleInfo {
   roleId: string;
   roleName: string;
 }
 
-/**
- * Fetches the user's active role from the UserRoles join table.
- * Returns null if no active role assignment exists.
- */
 export async function getUserRole(userId: string): Promise<UserRoleInfo | null> {
   try {
     const result = await UserRoleModel.aggregate<UserRoleInfo>([
@@ -47,20 +44,11 @@ export async function getUserRole(userId: string): Promise<UserRoleInfo | null> 
     return result[0] ?? null;
   } catch (e) {
     const error = e as Error;
-    console.error('getUserRole failed', { error: error.message, userId });
+    logError('getUserRole failed', { error: error.message, userId });
     return null;
   }
 }
 
-/**
- * Resolves the full effective permission set for a role.
- *
- * Uses $graphLookup to walk the parentRole chain, collecting all ancestor
- * role IDs, then fetches all RolePermissions for that entire set in a single
- * aggregation. Results are deduplicated by $addToSet.
- *
- * DB cost: 1 aggregation (Roles → $graphLookup → RolePermissions → Permissions)
- */
 export async function fetchRolePermissions(roleId: string): Promise<string[]> {
   try {
     const result = await RoleModel.aggregate<{ permissions: string[] }>([
@@ -135,7 +123,7 @@ export async function fetchRolePermissions(roleId: string): Promise<string[]> {
     return result.length > 0 ? result[0].permissions : [];
   } catch (e) {
     const error = e as Error;
-    console.error('fetchRolePermissions failed', {
+    logError('fetchRolePermissions failed', {
       error: error.message,
       roleId,
     });
