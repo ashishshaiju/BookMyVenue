@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-// ── Shared sub-schemas ────────────────────────────────────────────────────────
+// Shared sub-schemas 
 
 /** [longitude, latitude] */
 const coordinatesSchema = z
@@ -48,12 +48,9 @@ const refundRuleSchema = z.object({
   refundPercentage: z.coerce.number().min(0).max(100),
 });
 
-// ── Create ────────────────────────────────────────────────────────────────────
+// Create
 
-/**
- * Used by: POST /venues
- * All fields required at creation time.
- */
+// POST /venues
 export const createVenueSchema = z.object({
   // Basic Info
   name: z.string().trim().min(3, 'Name must be at least 3 characters').max(100),
@@ -76,8 +73,8 @@ export const createVenueSchema = z.object({
   maxCapacity: z.coerce.number().int().positive().optional(),
 
   // Booking & Pricing Config
-  bookingType: z.enum(['fixed', 'flexible']),
-  pricingType: z.enum(['same', 'timeBased']),
+  bookingType: z.enum(['fixedBooking', 'flexibleBooking']),
+  pricingType: z.enum(['fixedPricing', 'timeBasedPricing']),
   fixedPackages: z.array(fixedPackageSchema).default([]),
   workingHours: z.object({
     open: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/),
@@ -103,18 +100,15 @@ export const createVenueSchema = z.object({
 
   // Policies
   cancellationPolicy: z.enum(['refundable', 'nonRefundable']),
-  refundType: z.enum(['full', 'timeBased']).optional(),
+  refundType: z.enum(['fullRefund', 'timeBasedRefund']).optional(),
   refundRules: z.array(refundRuleSchema).default([]),
 });
 
 export type CreateVenueDTO = z.infer<typeof createVenueSchema>;
 
-// ── Update ────────────────────────────────────────────────────────────────────
+// Update
 
-/**
- * Used by: PUT /venues/:id
- * All fields optional for partial updates.
- */
+// PUT /venues/:id
 export const updateVenueSchema = createVenueSchema.partial().refine(
   (data) => Object.keys(data).length > 0,
   { message: 'At least one field must be provided for update' }
@@ -122,7 +116,7 @@ export const updateVenueSchema = createVenueSchema.partial().refine(
 
 export type UpdateVenueDTO = z.infer<typeof updateVenueSchema>;
 
-// ── Admin review ──────────────────────────────────────────────────────────────
+// Admin review
 
 export const rejectVenueSchema = z.object({
   rejectionReason: z
@@ -134,7 +128,7 @@ export const rejectVenueSchema = z.object({
 
 export type RejectVenueDTO = z.infer<typeof rejectVenueSchema>;
 
-// ── Admin list filters ────────────────────────────────────────────────────────
+// Admin list filters
 
 export const adminVenueFiltersSchema = z.object({
   status: z
@@ -147,7 +141,7 @@ export const adminVenueFiltersSchema = z.object({
 
 export type AdminVenueFiltersDTO = z.infer<typeof adminVenueFiltersSchema>;
 
-// ── Route param ───────────────────────────────────────────────────────────────
+// Route param
 
 export const venueIdParamSchema = z.object({
   id: venueIdSchema,
