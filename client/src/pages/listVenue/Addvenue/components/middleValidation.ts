@@ -67,7 +67,45 @@ export const middleSchema =
             schema.required( "Select buffer time" ),
         }
       ),
+      blockedTimes:
+  Yup.array().when(
+    "bookingType",
+    {
+      is: "flexible",
 
+      then: () =>
+        Yup.array().of(
+          Yup.object({
+            fromTime:
+              Yup.string().when(
+                "toTime",
+                {
+                  is: (value: string) =>
+                    !!value,
+
+                  then: (schema) => 
+                    schema.required( "From time required" ),
+                }
+              ),
+
+            toTime:
+              Yup.string().when(
+                "fromTime",
+                {
+                  is: (value: string) =>
+                    !!value,
+
+                  then: (schema) =>
+                    schema.required( "To time required" ),
+                }
+              ),
+          })
+        ),
+
+      otherwise: () =>
+        Yup.array(),
+    }
+  ),
     pricingType:
       Yup.string().when(
         "bookingType",
@@ -111,15 +149,7 @@ export const middleSchema =
             ),
         }
       ),
-      /* Blocked Times */
-      blockedTimes:
-        Yup.array().of(
-          Yup.object({ fromTime: Yup.string().required( "From time required" ), toTime: Yup.string().required( "To time required" ),
-
-            reason:
-              Yup.string().trim().required( "Reason required" ),
-          })
-        ),
+     
 
       /* Amenities */
       amenities:
