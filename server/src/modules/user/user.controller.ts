@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import { ResponseUtil } from "../../utils/responseUtils";
 import { UserModel } from "../user/user.models";
+import { logError } from "../../utils/logger";
 
 export const getProfile = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -25,7 +26,7 @@ export const getProfile = async (req: Request, res: Response): Promise<void> => 
     });
   } catch (e) {
     const error = e as Error;
-    console.error('Failed to fetch user info', {
+    logError('Failed to fetch user info', {
       error: error.message,
       stack: error.stack,
     });
