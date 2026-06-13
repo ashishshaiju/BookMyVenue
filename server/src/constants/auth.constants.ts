@@ -20,4 +20,5 @@ export const AuthConstants = {
   MAX_REQUESTS_PER_HR: 10,
   RESEND_COOLDOWN_MS: 30 * 1000, // 30s
   TOKEN_EXPIRY_MS: 15 * 60 * 1000, //15mins
+  SESSION_ABSOLUTE_EXPIRY_MS: 30 * 24 * 60 * 60 * 1000, // 30d
 } as const;
