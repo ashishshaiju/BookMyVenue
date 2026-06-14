@@ -1,6 +1,8 @@
 import type { IRefreshToken } from '../modules/auth/models/refresh-token.model';
 import type { IPermission } from '../constants/permissions';
 
+export type StoredToken = IRefreshToken;
+
 export interface VerifiedRole {
   id?: string;
   name?: string;
