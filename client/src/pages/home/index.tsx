@@ -23,17 +23,14 @@ const handleSearch = () => {
   return (
     <div>
       <section className="relative h-[550px] md:h-[620px] w-full overflow-hidden flex items-center justify-center">
-        {/* Overlay */}
         <div className="absolute inset-0 bg-black/75 z-10" />
 
-        {/* Background Image */}
         <img
           src={heroImage}
           alt="Venue Hero"
           className="absolute inset-0 w-full h-full object-cover"
         />
 
-        {/* Content */}
         <div className="relative z-20 px-6 w-full max-w-6xl text-center">
           <h1 className="text-4xl md:text-6xl font-bold text-white leading-tight">
             Find the Perfect Venue
@@ -45,10 +42,8 @@ const handleSearch = () => {
             Curated spaces for corporate events, weddings, and private gatherings.
           </p>
 
-          {/* Search Box */}
           <div className="mt-10 max-w-3xl mx-auto bg-white rounded-2xl p-2 shadow-xl flex flex-col md:flex-row items-center gap-2">
             
-            {/* Input */}
             <div className="flex items-center gap-3 w-full px-4 py-3">
               <IoLocationOutline
                 className="text-[var(--text-secondary)] text-xl"
@@ -63,7 +58,7 @@ const handleSearch = () => {
               />
             </div>
 
-            {/* Search Button */}
+            {/* search Button */}
             <button
               onClick={handleSearch}
               className="w-full md:w-auto px-8 py-4 bg-[var(--bg-green)] text-white rounded-xl font-medium hover:opacity-90 transition flex items-center justify-center gap-2"
@@ -77,7 +72,7 @@ const handleSearch = () => {
       <section className="px-6 py-16 bg-[var(--bg-primary)]">
         <div className="max-w-7xl mx-auto">
           
-          {/* Header */}
+          {/* header */}
           <div className="flex items-center justify-between mb-8">
             <div>
               <h2 className="text-3xl font-semibold text-[var(--text-primary)]">
@@ -97,7 +92,7 @@ const handleSearch = () => {
             </Link>
           </div>
 
-          {/* Cards */}
+          {/* cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {featuredVenues.map((venue) => (
               <div

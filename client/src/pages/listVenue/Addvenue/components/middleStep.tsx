@@ -224,48 +224,132 @@ const BookingStep = () => {
                 </div>
               </div>
 
-              {/* Slot Settings */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-                <div>
-                  <label className="block mb-2 font-bold">
-                    Slot Duration
-                  </label>
+            {/* Slot Duration */}
+            <div className="">
+              <label className="block mb-2 font-bold">
+                Slot Duration
+              </label>
 
-                  <Field
-                    as="select"
-                    name="slotDuration"
-                    className="w-full rounded-xl border border-[var(--bg-grey)] px-4 py-3"
-                  >
-                    <option value="">Select duration</option>
-                    <option value="30">30 mins</option>
-                    <option value="60">1 hour</option>
-                    <option value="120">2 hours</option>
-                    <option value="180">3 hours</option>
-                  </Field>
-                </div>
+              <p className="text-sm text-[var(--text-secondary)] mb-3">
+                Minimum booking duration for each slot.
+              </p>
 
-                <div>
-                  <label className="block mb-2 font-bold">
-                    Buffer Time
-                  </label>
+              <Field
+                as="select"
+                name="slotDuration"
+                className="w-full rounded-xl border border-[var(--bg-grey)] px-4 py-3"
+              >
+                <option value=""> Select duration </option>
+                <option value="30">30 mins</option>
+                <option value="60">1 hour</option>
+                <option value="120">2 hours</option>
+                <option value="180">3 hours</option>
+              </Field>
+            </div>
 
-                  <Field
-                    as="select"
-                    name="bufferTime"
-                    className="w-full rounded-xl border border-[var(--bg-grey)] px-4 py-3"
-                  >
-                    <option value="">Select buffer</option>
-                    <option value="0">No Buffer</option>
-                    <option value="15">15 mins</option>
-                    <option value="30">30 mins</option>
-                    <option value="60">1 hour</option>
-                    <option value="120">2 hours</option>
-                  </Field>
-                </div>
+            {/* Buffer Time */}
+            <div>
+              <label className="block mb-2 font-bold">
+                Buffer Time  
+              </label>
 
-              </div>
+              <p className="text-sm text-[var(--text-secondary)] mb-3">
+                Time gap between each slot 
+              </p>
 
+              <Field
+                as="select"
+                name="bufferTime"
+                className="w-full rounded-xl border border-[var(--bg-grey)] px-4 py-3"
+              >
+                <option value="">Select buffer </option>
+                <option value="0">No Buffer </option>
+                <option value="15">15 mins </option>
+                <option value="30">30 mins </option>
+                <option value="60">1 hour </option>
+                <option value="120">2 hours </option>
+              </Field>
+            </div>
+          </div>
+          {/* Blocked Time */}
+           <div className="mt-10">
+              <h3 className="font-semibold text-lg mb-4">
+                Blocked Time
+              </h3>
+
+              <p className="text-[var(--text-secondary)] mb-4">
+                Add maintenance, lunch break or unavailable hours.
+              </p>
+
+              <FieldArray name="blockedTimes">
+                {({ push, remove }) => (
+                  <div className="space-y-5">
+
+                    {values.blockedTimes.map((_, index: number) => (
+                      <div
+                        key={index}
+                        className="border border-[var(--bg-grey)] rounded-2xl p-5"
+                      >
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+                          <div>
+                            <label className="block mb-2 font-bold">
+                              From Time
+                            </label>
+
+                            <Field
+                              name={`blockedTimes.${index}.fromTime`}
+                              type="time"
+                              className="w-full rounded-xl border border-[var(--bg-grey)] px-4 py-3"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block mb-2 font-bold">
+                              To Time
+                            </label>
+
+                            <Field
+                              name={`blockedTimes.${index}.toTime`}
+                              type="time"
+                              className="w-full rounded-xl border border-[var(--bg-grey)] px-4 py-3"
+                            />
+                          </div>
+
+
+                        </div>
+
+                        {index > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => remove(index)}
+                            className="text-red-500 mt-4 cursor-pointer"
+                          >
+                            Remove Block
+                          </button>
+                        )}
+                      </div>
+                    ))}
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        push({
+                          fromTime: "",
+                          toTime: "",
+                        })
+                      }
+                      className="bg-[var(--bg-green)] text-white px-5 py-3 rounded-xl cursor-pointer"
+                    >
+                      + Add Blocked Time
+                    </button>
+
+                  </div>
+                )}
+              </FieldArray>
+            </div>
               {/* Pricing Type */}
               <div>
                 <label className="block mb-4 font-bold">
@@ -425,83 +509,6 @@ const BookingStep = () => {
               ))}
             </div>
           </div>
-          {/* Blocked Time */}
-          <div className="mt-10">
-            <h3 className="font-semibold text-lg mb-4">
-              Blocked Time
-            </h3>
-
-            <p className="text-[var(--text-secondary)] mb-4">
-              Add maintenance, lunch break or unavailable hours.
-            </p>
-
-            <FieldArray name="blockedTimes">
-              {({ push, remove }) => (
-                <div className="space-y-5">
-
-                  {values.blockedTimes.map((_, index: number) => (
-                    <div
-                      key={index}
-                      className="border border-[var(--bg-grey)] rounded-2xl p-5"
-                    >
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-
-                        <div>
-                          <label className="block mb-2 font-bold">
-                            From Time
-                          </label>
-
-                          <Field
-                            name={`blockedTimes.${index}.fromTime`}
-                            type="time"
-                            className="w-full rounded-xl border border-[var(--bg-grey)] px-4 py-3"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block mb-2 font-bold">
-                            To Time
-                          </label>
-
-                          <Field
-                            name={`blockedTimes.${index}.toTime`}
-                            type="time"
-                            className="w-full rounded-xl border border-[var(--bg-grey)] px-4 py-3"
-                          />
-                        </div>
-
-
-                      </div>
-
-                      {index > 0 && (
-                        <button
-                          type="button"
-                          onClick={() => remove(index)}
-                          className="text-red-500 mt-4 cursor-pointer"
-                        >
-                          Remove Block
-                        </button>
-                      )}
-                    </div>
-                  ))}
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      push({
-                        fromTime: "",
-                        toTime: "",
-                      })
-                    }
-                    className="bg-[var(--bg-green)] text-white px-5 py-3 rounded-xl cursor-pointer"
-                  >
-                    + Add Blocked Time
-                  </button>
-
-                </div>
-              )}
-            </FieldArray>
-          </div>
         </div>
       </div>
     </section>
@@ -509,3 +516,5 @@ const BookingStep = () => {
 };
 
 export default BookingStep;
+
+
