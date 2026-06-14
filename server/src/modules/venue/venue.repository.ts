@@ -1,34 +1,15 @@
-import type { IVenue, VenueStatus } from './venue.model';
+import type { IVenue, VenueStatus, AdminVenueFilters, CreateVenueData, UpdateVenueData } from './venue.types';
 import { VenueModel } from './venue.model';
 import mongoose from 'mongoose';
 
-// ── Types ─────────────────────────────────────────────────────────────────────
+// Helpers
 
-export type CreateVenueData = Omit<
-  IVenue,
-  keyof mongoose.Document | 'status' | 'createdAt' | 'updatedAt' | 'active' | 'deleted' | 'rejectionReason'
->;
-
-export type UpdateVenueData = Partial<Omit<CreateVenueData, 'createdBy' | 'ownerUserId' | 'updatedBy'>> & {
-  updatedBy: string;
-};
-
-export interface AdminVenueFilters {
-  status?: VenueStatus;
-  city?: string;
-  page: number;
-  limit: number;
-}
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-function toObjectId(id: string): mongoose.Types.ObjectId {
+const toObjectId = (id: string): mongoose.Types.ObjectId => {
   return new mongoose.Types.ObjectId(id);
 }
 
-// ── Read Operations ───────────────────────────────────────────────────────────
+// Read Operations
 
-/** Find a single venue by ID (excludes soft-deleted) */
 export async function findVenueById(venueId: string): Promise<IVenue | null> {
   return VenueModel.findOne({ _id: toObjectId(venueId), deleted: false }).exec();
 }
@@ -41,7 +22,7 @@ export async function existsByOwnerAndName(
 ): Promise<boolean> {
   const query: Record<string, unknown> = {
     ownerUserId: toObjectId(ownerUserId),
-    name: { $regex: new RegExp(`^${name}$`, 'i') }, // Case-insensitive exact match
+    name: { $regex: new RegExp(`^${name}$`, 'i') }, 
     deleted: false,
   };
 
@@ -95,7 +76,7 @@ export async function findAllVenues(filters: AdminVenueFilters): Promise<{
   return { venues, total, page, limit };
 }
 
-// ── Write Operations ──────────────────────────────────────────────────────────
+// Write Operations
 
 /** Insert a new venue document */
 export async function createVenue(data: CreateVenueData): Promise<IVenue> {
@@ -131,7 +112,7 @@ export async function softDeleteVenue(venueId: string, updatedBy: string): Promi
   return result.modifiedCount > 0;
 }
 
-// ── State Machine Operations ──────────────────────────────────────────────────
+// State Machine Operations 
 
 /**
  * Atomic status update.

@@ -1,5 +1,6 @@
 import type { IPermission } from '../../constants/permissions';
 import { fetchRolePermissions } from '../roles.service';
+import { logInfo } from '../../utils/logger';
 
 interface CacheEntry {
   permissions: string[];
@@ -14,20 +15,19 @@ export interface CacheStatEntry {
   ageSeconds: number;
 }
 
-// Module-level singleton — Node.js module cache guarantees one Map per process
 const store = new Map<string, CacheEntry>();
 
-const TTL_MS = 15 * 60 * 1000; // 15 min — matches access token lifetime
-const CLEANUP_INTERVAL_MS = 5 * 60 * 1000; // background sweep every 5 min
+const TTL_MS = 15 * 60 * 1000; // 15mins (same as accessToken  TTL)
+const CLEANUP_INTERVAL_MS = 5 * 60 * 1000; // 5mins
 
-// ── Pure helpers ──────────────────────────────────────────────────────────────
+// Pure helpers
 
 const isExpired = (entry: CacheEntry): boolean => Date.now() - entry.timestamp > TTL_MS;
 
 const ageInSeconds = (entry: CacheEntry): number =>
   Math.round((Date.now() - entry.timestamp) / 1000);
 
-// ── Internal read/write ───────────────────────────────────────────────────────
+// Internal read/write
 
 const getEntry = (roleId: string): CacheEntry | null => {
   const entry = store.get(roleId);
@@ -49,7 +49,7 @@ const resolveAndCache = async (roleId: string, roleName: string): Promise<string
   return permissions;
 };
 
-// ── Public API ────────────────────────────────────────────────────────────────
+// Public API
 
 /**
  * Cache-first permission lookup.
@@ -71,7 +71,7 @@ export const getPerms = async (roleId: string, roleName: string): Promise<IPermi
 export const invalidateRole = (roleId: string): void => {
   const existed = store.delete(roleId);
   if (existed) {
-    console.log('Permission cache invalidated', { roleId });
+    logInfo('Permission cache invalidated', { roleId });
   }
 };
 
@@ -82,7 +82,7 @@ export const invalidateRole = (roleId: string): void => {
 export const clearAll = (): void => {
   const size = store.size;
   store.clear();
-  console.log('Permission cache cleared', { removed: size });
+  logInfo('Permission cache cleared', { removed: size });
 };
 
 /** Returns current cache size and per-entry stats for observability. */
@@ -96,7 +96,7 @@ export const getStats = (): { size: number; entries: CacheStatEntry[] } => {
   return { size: store.size, entries };
 };
 
-// ── Background cleanup ────────────────────────────────────────────────────────
+// Background cleanup
 
 const cleanupExpired = (): void => {
   let removed = 0;
@@ -107,7 +107,7 @@ const cleanupExpired = (): void => {
     }
   }
   if (removed > 0) {
-    console.log('Permission cache cleanup', { removed });
+    logInfo('Permission cache cleanup', { removed });
   }
 };
 

@@ -2,6 +2,7 @@ import { Resend } from 'resend';
 import { z } from 'zod';
 import type { EmailIntentType } from '../constants/email.constants';
 import { resendConfig } from '../constants/env';
+import { logError, logInfo } from '../utils/logger';
 
 /**
  * Call this during server startup to catch
@@ -17,11 +18,11 @@ export function validateEmailConfig(): void {
   if (!resendConfig.frontendUrl) missing.push('FRONTEND_URL');
 
   if (missing.length > 0) {
-    console.error('Missing required email environment variables', { missing });
+    logError('Missing required email environment variables', { missing });
     process.exit(1);
   }
 
-  console.log('Resend Email service config validated 👍');
+  logInfo('Resend Email service config validated');
 }
 
 let _resend: Resend | null = null;
@@ -142,7 +143,7 @@ async function sendEmail(
     const { data, error } = await resend.emails.send({ from, to, subject, html });
 
     if (error) {
-      console.error('Email delivery failed', {
+      logError('Email delivery failed', {
         intent,
         recipient: to,
         providerError: error.message,
@@ -150,7 +151,7 @@ async function sendEmail(
       return { success: false };
     }
 
-    console.log('Email sent successfully', {
+    logInfo('Email sent successfully', {
       intent,
       recipient: to,
       messageId: data.id,
@@ -159,7 +160,7 @@ async function sendEmail(
     return { success: true, messageId: data.id };
   } catch (e) {
     const err = e as Error;
-    console.error('Email service encountered an unexpected error', {
+    logError('Email service encountered an unexpected error', {
       intent,
       recipient: to,
       error: err.message,

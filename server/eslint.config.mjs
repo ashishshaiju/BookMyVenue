@@ -46,7 +46,7 @@ export default tseslint.config(
 
       // ── General quality ────────────────────────────────
       'no-undef': 'off', // TS handles this
-      'no-console': 'off', // use proper logger
+      'no-console': 'error',
       'no-debugger': 'error',
       'no-return-await': 'off', // use TS rule below
       '@typescript-eslint/return-await': ['error', 'in-try-catch'],

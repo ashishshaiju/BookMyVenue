@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import type { Server } from 'http';
 import { stopEmailWorker } from '../workers/email.worker';
+import { logInfo, logWarn, logError } from '../utils/logger';
 
 let isShuttingDown = false;
 let getServerFn: (() => Server | null) | null = null;
@@ -21,7 +22,7 @@ const withTimeout = async <T>(promise: Promise<T>, ms: number, name: string): Pr
   try {
     await Promise.race([promise, timeoutPromise]);
   } catch (err) {
-    console.error(`[server] ${name} failed to shut down cleanly:`, (err as Error).message);
+    logError(`[server] ${name} failed to shut down cleanly`, { error: (err as Error).message });
   } finally {
     if (timeoutHandle) {
       clearTimeout(timeoutHandle);
@@ -33,11 +34,11 @@ async function gracefulShutdown(signal: string, exitCode = 0): Promise<void> {
   if (isShuttingDown) return;
   isShuttingDown = true;
 
-  console.log(`\n[server] ${signal} received. Initiating graceful shutdown...`);
+  logInfo(`[server] ${signal} received. Initiating graceful shutdown...`);
 
   // Global Hard Timeout: If everything completely locks up, OS kills it after 30s.
   const forceExitTimer = setTimeout(() => {
-    console.error('[server] GLOBAL shutdown timeout reached (30s). Forcing exit.');
+    logError('[server] GLOBAL shutdown timeout reached (30s). Forcing exit.');
     process.exit(exitCode);
   }, 30_000);
   forceExitTimer.unref();
@@ -47,13 +48,13 @@ async function gracefulShutdown(signal: string, exitCode = 0): Promise<void> {
 
     // STEP 1: HTTP Server (Max 5 seconds)
     if (server) {
-      console.log('[server] Stopping HTTP server...');
+      logInfo('[server] Stopping HTTP server...');
 
       // If it's a fatal crash, destroy all active connections instantly.
       // If it's a polite signal, just destroy idle connections.
       if (signal === 'Uncaught Exception' || signal === 'Unhandled Rejection') {
         if ('closeAllConnections' in server) {
-          console.warn('[server] Fatal crash detected. Severing all active HTTP connections.');
+          logWarn('[server] Fatal crash detected. Severing all active HTTP connections.');
           server.closeAllConnections();
         }
       } else {
@@ -70,23 +71,21 @@ async function gracefulShutdown(signal: string, exitCode = 0): Promise<void> {
       });
 
       await withTimeout(closeHttpPromise, 5000, 'HTTP Server');
-      console.log('[server] HTTP server closed.');
+      logInfo('[server] HTTP server closed.');
     }
 
-    // STEP 2: Background Worker (Max 3 seconds)
-    console.log('[server] Stopping email worker...');
+    logInfo('[server] Stopping email worker...');
     await withTimeout(stopEmailWorker(), 3000, 'Email Worker');
-    console.log('[server] Email worker stopped.');
+    logInfo('[server] Email worker stopped.');
 
-    // STEP 3: Database (Max 3 seconds)
-    console.log('[server] Closing MongoDB connection...');
+    logInfo('[server] Closing MongoDB connection...');
     await withTimeout(mongoose.connection.close(false), 3000, 'MongoDB');
-    console.log('[server] MongoDB connection closed.');
+    logInfo('[server] MongoDB connection closed.');
   } catch (err) {
-    console.error('[server] Unexpected error during shutdown sequence:', err);
+    logError('[server] Unexpected error during shutdown sequence', { error: (err as Error).message });
   }
 
-  console.log('[server] Shutdown sequence complete.');
+  logInfo('[server] Shutdown sequence complete.');
   process.exit(exitCode);
 }
 
@@ -94,12 +93,12 @@ export function setupGracefulShutdown(getServer: () => Server | null): void {
   getServerFn = getServer;
 
   process.on('unhandledRejection', (reason) => {
-    console.error('Unhandled Rejection', { reason });
+    logError('Unhandled Rejection', { reason: String(reason) });
     void gracefulShutdown('Unhandled Rejection', 1);
   });
 
   process.on('uncaughtException', (error) => {
-    console.error('Uncaught Exception', {
+    logError('Uncaught Exception', {
       error: error.message,
       stack: error.stack,
     });

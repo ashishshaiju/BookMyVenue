@@ -1,22 +1,18 @@
 import type { IRefreshToken } from '../modules/auth/models/refresh-token.model';
 import type { IPermission } from '../constants/permissions';
 
-// ── RBAC ─────────────────────────────────────────────────────────────────────
-
 export interface VerifiedRole {
-  id?: string;                     // roleId (ObjectId string)
-  name?: string;                   // 'user' | 'owner' | 'admin' | 'superAdmin' | future roles
-  isSuperAdmin?: boolean;          // true → requirePermission short-circuits to next()
-  permissions?: Set<IPermission>;  // full effective set, including inherited
+  id?: string;
+  name?: string;
+  isSuperAdmin?: boolean;
+  permissions?: Set<IPermission>;
 }
-
-// ── Auth ──────────────────────────────────────────────────────────────────────
 
 export interface AuthenticatedUser {
   userId: string;
   username: string;
   email: string;
-  role: VerifiedRole; // populated by verifyAccessToken; permissions loaded lazily by loadPermissions
+  role: VerifiedRole;
 }
 
 export type Permission = IPermission;
@@ -48,6 +44,12 @@ export interface ApiResponse<T = unknown> {
   code?: string;
 }
 
+export interface ValidatedRequest {
+  body?: unknown;
+  params?: unknown;
+  query?: unknown;
+}
+
 export interface RequestToken {
   decoded: DecodedToken;
   stored: IRefreshToken;
@@ -58,6 +60,7 @@ declare global {
     interface Request {
       user?: AuthenticatedUser;
       token?: RequestToken;
+      validated?: ValidatedRequest;
     }
   }
 }

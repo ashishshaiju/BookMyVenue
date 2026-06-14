@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { logInfo, logError } from '../utils/logger';
 
 export let dbSupportsTransactions = false;
 
@@ -6,7 +7,7 @@ export const connectDatabase = async (): Promise<typeof mongoose> => {
   const mongodburi = process.env.MONGODB_URI;
 
   if (!mongodburi) {
-    console.error('MONGODB_URI environment variable is not set');
+    logError('MONGODB_URI environment variable is not set');
     process.exit(1);
   }
 
@@ -14,19 +15,21 @@ export const connectDatabase = async (): Promise<typeof mongoose> => {
     const connection = await mongoose.connect(mongodburi, {
       autoIndex: process.env.NODE_ENV !== 'production',
     });
-    console.log('Connected to MongoDB');
+    logInfo('Connected to MongoDB');
 
-    // Check if deployment topology supports transactions (requires replica set or sharded cluster)
     const client = mongoose.connection.getClient();
     const topologyType = (client as unknown as { topology?: { description?: { type?: string } } }).topology?.description?.type;
-    dbSupportsTransactions = typeof topologyType === 'string' && 
+    dbSupportsTransactions = typeof topologyType === 'string' &&
       (topologyType.includes('ReplicaSet') || topologyType.includes('Sharded'));
-    
-    console.log(`MongoDB topology type: ${topologyType ?? 'unknown'}. Transactions supported: ${String(dbSupportsTransactions)}`);
+
+    logInfo('MongoDB topology detected', {
+      topologyType: topologyType ?? 'unknown',
+      transactionsSupported: dbSupportsTransactions,
+    });
 
     return connection;
   } catch (error) {
-    console.error('Failed to connect to MongoDB', { error: (error as Error).message });
+    logError('Failed to connect to MongoDB', { error: (error as Error).message });
     process.exit(1);
   }
 };
@@ -34,9 +37,9 @@ export const connectDatabase = async (): Promise<typeof mongoose> => {
 export const disconnectDatabase = async (): Promise<void> => {
   try {
     await mongoose.disconnect();
-    console.log('Disconnected from MongoDB');
+    logInfo('Disconnected from MongoDB');
   } catch (error) {
-    console.error('Failed to disconnect from MongoDB', { error: (error as Error).message });
+    logError('Failed to disconnect from MongoDB', { error: (error as Error).message });
     process.exit(1);
   }
 };

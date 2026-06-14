@@ -1,167 +1,38 @@
 import type { Request, Response } from 'express';
-import * as bcrypt from 'bcrypt';
-import { z } from 'zod';
-import { ResponseUtil } from '../../utils/responseUtils';
-import { parseDurationToMs } from '../../utils/timeUtils';
-import * as authScheme from './auth.validator';
-import { UserModel } from '../user/user.models';
-import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
-import mongoose from 'mongoose';
-import { RefreshTokenModel } from './models/refresh-token.model';
-import { PasswordResetTokenModel } from './models/password-reset-token.model';
+import * as bcrypt from 'bcrypt';
+import { authEnvs } from '../../constants/env';
+import { AuthConstants, TokenRevocationReason } from '../../constants/auth.constants';
 import { PasswordResetRequestModel } from './models/password-reset-request.model';
+import { PasswordResetTokenModel } from './models/password-reset-token.model';
+import { RefreshTokenModel } from './models/refresh-token.model';
+import { SessionModel } from '../../models/session.model';
 import { EmailTaskModel } from '../../models/email-task.model';
-import { authEnvs, jwtConfig } from '../../constants/env';
-import {
-  AuthConstants,
-  TokenRevocationReason,
-  type TokenRevocationReasonType,
-} from '../../constants/auth.constants';
-import type { RefreshTokenPayload, TokenPayload } from '../../types/express';
 import { RoleModel } from '../../models/role.model';
 import { UserRoleModel } from '../../models/user-role.model';
-
-const generateAccessToken = (userId: string, username: string, email: string): string => {
-  try {
-    const payload: TokenPayload = {
-      id: userId,
-      username,
-      email,
-      iat: Math.floor(Date.now() / 1000),
-    };
-
-    const jwtOptions: jwt.SignOptions = {
-      expiresIn: authEnvs.accessTokenExpiry as jwt.SignOptions['expiresIn'],
-      issuer: jwtConfig.issuer,
-      audience: jwtConfig.audience,
-      algorithm: jwtConfig.algorithm,
-      subject: userId,
-    };
-
-    if (!authEnvs.accessTokenSecret) {
-      throw new Error('Access token secret not defined');
-    }
-
-    return jwt.sign(payload, authEnvs.accessTokenSecret, jwtOptions);
-  } catch (error) {
-    throw new Error(`Failed to generate access token: ${(error as Error).message}`, {
-      cause: error,
-    });
-  }
-};
-
-const generateRefreshToken = async (userId: string): Promise<string> => {
-  try {
-    const jti = `${userId}-${String(Date.now())}-${crypto.randomBytes(32).toString('hex')}`;
-    const payload: RefreshTokenPayload = {
-      id: userId,
-      iat: Math.floor(Date.now() / 1000),
-      jti,
-    };
-
-    const jwtOptions: jwt.SignOptions = {
-      expiresIn: authEnvs.refreshTokenExpiry as jwt.SignOptions['expiresIn'],
-      issuer: jwtConfig.issuer,
-      audience: jwtConfig.audience,
-      algorithm: jwtConfig.algorithm,
-      subject: userId,
-    };
-
-    if (!authEnvs.refreshTokenSecret) {
-      throw new Error('Refresh token secret not defined');
-    }
-
-    const token = jwt.sign(payload, authEnvs.refreshTokenSecret, jwtOptions);
-    const tokenHash = crypto.createHash('sha256').update(jti).digest('hex');
-    const expiresAt = new Date(Date.now() + parseDurationToMs(authEnvs.refreshTokenExpiry));
-
-    await RefreshTokenModel.create({
-      userId: new mongoose.Types.ObjectId(userId),
-      tokenHash,
-      expiresAt,
-    });
-
-    return token;
-  } catch (error) {
-    throw new Error(`Failed to generate refresh token: ${(error as Error).message}`, {
-      cause: error,
-    });
-  }
-};
-
-const revokeRefreshToken = async (
-  tokenHash: string,
-  reason: TokenRevocationReasonType
-): Promise<void> => {
-  try {
-    await RefreshTokenModel.updateOne(
-      {
-        tokenHash,
-        active: true,
-        isUsed: false,
-      },
-      {
-        $set: {
-          active: false,
-          isUsed: true,
-          revokedAt: new Date(),
-          revokedReason: reason,
-        },
-      }
-    );
-  } catch (error) {
-    throw new Error(`Failed to revoke refresh token: ${(error as Error).message}`, {
-      cause: error,
-    });
-  }
-};
-
-const setTokenCookies = (res: Response, accessToken: string, refreshToken: string): Response => {
-  const isProduction = process.env.NODE_ENV === 'production';
-  const accessTokenMaxAge = parseDurationToMs(authEnvs.accessTokenExpiry);
-  const refreshTokenMaxAge = parseDurationToMs(authEnvs.refreshTokenExpiry);
-
-  res.cookie('accessToken', accessToken, {
-    httpOnly: true,
-    secure: isProduction,
-    sameSite: 'strict',
-    maxAge: accessTokenMaxAge,
-    path: '/',
-  });
-
-  res.cookie('refreshToken', refreshToken, {
-    httpOnly: true,
-    secure: isProduction,
-    sameSite: 'strict',
-    maxAge: refreshTokenMaxAge,
-    path: '/',
-  });
-
-  return res;
-};
-
-const clearTokenCookies = (res: Response): Response => {
-  res.clearCookie('accessToken', { path: '/' });
-  res.clearCookie('refreshToken', { path: '/' });
-  return res;
-};
-
-// Routes Handlers
+import * as authScheme from './auth.validator';
+import { logError, logWarn, logInfo } from '../../utils/logger';
+import { ResponseUtil } from '../../utils/responseUtils';
+import { runInTransaction } from '../../utils/dbUtils';
+import {
+  generateAccessToken,
+  generateRefreshToken,
+  revokeRefreshToken,
+  setTokenCookies,
+  clearTokenCookies,
+} from '../../utils/tokenUtils';
+import { UserModel } from '../user/user.models';
+import { z } from 'zod';
 
 export const register = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { username, email, password } = authScheme.registerSchema.parse(req.body);
+    const { username, email, password } = req.validated?.body as z.infer<
+      typeof authScheme.registerSchema
+    >;
 
-    if (!username || !email || !password) {
-      console.warn('Registration attempt with missing fields');
-      ResponseUtil.badRequest(res, 'Missing username, email or password');
-      return;
-    }
-
-    const user = await UserModel.findOne({ $or: [{ username }, { email }] });
-    if (user) {
-      console.warn('Registration attempt with existing user', { username, email });
+    const existingUser = await UserModel.findOne({ $or: [{ username }, { email }] });
+    if (existingUser) {
+      logWarn('Registration attempt with existing user', { username, email });
       ResponseUtil.badRequest(
         res,
         'User already exists! please login instead, or choose a different username/email'
@@ -169,18 +40,33 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const hashedPassword = await bcrypt.hash(password, 12);
-    const newUser = new UserModel({
-      username,
-      email,
-      password: hashedPassword,
-    });
+    const defaultRole = await RoleModel.findOne({
+      name: 'user',
+      active: true,
+      deleted: false,
+    }).lean();
 
-    await newUser.save();
+    if (!defaultRole) {
+      logError('register: default "user" role missing from system configs', {
+        module: 'auth.controller.ts:register',
+      });
+      ResponseUtil.internalServerError(res, 'System initialization Error, Pls contact admin...');
+      return;
+    }
 
-    // Assign the default 'user' role — every registrant starts as a user
-    const defaultRole = await RoleModel.findOne({ name: 'user', active: true, deleted: false }).lean();
-    if (defaultRole) {
+    let createdUserId = '';
+
+    await runInTransaction(async (session) => {
+      const hashedPassword = await bcrypt.hash(password, 12);
+      const newUser = new UserModel({
+        username,
+        email,
+        password: hashedPassword,
+      });
+
+      await newUser.save({ session });
+      createdUserId = newUser._id.toString();
+
       await UserRoleModel.updateOne(
         { userId: newUser._id, roleId: defaultRole._id },
         {
@@ -191,41 +77,35 @@ export const register = async (req: Request, res: Response): Promise<void> => {
             deleted: false,
           },
         },
-        { upsert: true }
+        { upsert: true, session }
       );
-    } else {
-      console.warn('register: default "user" role not found — skipping role assignment', { username });
-    }
+    });
 
-    console.log('New user registered successfully', { username, email });
-
+    logInfo('New user registered successfully', { username, email });
     ResponseUtil.created(res, 'User registered successfully! Please login.', {
-      userId: newUser._id.toString(),
+      userId: createdUserId,
     });
   } catch (e) {
     const error = e as Error;
-    if (e instanceof z.ZodError) {
-      console.warn('Registration validation failed', { error: error.message });
-      ResponseUtil.badRequest(res, 'Invalid registration data');
-    } else {
-      console.error('Failed to register user', {
-        error: error.message,
-        stack: error.stack,
-      });
-      ResponseUtil.internalServerError(res, 'Server error during registration');
-    }
+    logError('Failed to register user', {
+      error: error.message,
+      stack: error.stack,
+    });
+    ResponseUtil.internalServerError(res, 'Server error during registration');
   }
 };
 
 export const login = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { username, email, password } = authScheme.loginSchema.parse(req.body);
+    const { username, email, password } = req.validated?.body as z.infer<
+      typeof authScheme.loginSchema
+    >;
     const identifier = username ?? email;
 
-    console.log('Login attempt', { credential: identifier });
+    logInfo('Login attempt', { credential: identifier });
 
     if (!identifier || !password) {
-      console.warn('Login attempt with missing credentials');
+      logWarn('Login attempt with missing credentials');
       ResponseUtil.badRequest(res, 'Username/Email and password required');
       return;
     }
@@ -237,7 +117,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     }).select('+password');
 
     if (!user) {
-      console.warn('Login attempt with non-existent user', { credential: identifier });
+      logWarn('Login attempt with non-existent user', { credential: identifier });
       ResponseUtil.unauthorized(res, 'Invalid username or password');
       return;
     }
@@ -245,33 +125,60 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
-      console.warn('Login attempt with invalid password', { credential: identifier });
+      logWarn('Login attempt with invalid password', { credential: identifier });
       ResponseUtil.unauthorized(res, 'Invalid username or password');
       return;
     }
 
-    void PasswordResetTokenModel.updateMany(
-      { userId: user._id, active: true },
-      {
-        $set: {
-          active: false,
-          revokedAt: new Date(),
-          revokedReason: TokenRevocationReason.USER_LOGIN,
-        },
-      }
-    ).catch((err: unknown) => { console.error('Failed to cleanup reset tokens on login', { error: err instanceof Error ? err.message : String(err) }); });
-
     if (!authEnvs.accessTokenSecret || !authEnvs.refreshTokenSecret) {
-      console.error('JWT secrets not configured');
+      logError('JWT secrets not configured');
       ResponseUtil.internalServerError(res, 'Server configuration error');
       return;
     }
 
     const userId = user._id.toString();
-    const accessToken = generateAccessToken(userId, user.username, user.email);
-    const refreshToken = await generateRefreshToken(userId);
+    let refreshToken = '';
 
-    console.log('User logged in successfully', { username: user.username, userId });
+    await runInTransaction(async (session) => {
+      try {
+        await PasswordResetTokenModel.updateMany(
+          { userId: user._id, active: true },
+          {
+            $set: {
+              active: false,
+              revokedAt: new Date(),
+              revokedReason: TokenRevocationReason.USER_LOGIN,
+            },
+          },
+          { session }
+        );
+      } catch (err: unknown) {
+        logError('Failed to cleanup reset tokens on login', {
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
+
+      const result = await generateRefreshToken(userId, undefined, undefined, session);
+      refreshToken = result.token;
+
+      await SessionModel.create(
+        [
+          {
+            userId: user._id,
+            rootTokenId: result.rootTokenId,
+            absoluteExpiresAt: new Date(Date.now() + AuthConstants.SESSION_ABSOLUTE_EXPIRY_MS),
+            lastLogin: new Date(),
+            ipAddress: req.ip ?? 'unknown',
+            userAgent: req.get('user-agent') ?? 'unknown',
+          },
+        ],
+        { session }
+      );
+    });
+
+    const accessToken = generateAccessToken(userId, user.username, user.email);
+
+    logInfo('User logged in successfully', { username: user.username, userId });
 
     setTokenCookies(res, accessToken, refreshToken);
 
@@ -284,10 +191,10 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     const error = e as Error;
 
     if (e instanceof z.ZodError) {
-      console.warn('Login validation failed', { error: error.message });
+      logWarn('Login validation failed', { error: error.message });
       ResponseUtil.badRequest(res, 'Invalid credentials');
     } else {
-      console.error('Login process failed', {
+      logError('Login process failed', {
         error: error.message,
         stack: error.stack,
         endpoint: '/auth/login',
@@ -318,9 +225,23 @@ export const refreshToken = async (req: Request, res: Response): Promise<void> =
     }
 
     const newAccessToken = generateAccessToken(userId, user.username, user.email);
-    const newRefreshToken = await generateRefreshToken(userId);
+    let newRefreshToken = '';
 
-    await revokeRefreshToken(storedToken.tokenHash, TokenRevocationReason.TOKEN_ROTATION);
+    await runInTransaction(async (session) => {
+      const result = await generateRefreshToken(
+        userId,
+        storedToken.rootTokenId.toString(),
+        storedToken._id.toString(),
+        session
+      );
+      newRefreshToken = result.token;
+
+      await revokeRefreshToken(
+        storedToken.tokenHash,
+        TokenRevocationReason.TOKEN_ROTATION,
+        session
+      );
+    });
 
     setTokenCookies(res, newAccessToken, newRefreshToken);
 
@@ -331,7 +252,7 @@ export const refreshToken = async (req: Request, res: Response): Promise<void> =
     });
   } catch (e) {
     const error = e as Error;
-    console.error('Token refresh failed', {
+    logError('Token refresh failed', {
       error: error.message,
       stack: error.stack,
     });
@@ -350,17 +271,29 @@ export const logout = async (req: Request, res: Response): Promise<void> => {
 
     const storedToken = req.token?.stored;
     if (storedToken) {
-      await revokeRefreshToken(storedToken.tokenHash, TokenRevocationReason.USER_LOGOUT);
+      await runInTransaction(async (session) => {
+        await revokeRefreshToken(
+          storedToken.tokenHash,
+          TokenRevocationReason.USER_LOGOUT,
+          session
+        );
+
+        await SessionModel.findOneAndUpdate(
+          { rootTokenId: storedToken.rootTokenId },
+          { $set: { active: false } },
+          { session }
+        );
+      });
     }
 
-    console.log('User logged out', { userId });
+    logInfo('User logged out', { userId });
 
     clearTokenCookies(res);
 
     ResponseUtil.success(res, 'Logout successful');
   } catch (e) {
     const error = e as Error;
-    console.error('Logout failed', {
+    logError('Logout failed', {
       error: error.message,
       stack: error.stack,
     });
@@ -373,20 +306,12 @@ export const forgotPassword = async (req: Request, res: Response): Promise<void>
   const userAgent = req.get('user-agent') ?? 'unknown';
 
   try {
-    // Validate input
-    const parseResult = authScheme.forgotPasswordSchema.safeParse(req.body);
-    if (!parseResult.success) {
-      ResponseUtil.validationError(res, 'Invalid request', parseResult.error.message); return;
-    }
-
-    const { email } = parseResult.data;
+    const { email } = req.validated?.body as z.infer<typeof authScheme.forgotPasswordSchema>;
     const normalizedEmail = email.trim().toLowerCase();
     const emailHash = crypto.createHash('sha256').update(normalizedEmail).digest('hex');
 
-    // Single aggregate replaces 3 separate countDocuments/findOne calls.
-    // Uses the compound index { emailHash: 1, createdAt: -1 } for efficiency.
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
-    const [rateLimitData] = await PasswordResetRequestModel.aggregate<{
+    const [rateLimitData] = (await PasswordResetRequestModel.aggregate<{
       totalRequests: ({ n: number } | undefined)[];
       emailsSent: ({ n: number } | undefined)[];
       lastEmailSent: ({ createdAt: Date } | undefined)[];
@@ -404,7 +329,7 @@ export const forgotPassword = async (req: Request, res: Response): Promise<void>
           ],
         },
       },
-    ]) as (
+    ])) as (
       | {
           totalRequests: ({ n: number } | undefined)[];
           emailsSent: ({ n: number } | undefined)[];
@@ -419,14 +344,16 @@ export const forgotPassword = async (req: Request, res: Response): Promise<void>
 
     // Rate limit: max 20 requests per emailHash per hour
     if (totalCount >= AuthConstants.MAX_REQUESTS_PER_HR) {
-      console.warn('forgot-password: request limit exceeded', { emailHash, ip, userAgent });
-      ResponseUtil.rateLimitExceeded(res); return;
+      logWarn('forgot-password: request limit exceeded', { emailHash, ip, userAgent });
+      ResponseUtil.rateLimitExceeded(res);
+      return;
     }
 
     // Rate limit: max 5 emails per emailHash per hour
     if (emailCount >= AuthConstants.MAX_EMAILS_PER_HR) {
-      console.warn('forgot-password: email send limit exceeded', { emailHash, ip, userAgent });
-      ResponseUtil.rateLimitExceeded(res); return;
+      logWarn('forgot-password: email send limit exceeded', { emailHash, ip, userAgent });
+      ResponseUtil.rateLimitExceeded(res);
+      return;
     }
 
     // Cooldown: 30 seconds between email sends for this emailHash
@@ -436,7 +363,7 @@ export const forgotPassword = async (req: Request, res: Response): Promise<void>
         const secondsRemaining = Math.ceil(
           (AuthConstants.RESEND_COOLDOWN_MS - msSinceLastEmail) / 1000
         );
-        console.warn('forgot-password: cooldown active', {
+        logWarn('forgot-password: cooldown active', {
           emailHash,
           ip,
           userAgent,
@@ -445,77 +372,83 @@ export const forgotPassword = async (req: Request, res: Response): Promise<void>
         ResponseUtil.rateLimitExceeded(
           res,
           `Please wait ${secondsRemaining.toString()} seconds before resending reset link`
-        ); return;
+        );
+        return;
       }
     }
 
-    //TODO: Optimise with single db write queries for nonusers and users
     // Look up user
     const user = await UserModel.findOne({ email: normalizedEmail, active: true, deleted: false });
     if (!user) {
       await PasswordResetRequestModel.create([{ emailHash, ip, userAgent, emailSent: false }]);
-      console.warn('forgot-password: user not found or inactive', { ip, userAgent });
-      ResponseUtil.success(res, 'If an account exists, a reset link has been sent.'); return;
+      logWarn('forgot-password: user not found or inactive', { ip, userAgent });
+      ResponseUtil.success(res, 'If an account exists, a reset link has been sent.');
+      return;
     }
-
-    const userId = user._id;
-    const now = new Date();
-
-    // Fire-and-forget: prune tokens for this user that exceed the active limit.
-    // Done in background — does not block the response.
-    void PasswordResetTokenModel.find(
-      { userId, used: false, active: true, deleted: false, expiresAt: { $gt: now } },
-      { _id: 1 },
-      { sort: { createdAt: 1 } }
-    ).then((activeTokens) => {
-      if (activeTokens.length >= AuthConstants.MAX_ACTIVE_TOKENS) {
-        const excess = activeTokens.slice(
-          0,
-          activeTokens.length - AuthConstants.MAX_ACTIVE_TOKENS + 1
-        );
-        void PasswordResetTokenModel.updateMany(
-          { _id: { $in: excess.map((t) => t._id) } },
-          { $set: { active: false, deleted: true } }
-        );
-      }
-    });
 
     // Generate token
     const rawToken = crypto.randomBytes(32).toString('hex');
     const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
     const expiresAt = new Date(Date.now() + AuthConstants.TOKEN_EXPIRY_MS);
 
-    // These are non-critical, recoverable writes — no transaction needed.
-    // Worst case: an orphaned token expires via TTL, or the user re-requests a link.
-    await PasswordResetRequestModel.create([{ emailHash, ip, userAgent, emailSent: true }]);
+    await runInTransaction(async (session) => {
+      const activeTokens = await PasswordResetTokenModel.find(
+        {
+          userId: user._id,
+          used: false,
+          active: true,
+          deleted: false,
+          expiresAt: { $gt: new Date() },
+        },
+        { _id: 1 },
+        { sort: { createdAt: 1 } }
+      ).session(session);
 
-    await PasswordResetTokenModel.create([
-      { userId, tokenHash, expiresAt, requestIp: ip, userAgent },
-    ]);
+      if (activeTokens.length >= AuthConstants.MAX_ACTIVE_TOKENS) {
+        const excess = activeTokens.slice(
+          0,
+          activeTokens.length - AuthConstants.MAX_ACTIVE_TOKENS + 1
+        );
+        await PasswordResetTokenModel.updateMany(
+          { _id: { $in: excess.map((t) => t._id) } },
+          { $set: { active: false, deleted: true } },
+          { session }
+        );
+      }
 
-    const frontendUrl = process.env.FRONTEND_URL ?? '';
-    const resetLink = `${frontendUrl}/reset-password?token=${rawToken}`;
-    const appName = process.env.APP_NAME ?? 'BookMyVenue';
+      await PasswordResetRequestModel.create([{ emailHash, ip, userAgent, emailSent: true }], {
+        session,
+      });
+      await PasswordResetTokenModel.create([
+        { userId: user._id, tokenHash, expiresAt, requestIp: ip, userAgent },
+      ], {session});
 
-    await EmailTaskModel.create([
-      {
-        intent: 'password_reset',
-        recipient: user.email,
-        subject: `Reset your ${appName} password`,
-        metadata: { resetLink },
-      },
-    ]);
+      const frontendUrl = process.env.FRONTEND_URL ?? '';
+      const resetLink = `${frontendUrl}/reset-password?token=${rawToken}`;
+      const appName = process.env.APP_NAME ?? 'BookMyVenue';
 
-    console.log('forgot-password: reset email queued', {
-      userId: userId.toString(),
+      await EmailTaskModel.create([
+        {
+          intent: 'password_reset',
+          recipient: user.email,
+          subject: `Reset your ${appName} password`,
+          metadata: { resetLink },
+        },
+      ], {session});
+    });
+
+    logInfo('forgot-password: reset email successfully synced & queued', {
+      userId: user._id.toString(),
       ip,
       userAgent,
     });
 
-    ResponseUtil.success(res, 'If an account exists, a reset link has been sent.'); return;
+    ResponseUtil.success(res, 'If an account exists, a reset link has been sent.');
+    return;
   } catch (e) {
     const error = e as Error;
-    console.error('forgot-password: unexpected error', {
+    logError('forgot-password: unexpected error', {
+      module: 'auth.controller.ts:forgotPassword',
       error: error.message,
       stack: error.stack,
       ip,
@@ -524,7 +457,8 @@ export const forgotPassword = async (req: Request, res: Response): Promise<void>
     ResponseUtil.internalServerError(
       res,
       'Server error during forgot password request, please try again later'
-    ); return;
+    );
+    return;
   }
 };
 
@@ -538,124 +472,139 @@ export const resetPassword = async (req: Request, res: Response): Promise<void> 
       ResponseUtil.badRequest(res, 'Invalid request');
       return;
     }
+
     const { token, password } = parseResult.data;
 
-    // Hash the incoming raw token for DB lookup
     const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
 
-    const tokenRecord = await PasswordResetTokenModel.findOneAndUpdate(
-      { tokenHash, active: true, used: false, deleted: false },
-      { $set: { active: false, used: true, usedAt: new Date() } },
-      { returnDocument: 'after' }
-    );
+    await runInTransaction(async (session) => {
+      const tokenRecord = await PasswordResetTokenModel.findOneAndUpdate(
+        { tokenHash, active: true, used: false, deleted: false },
+        { $set: { active: false, used: true, usedAt: new Date() } },
+        { returnDocument: 'after', session }
+      );
 
-    if (!tokenRecord) {
-      console.warn('reset-password: token not found or already used', { ip, userAgent });
-      ResponseUtil.badRequest(res, 'Invalid or expired reset token');
-      return;
-    }
+      if (!tokenRecord) {
+        logWarn('reset-password: token not found or already used', { ip, userAgent });
+        ResponseUtil.badRequest(res, 'Invalid or expired reset token');
+        return;
+      }
 
-    if (tokenRecord.expiresAt < new Date()) {
-      console.warn('reset-password: token expired', {
-        userId: tokenRecord.userId.toString(),
-        ip,
-        userAgent,
-      });
-      ResponseUtil.badRequest(res, 'Invalid or expired reset token');
-      return;
-    }
+      if (tokenRecord.expiresAt < new Date()) {
+        logWarn('reset-password: token expired', {
+          userId: tokenRecord.userId.toString(),
+          ip,
+          userAgent,
+        });
+        ResponseUtil.badRequest(res, 'Invalid or expired reset token');
+        return;
+      }
 
-    const user = await UserModel.findOne({
-      _id: tokenRecord.userId,
-      active: true,
-      deleted: false,
-    }).select('+password');
+      const user = await UserModel.findOne({
+        _id: tokenRecord.userId,
+        active: true,
+        deleted: false,
+      })
+        .select('+password')
+        .session(session);
 
-    if (!user) {
-      console.warn('reset-password: user not found or inactive', {
-        userId: tokenRecord.userId.toString(),
-        ip,
-        userAgent,
-      });
-      ResponseUtil.badRequest(res, 'Invalid or expired reset token');
-      return;
-    }
+      if (!user) {
+        logWarn('reset-password: user not found or inactive', {
+          userId: tokenRecord.userId.toString(),
+          ip,
+          userAgent,
+        });
+        ResponseUtil.badRequest(res, 'Invalid or expired reset token');
+        return;
+      }
 
-    const userId = user._id;
+      const userId = user._id;
 
-    const isSamePassword = await bcrypt.compare(password, user.password);
-    if (isSamePassword) {
+      const isSamePassword = await bcrypt.compare(password, user.password);
+      if (isSamePassword) {
+        await PasswordResetTokenModel.updateMany(
+          { userId, _id: { $ne: tokenRecord._id }, active: true, used: false, deleted: false },
+          {
+            $set: {
+              active: false,
+              revokedAt: new Date(),
+              revokedReason: TokenRevocationReason.PASSWORD_REUSE_ATTEMPT,
+            },
+          },
+          { session }
+        );
+        logWarn('reset-password: password reuse attempt', {
+          userId: userId.toString(),
+          ip,
+          userAgent,
+        });
+        ResponseUtil.badRequest(res, 'New password cannot be the same as your old password');
+        return;
+      }
+
+      const hashedPassword = await bcrypt.hash(password, 12);
+
+      await UserModel.updateOne(
+        { _id: userId },
+        { $set: { password: hashedPassword, passwordChangedAt: new Date() } },
+        { session }
+      );
+
       await PasswordResetTokenModel.updateMany(
-        { userId, _id: { $ne: tokenRecord._id }, active: true, used: false, deleted: false },
+        { userId, _id: { $ne: tokenRecord._id }, active: true },
         {
           $set: {
             active: false,
             revokedAt: new Date(),
-            revokedReason: TokenRevocationReason.PASSWORD_REUSE_ATTEMPT,
+            revokedReason: TokenRevocationReason.PASSWORD_CHANGED,
           },
-        }
+        },
+        { session }
       );
-      console.warn('reset-password: password reuse attempt', {
+
+      await RefreshTokenModel.updateMany(
+        { userId, active: true },
+        {
+          $set: {
+            active: false,
+            revokedAt: new Date(),
+            revokedReason: TokenRevocationReason.PASSWORD_CHANGED,
+          },
+        },
+        { session }
+      );
+
+      await SessionModel.updateMany(
+        { userId, active: true },
+        { $set: { active: false } },
+        { session }
+      );
+
+      const appName = process.env.APP_NAME ?? 'BookMyVenue';
+      // Send security notification — non-blocking via queue
+      await EmailTaskModel.create(
+        [
+          {
+            intent: 'security_alert',
+            recipient: user.email,
+            subject: `Your ${appName} password was changed`,
+            metadata: {},
+          },
+        ],
+        { session }
+      );
+
+      logInfo('reset-password: password reset successful', {
         userId: userId.toString(),
         ip,
         userAgent,
       });
-      ResponseUtil.badRequest(res, 'New password cannot be the same as your old password');
-      return;
-    }
-
-    // 1. Hash the new password
-    const hashedPassword = await bcrypt.hash(password, 12);
-
-    // 2. Persist the new password
-    await UserModel.updateOne(
-      { _id: userId },
-      { $set: { password: hashedPassword, passwordChangedAt: new Date() } }
-    );
-
-    // 3. Soft-invalidate all OTHER reset tokens for this user
-    await PasswordResetTokenModel.updateMany(
-      { userId, _id: { $ne: tokenRecord._id }, active: true },
-      {
-        $set: {
-          active: false,
-          revokedAt: new Date(),
-          revokedReason: TokenRevocationReason.PASSWORD_CHANGED,
-        },
-      }
-    );
-
-    // 4. Revoke ALL active refresh tokens for this user — forces re-authentication
-    await RefreshTokenModel.updateMany(
-      { userId, active: true },
-      {
-        $set: {
-          active: false,
-          revokedAt: new Date(),
-          revokedReason: TokenRevocationReason.PASSWORD_CHANGED,
-        },
-      }
-    );
-
-    const appName = process.env.APP_NAME ?? 'BookMyVenue';
-    // Send security notification — non-blocking via queue
-    await EmailTaskModel.create({
-      intent: 'security_alert',
-      recipient: user.email,
-      subject: `Your ${appName} password was changed`,
-      metadata: {},
-    });
-
-    console.log('reset-password: password reset successful', {
-      userId: userId.toString(),
-      ip,
-      userAgent,
     });
 
     ResponseUtil.success(res, 'Password reset successful. Please log in with your new password.');
   } catch (e) {
     const error = e as Error;
-    console.error('reset-password: unexpected error', {
+    logError('reset-password: unexpected error', {
       error: error.message,
       stack: error.stack,
       ip,

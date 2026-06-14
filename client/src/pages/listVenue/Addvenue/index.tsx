@@ -78,7 +78,7 @@ const AddVenue = () => {
       initialValues={initialValues}
       validationSchema={stepSchemas[step] || undefined}
       onSubmit={(values) => {
-        console.log(values);
+        console.log({values});
       }}
     >
       {({ validateForm }) => (
@@ -112,7 +112,7 @@ const AddVenue = () => {
                  
                 const errors = await validateForm();
 
-                console.log(errors);
+                console.error(errors);
 
                 setStep(step + 1);
               
