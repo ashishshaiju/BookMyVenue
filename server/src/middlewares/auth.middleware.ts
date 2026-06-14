@@ -3,9 +3,8 @@ import jwt from 'jsonwebtoken';
 import mongoose from 'mongoose';
 import type { RefreshTokenPayload, TokenPayload } from '../types/express';
 import { ResponseUtil } from '../utils/responseUtils';
-import { RefreshTokenModel } from '../modules/auth/models/refresh-token.model';
-import { SessionModel } from '../models/session.model';
-import { tokenVerifyOptions } from '../utils/tokenUtils';
+import * as authRepo from '../modules/auth/auth.repository';
+import { tokenVerifyOptions, revokeTokenFamily } from '../utils/tokenUtils';
 import { TokenRevocationReason } from '../constants/auth.constants';
 import crypto from 'crypto';
 import { logWarn, logError } from '../utils/logger';
@@ -94,11 +93,10 @@ export const verifyRefreshToken = async (
 
     const tokenHash = crypto.createHash('sha256').update(decoded.jti).digest('hex');
 
-    const storedToken = await RefreshTokenModel.findOne({
+    const storedToken = await authRepo.findRefreshTokenByHash(
       tokenHash,
-      userId: new mongoose.Types.ObjectId(decoded.id),
-      deleted: false,
-    });
+      new mongoose.Types.ObjectId(decoded.id)
+    );
 
     if (!storedToken) {
       logWarn('Refresh token not found', { path: req.path });
@@ -120,15 +118,9 @@ export const verifyRefreshToken = async (
         userId: decoded.id,
       });
 
-      await RefreshTokenModel.updateMany(
-        { rootTokenId: storedToken.rootTokenId },
-        {
-          $set: {
-            active: false,
-            revokedAt: new Date(),
-            revokedReason: TokenRevocationReason.SUSPICIOUS_ACTIVITY,
-          },
-        }
+      await revokeTokenFamily(
+        storedToken.rootTokenId,
+        TokenRevocationReason.SUSPICIOUS_ACTIVITY
       ).catch((err: unknown) => {
         const error = err as Error;
         logError('Failed to revoke token family on reuse detection', {
@@ -137,9 +129,8 @@ export const verifyRefreshToken = async (
         });
       });
 
-      await SessionModel.findOneAndUpdate(
-        { rootTokenId: storedToken.rootTokenId },
-        { $set: { active: false } }
+      await authRepo.deactivateSessionByRootTokenId(
+        storedToken.rootTokenId.toString()
       ).catch((err: unknown) => {
         const error = err as Error;
         logError('Failed to deactivate session on reuse detection', {
@@ -153,10 +144,7 @@ export const verifyRefreshToken = async (
     }
 
     // Session validation
-    const session = await SessionModel.findOne({
-      rootTokenId: storedToken.rootTokenId,
-      deleted: false,
-    });
+    const session = await authRepo.findSessionByRootTokenId(storedToken.rootTokenId);
 
     if (!session) {
       logWarn('Session not found for refresh token', { path: req.path });

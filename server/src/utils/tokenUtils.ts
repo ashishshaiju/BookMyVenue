@@ -3,7 +3,7 @@ import crypto from 'crypto';
 import mongoose from 'mongoose';
 import type { Response } from 'express';
 import { parseDurationToMs } from './timeUtils';
-import { RefreshTokenModel } from '../modules/auth/models/refresh-token.model';
+import * as authRepo from '../modules/auth/auth.repository';
 import { authEnvs, jwtConfig } from '../constants/env';
 import type { TokenRevocationReasonType } from '../constants/auth.constants';
 import type { RefreshTokenPayload, TokenPayload } from '../types/express';
@@ -95,18 +95,16 @@ export const generateRefreshToken = async (
     const tokenHash = crypto.createHash('sha256').update(jti).digest('hex');
     const expiresAt = new Date(Date.now() + parseDurationToMs(authEnvs.refreshTokenExpiry));
 
-    await RefreshTokenModel.create(
-      [
-        {
-          _id: tokenId,
-          userId: new mongoose.Types.ObjectId(userId),
-          tokenHash,
-          rootTokenId: effectiveRootTokenId,
-          parentTokenId: effectiveParentTokenId,
-          expiresAt,
-        },
-      ],
-      { session }
+    await authRepo.createRefreshToken(
+      {
+        _id: tokenId,
+        userId: new mongoose.Types.ObjectId(userId),
+        tokenHash,
+        rootTokenId: effectiveRootTokenId,
+        parentTokenId: effectiveParentTokenId,
+        expiresAt,
+      },
+      session
     );
 
     return {
@@ -127,18 +125,7 @@ export const revokeRefreshToken = async (
   session?: mongoose.ClientSession
 ): Promise<void> => {
   try {
-    await RefreshTokenModel.updateOne(
-      { tokenHash, active: true, isUsed: false },
-      {
-        $set: {
-          active: false,
-          isUsed: true,
-          revokedAt: new Date(),
-          revokedReason: reason,
-        },
-      },
-      { session }
-    );
+    await authRepo.revokeRefreshToken(tokenHash, reason, session);
   } catch (error) {
     throw new Error(`Failed to revoke refresh token: ${(error as Error).message}`, {
       cause: error,
@@ -153,17 +140,7 @@ export const revokeTokenFamily = async (
   session?: mongoose.ClientSession
 ): Promise<void> => {
   try {
-    await RefreshTokenModel.updateMany(
-      { rootTokenId, active: true },
-      {
-        $set: {
-          active: false,
-          revokedAt: new Date(),
-          revokedReason: reason,
-        },
-      },
-      { session }
-    );
+    await authRepo.revokeTokenFamily(rootTokenId, reason, session);
   } catch (error) {
     throw new Error(`Failed to revoke token family: ${(error as Error).message}`, {
       cause: error,
