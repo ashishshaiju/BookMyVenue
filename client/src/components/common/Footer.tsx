@@ -3,7 +3,7 @@ import { Link } from 'react-router'
 const Footer = () => {
   return (
     <div>
-      <footer className="bg-[var(--bg-tertiary)] border-t border-[var(--bg-grey)] px-6 py-10">
+      <footer className="z-50 bg-[var(--bg-tertiary)] border-t border-[var(--bg-grey)] px-6 py-10">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:justify-between gap-8">
           
           {/* Brand */}
