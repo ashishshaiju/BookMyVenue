@@ -68,39 +68,39 @@ export const middleSchema =
         }
       ),
       blockedTimes:
-  Yup.array().when(
-    "bookingType",
-    {
-      is: "flexible",
+        Yup.array().when(
+          "bookingType",
+          {
+            is: "flexible",
 
-      then: () =>
-        Yup.array().of(
-          Yup.object({
-            fromTime:
-              Yup.string().when(
-                "toTime",
-                {
-                  is: (value: string) =>
-                    !!value,
+            then: () =>
+              Yup.array().of(
+                Yup.object({
+                  fromTime:
+                    Yup.string().when(
+                      "toTime",
+                      {
+                        is: (value: string) =>
+                          !!value,
 
-                  then: (schema) => 
-                    schema.required( "From time required" ),
-                }
+                        then: (schema) => 
+                          schema.required( "From time required" ),
+                      }
+                    ),
+
+                  toTime:
+                    Yup.string().when(
+                      "fromTime",
+                      {
+                        is: (value: string) =>
+                          !!value,
+
+                        then: (schema) =>
+                          schema.required( "To time required" ),
+                      }
+                    ),
+                })
               ),
-
-            toTime:
-              Yup.string().when(
-                "fromTime",
-                {
-                  is: (value: string) =>
-                    !!value,
-
-                  then: (schema) =>
-                    schema.required( "To time required" ),
-                }
-              ),
-          })
-        ),
 
       otherwise: () =>
         Yup.array(),
