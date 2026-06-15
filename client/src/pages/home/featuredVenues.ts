@@ -3,6 +3,7 @@ export const featuredVenues = [
     id: 1,
     name: "Royal Palace Hall",
     place: "Edappally",
+    price:1000,
     district: "Ernakulam",
     guests: "500 Guests",
     rating: 4.8,
@@ -14,6 +15,7 @@ export const featuredVenues = [
     id: 2,
     name: "Grand Celebration Hall",
     place: "Kottakkal",
+    price:1000,
     district: "Malappuram",
     guests: "300 Guests",
     rating: 4.6,
@@ -25,6 +27,7 @@ export const featuredVenues = [
     id: 3,
     name: "Skyline Event Space",
     place: "Mavoor",
+     price:1000,
     district: "Kozhikode",
     guests: "200 Guests",
     rating: 4.7,
@@ -36,10 +39,12 @@ export const featuredVenues = [
     id: 4,
     name: "Green Garden Venue",
     place: "Guruvayur",
+     price:1000,
     district: "Thrissur",
     guests: "450 Guests",
     rating: 4.9,
     image:
       "https://images.unsplash.com/photo-1517457373958-b7bdd4587205?w=800",
   },
+  
 ];
