@@ -1,39 +1,11 @@
-import type { Request, Response } from 'express';
-import { z } from 'zod';
-import * as authScheme from './auth.validator';
-import * as service from './auth.service';
-import { logError } from '../../utils/logger';
+import { handleError } from '../../utils/errors';
 import { ResponseUtil } from '../../utils/responseUtils';
 import { setTokenCookies, clearTokenCookies } from '../../utils/tokenUtils';
-import { AppError } from '../../utils/errors';
+import * as service from './auth.service';
+import type * as authScheme from './auth.validator';
+import type { Request, Response } from 'express';
+import type { z } from 'zod';
 
-// Error mapper
-function handleError(res: Response, error: unknown, context: string): void {
-  if (error instanceof z.ZodError) {
-    ResponseUtil.badRequest(res, 'Invalid request parameters');
-    return;
-  }
-  if (error instanceof service.UnauthorizedError) {
-    ResponseUtil.unauthorized(res, error.message);
-    return;
-  }
-  if (error instanceof service.RateLimitError) {
-    ResponseUtil.rateLimitExceeded(res, error.message);
-    return;
-  }
-  if (error instanceof service.BadRequestError) {
-    ResponseUtil.badRequest(res, error.message);
-    return;
-  }
-  if (error instanceof AppError) {
-    ResponseUtil.error(res, error.message, undefined, error.statusCode);
-    return;
-  }
-
-  const err = error as Error;
-  logError(`${context}: unexpected error`, { error: err.message, stack: err.stack });
-  ResponseUtil.internalServerError(res, 'Server error');
-}
 
 export const register = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -121,16 +93,12 @@ export const forgotPassword = async (req: Request, res: Response): Promise<void>
 
 export const resetPassword = async (req: Request, res: Response): Promise<void> => {
   try {
-    const parseResult = authScheme.resetPasswordSchema.safeParse(req.body);
-    if (!parseResult.success) {
-      ResponseUtil.badRequest(res, 'Invalid request');
-      return;
-    }
+    const dto = req.validated?.body as z.infer<typeof authScheme.resetPasswordSchema>;
 
     const ip = req.ip ?? 'unknown';
     const userAgent = req.get('user-agent') ?? 'unknown';
 
-    await service.processResetPassword(parseResult.data, ip, userAgent);
+    await service.processResetPassword(dto, ip, userAgent);
 
     ResponseUtil.success(res, 'Password reset successful. Please log in with your new password.');
   } catch (e) {
