@@ -82,12 +82,17 @@ export const createAxiosInstance = (): AxiosInstance => {
       }
 
       if (error.response.status === 401 && !originalRequest._retry) {
-        if (originalRequest.url?.includes(API_ENDPOINTS.REFRESH)) {
-          window.dispatchEvent(
-            new CustomEvent("auth:logout", {
-              detail: { message: "Session expired. Please login again." },
-            }),
-          );
+        if (
+          originalRequest.url?.includes(API_ENDPOINTS.REFRESH) ||
+          originalRequest.url?.includes(API_ENDPOINTS.LOGIN)
+        ) {
+          if (originalRequest.url?.includes(API_ENDPOINTS.REFRESH)) {
+            window.dispatchEvent(
+              new CustomEvent("auth:logout", {
+                detail: { message: "Session expired. Please login again." },
+              }),
+            );
+          }
           return Promise.reject(error);
         }
 

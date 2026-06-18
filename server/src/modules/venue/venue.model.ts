@@ -71,9 +71,8 @@ const VenueSchema = new Schema<IVenue>(
     city: { type: String, required: true, trim: true },
     district: { type: String, required: true, trim: true },
     state: { type: String, required: true, trim: true },
-    country: { type: String, required: true, trim: true },
     pincode: { type: String, required: true, trim: true },
-    location: { type: GeoPointSchema, required: true },
+    location: { type: GeoPointSchema, required: false },
     googleMapsUrl: { type: String, trim: true, default: null },
 
     // Space & Capacity
@@ -85,6 +84,7 @@ const VenueSchema = new Schema<IVenue>(
     bookingType: { type: String, enum: ['fixedBooking', 'flexibleBooking'], required: true },
     pricingType: { type: String, enum: ['fixedPricing', 'timeBasedPricing'], required: true },
     fixedPackages: { type: [FixedPackageSchema], default: [] },
+    workingDays: { type: [String], default: [] },
     workingHours: {
       open: { type: String, required: true },
       close: { type: String, required: true },

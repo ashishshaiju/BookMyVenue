@@ -9,10 +9,26 @@ import {
   validateQuery,
 } from '../../middlewares/validation.middleware';
 import * as validator from './venue.validator';
+import rateLimit from 'express-rate-limit';
 
 const router: Router = Router();
 
+const uploadSignatureLimiter = rateLimit({
+  windowMs: 30 * 60 * 1000, // 30 mins
+  max: 10, // max 10 signature requests per 30 min per IP
+  message: 'Too many upload requests, please try again later',
+});
+
 // Owner Routes
+router
+  .route('/upload-signature')
+  .get(
+    verifyAccessToken,
+    requirePermission(P.venues.create),
+    uploadSignatureLimiter,
+    controller.getUploadSignature
+  );
+
 router
   .route('/')
   .post(

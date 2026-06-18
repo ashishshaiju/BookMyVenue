@@ -10,6 +10,7 @@ import type {
   venueIdParamSchema,
 } from './venue.validator';
 import { handleError } from '../../utils/errors';
+import { v2 as cloudinary } from 'cloudinary';
 
 
 // Helpers
@@ -19,6 +20,36 @@ function isCallerAdmin(req: Request): boolean {
     req.user?.role.permissions?.has('approve:venues') === true
   );
 }
+
+export const getUploadSignature = (req: Request, res: Response): void => {
+  try {
+    const userId = req.user?.userId;
+    if (!userId) { ResponseUtil.unauthorized(res, 'Unauthorized'); return; }
+
+    const apiSecret = process.env.CLOUDINARY_API_SECRET;
+    const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+    const apiKey = process.env.CLOUDINARY_API_KEY;
+    const uploadPreset = process.env.CLOUDINARY_UPLOAD_PRESET;
+
+    if (!apiSecret || !cloudName || !apiKey || !uploadPreset) {
+      ResponseUtil.internalServerError(res, 'Image upload not configured');
+      return;
+    }
+
+    const timestamp = Math.round(Date.now() / 1000);
+    const folder = `bookmyvenue/venues/${userId}`;
+
+    const paramsToSign = { folder, timestamp, upload_preset: uploadPreset };
+
+    const signature = cloudinary.utils.api_sign_request(paramsToSign, apiSecret);
+
+    ResponseUtil.success(res, 'Signature generated', {
+      signature, timestamp, cloudName, apiKey, folder, uploadPreset,
+    });
+  } catch (e) {
+    handleError(res, e, 'getUploadSignature');
+  }
+};
 
 // Owner Handlers
 export const createVenue = async (req: Request, res: Response): Promise<void> => {

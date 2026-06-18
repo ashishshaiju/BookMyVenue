@@ -2,6 +2,7 @@ import React, { createContext, useState, useEffect, type ReactNode } from "react
 import { axiosInstance } from "../config/axios";
 import { API_ENDPOINTS, STORAGE_KEYS } from "../constants";
 import { showSuccess, showError } from "../utils/toast";
+import { clearDraft } from "../utils/venueDraft";
 
 export interface User {
   id: string;
@@ -116,6 +117,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } catch {
       showError("Failed to log out. Please try again.");
     } finally {
+      if (user?.id) clearDraft(user.id);
       clearAuthData(setUser);
     }
   };
