@@ -46,4 +46,3 @@ node_modules/
 /server/.env
 /server/dist/
 /server/node_modules
-/server/src/scripts/
