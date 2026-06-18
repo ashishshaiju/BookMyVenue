@@ -1,10 +1,10 @@
 import type { Document } from 'mongoose';
 import mongoose, { Schema } from 'mongoose';
-import { 
-  EmailIntent, 
-  type EmailIntentType, 
-  EmailTaskStatus, 
-  type EmailTaskStatusType 
+import {
+  EmailIntent,
+  type EmailIntentType,
+  EmailTaskStatus,
+  type EmailTaskStatusType,
 } from '../constants/email.constants';
 
 export interface IEmailTask extends Document {
@@ -46,6 +46,7 @@ const EmailTaskSchema = new Schema<IEmailTask>(
 
 // Compound index for fast polling
 EmailTaskSchema.index({ status: 1, lockedAt: 1 });
+EmailTaskSchema.index({ createdAt: 1 }, { expireAfterSeconds: 15 * 60 });
 
 export const EmailTaskModel = mongoose.model<IEmailTask>(
   'EmailTasks',
