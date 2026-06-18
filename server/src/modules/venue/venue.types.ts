@@ -48,7 +48,6 @@ export interface IVenue extends Document {
   city: string;
   district: string;
   state: string;
-  country: string;
   pincode: string;
   location: IGeoPoint; // $geoNear / 2dsphere queries - future usecase
   googleMapsUrl?: string;
@@ -62,6 +61,7 @@ export interface IVenue extends Document {
   bookingType: 'fixedBooking' | 'flexibleBooking';
   pricingType: 'fixedPricing' | 'timeBasedPricing';
   fixedPackages: IFixedPackage[];
+  workingDays: string[];
   workingHours: {
     open: string;
     close: string;

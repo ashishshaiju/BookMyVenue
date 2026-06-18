@@ -28,11 +28,14 @@ export async function createVenue(userId: string, dto: CreateVenueDTO): Promise<
   const data = {
     ...dto,
     galleryImages: dto.galleryImages ?? [],
-    location: { type: 'Point' as const, coordinates: dto.coordinates },
+    ...(dto.coordinates && {
+      location: { type: 'Point' as const, coordinates: dto.coordinates },
+    }),
     ownerUserId: userId,
     createdBy: userId,
     updatedBy: userId,
   } as unknown as CreateVenueData;
+  if (!dto.coordinates) delete (data as unknown as Record<string, unknown>).location;
   delete (data as unknown as Record<string, unknown>).coordinates;
 
   return repo.createVenue(data);
