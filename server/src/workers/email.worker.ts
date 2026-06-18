@@ -46,6 +46,7 @@ async function processNextTask(): Promise<void> {
       {
         status: EmailTaskStatus.PENDING,
         $or: [{ lockedAt: null }, { lockedAt: { $lt: staleCutoff } }],
+        retryAfter: { $lte: now }
       },
       {
         $set: {
@@ -54,7 +55,7 @@ async function processNextTask(): Promise<void> {
           lockedAt: now,
         },
       },
-      { returnDocument: 'after' }
+      { returnDocument: 'after', writeConcern: { w: 'majority' } }
     );
 
     if (!task) return;
@@ -74,6 +75,7 @@ async function processNextTask(): Promise<void> {
       if (task.retries >= EmailConstants.MAX_RETRIES) {
         task.status = EmailTaskStatus.FAILED;
         logError(`Email task failed permanently`, {
+          module: "email.worker.ts/processNextTask",
           taskId: task._id.toString(),
           error: error.message,
         });
@@ -95,6 +97,7 @@ async function processNextTask(): Promise<void> {
     }
   } catch (err) {
     logError('Email worker polling loop encountered an error', {
+      module: "email.worker.ts/processNextTask",
       error: (err as Error).message,
     });
   }

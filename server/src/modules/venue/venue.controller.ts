@@ -1,6 +1,5 @@
 import type { z } from 'zod';
 import type { Request, Response } from 'express';
-import { logError } from '../../utils/logger';
 import { ResponseUtil } from '../../utils/responseUtils';
 import * as service from './venue.service';
 import type {
@@ -10,42 +9,8 @@ import type {
   adminVenueFiltersSchema,
   venueIdParamSchema,
 } from './venue.validator';
-import {
-  AppError,
-  NotFoundError,
-  ForbiddenError,
-  ConflictError,
-  WorkflowError,
-  ValidationError,
-} from '../../utils/errors';
+import { handleError } from '../../utils/errors';
 
-// Error mapper
-function handleError(res: Response, error: unknown, context: string): void {
-  if (error instanceof NotFoundError) {
-    ResponseUtil.notFound(res, error.message);
-    return;
-  }
-  if (error instanceof ForbiddenError) {
-    ResponseUtil.forbidden(res, error.message);
-    return;
-  }
-  if (error instanceof ConflictError) {
-    ResponseUtil.conflict(res, error.message);
-    return;
-  }
-  if (error instanceof WorkflowError || error instanceof ValidationError) {
-    ResponseUtil.validationError(res, error.message);
-    return;
-  }
-  if (error instanceof AppError) {
-    ResponseUtil.error(res, error.message, undefined, error.statusCode);
-    return;
-  }
-
-  const err = error as Error;
-  logError(`${context}: unexpected error`, { error: err.message, stack: err.stack });
-  ResponseUtil.internalServerError(res, 'Server error');
-}
 
 // Helpers
 function isCallerAdmin(req: Request): boolean {

@@ -17,7 +17,12 @@ export interface ISession extends Document {
 const SessionSchema = new Schema<ISession>(
   {
     userId: { type: Schema.Types.ObjectId, ref: 'Users', required: true },
-    rootTokenId: { type: Schema.Types.ObjectId, ref: 'RefreshTokens', required: true, unique: true },
+    rootTokenId: {
+      type: Schema.Types.ObjectId,
+      ref: 'RefreshTokens',
+      required: true,
+      unique: true,
+    },
     absoluteExpiresAt: { type: Date, required: true, index: { expires: 0 } },
     lastLogin: { type: Date, default: Date.now },
     ipAddress: { type: String, required: true },

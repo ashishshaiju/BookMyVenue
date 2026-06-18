@@ -12,7 +12,8 @@
     "typecheck": "tsc --noEmit",
     "format": "prettier --write \"src/**/*.ts\"",
     "format:check": "prettier --check \"src/**/*.ts\"",
-    "format:fix": "prettier --write ."
+    "format:fix": "prettier --write .",
+    "script": "tsx scripts/configs/runner.ts"
   },
   "keywords": [],
   "author": "",

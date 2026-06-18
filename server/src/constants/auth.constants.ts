@@ -12,7 +12,8 @@ export const TokenRevocationReason = {
   USER_REVOKED: 'user:revoked',
 } as const;
 
-export type TokenRevocationReasonType = typeof TokenRevocationReason[keyof typeof TokenRevocationReason];
+export type TokenRevocationReasonType =
+  (typeof TokenRevocationReason)[keyof typeof TokenRevocationReason];
 
 export const AuthConstants = {
   MAX_ACTIVE_TOKENS: 3,

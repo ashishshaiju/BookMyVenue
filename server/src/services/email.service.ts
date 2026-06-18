@@ -18,7 +18,7 @@ export function validateEmailConfig(): void {
   if (!resendConfig.frontendUrl) missing.push('FRONTEND_URL');
 
   if (missing.length > 0) {
-    logError('Missing required email environment variables', { missing });
+    logError('Missing required email environment variables', { module: "email.service.ts/validateEmailConfig",missing });
     process.exit(1);
   }
 
@@ -119,7 +119,7 @@ function buildEmailWrapper(bodyContent: string): string {
 const emailAddressSchema = z.email('Invalid recipient email address');
 
 function validateRecipient(email: string): string {
-  if (process.env.NODE_ENV === "development") {
+  if (process.env.NODE_ENV === 'development') {
     const res = resendConfig.devToEmail ?? '';
     if (!emailAddressSchema.safeParse(res).success) {
       throw new Error('Invalid development recipient email address');
@@ -144,6 +144,7 @@ async function sendEmail(
 
     if (error) {
       logError('Email delivery failed', {
+        module: "email.service.ts/sendEmail",
         intent,
         recipient: to,
         providerError: error.message,
@@ -161,6 +162,7 @@ async function sendEmail(
   } catch (e) {
     const err = e as Error;
     logError('Email service encountered an unexpected error', {
+      module: "email.service.ts/sendEmail",
       intent,
       recipient: to,
       error: err.message,
@@ -232,7 +234,12 @@ class EmailService {
       ${process.env.NODE_ENV === 'development' ? `<p style="margin:16px 0 0;font-size:13px;color:#92400e;"><strong>Development mode</strong> - Email sent to ${email}</p>` : ''}
     `;
 
-    return sendEmail(validatedRecipientEmail, `Reset your ${appName} password`, buildEmailWrapper(bodyContent), 'password_reset');
+    return sendEmail(
+      validatedRecipientEmail,
+      `Reset your ${appName} password`,
+      buildEmailWrapper(bodyContent),
+      'password_reset'
+    );
   }
 
   // ---------------------------------------------------------------------------

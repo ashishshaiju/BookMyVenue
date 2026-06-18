@@ -107,10 +107,18 @@ export interface IVenue extends Document {
 
 export type CreateVenueData = Omit<
   IVenue,
-  keyof mongoose.Document | 'status' | 'createdAt' | 'updatedAt' | 'active' | 'deleted' | 'rejectionReason'
+  | keyof mongoose.Document
+  | 'status'
+  | 'createdAt'
+  | 'updatedAt'
+  | 'active'
+  | 'deleted'
+  | 'rejectionReason'
 >;
 
-export type UpdateVenueData = Partial<Omit<CreateVenueData, 'createdBy' | 'ownerUserId' | 'updatedBy'>> & {
+export type UpdateVenueData = Partial<
+  Omit<CreateVenueData, 'createdBy' | 'ownerUserId' | 'updatedBy'>
+> & {
   updatedBy: string;
 };
 

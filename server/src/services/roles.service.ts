@@ -24,10 +24,7 @@ export async function getUserRole(userId: string): Promise<UserRoleInfo | null> 
           localField: 'roleId',
           foreignField: '_id',
           as: 'role',
-          pipeline: [
-            { $match: { active: true, deleted: false } },
-            { $project: { name: 1 } },
-          ],
+          pipeline: [{ $match: { active: true, deleted: false } }, { $project: { name: 1 } }],
         },
       },
       { $unwind: '$role' },
@@ -44,7 +41,7 @@ export async function getUserRole(userId: string): Promise<UserRoleInfo | null> 
     return result[0] ?? null;
   } catch (e) {
     const error = e as Error;
-    logError('getUserRole failed', { error: error.message, userId });
+    logError('getUserRole failed', { module: "roles.service.ts/getUserRole", error: error.message, userId });
     return null;
   }
 }
@@ -124,6 +121,7 @@ export async function fetchRolePermissions(roleId: string): Promise<string[]> {
   } catch (e) {
     const error = e as Error;
     logError('fetchRolePermissions failed', {
+      module: "roles.service.ts/fetchRolePermissions",
       error: error.message,
       roleId,
     });

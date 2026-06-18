@@ -4,7 +4,7 @@ import tseslint from 'typescript-eslint';
 export default tseslint.config(
   // Global ignores — must be a standalone object with only 'ignores' to act globally
   {
-    ignores: ['dist/**', 'src/scripts/**', 'eslint.config.mjs'],
+    ignores: ['dist/**', 'scripts/**', 'eslint.config.mjs'],
   },
   js.configs.recommended,
   ...tseslint.configs.strictTypeChecked, // stricter than recommended

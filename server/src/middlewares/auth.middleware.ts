@@ -21,7 +21,7 @@ export const verifyAccessToken = (req: Request, res: Response, next: NextFunctio
 
     const accessSecret = process.env.JWT_ACCESS_SECRET;
     if (!accessSecret) {
-      logError('JWT_ACCESS_SECRET not configured', { path: req.path });
+      logError('JWT_ACCESS_SECRET not configured', { module: "auth.middleware.ts/verifyAccessToken",path: req.path });
       ResponseUtil.internalServerError(res, 'Server configuration error');
       return;
     }
@@ -74,7 +74,7 @@ export const verifyRefreshToken = async (
 
     const refreshSecret = process.env.JWT_REFRESH_SECRET;
     if (!refreshSecret) {
-      logError('JWT_REFRESH_SECRET not configured', { path: req.path });
+      logError('JWT_REFRESH_SECRET not configured', { module: "auth.middleware.ts/verifyRefreshToken",path: req.path });
       ResponseUtil.internalServerError(res, 'Server configuration error');
       return;
     }
@@ -124,20 +124,22 @@ export const verifyRefreshToken = async (
       ).catch((err: unknown) => {
         const error = err as Error;
         logError('Failed to revoke token family on reuse detection', {
+          module: "auth.middleware.ts/verifyRefreshToken",
           error: error.message,
           rootTokenId: storedToken.rootTokenId.toString(),
         });
       });
 
-      await authRepo.deactivateSessionByRootTokenId(
-        storedToken.rootTokenId.toString()
-      ).catch((err: unknown) => {
-        const error = err as Error;
-        logError('Failed to deactivate session on reuse detection', {
-          error: error.message,
-          rootTokenId: storedToken.rootTokenId.toString(),
+      await authRepo
+        .deactivateSessionByRootTokenId(storedToken.rootTokenId.toString())
+        .catch((err: unknown) => {
+          const error = err as Error;
+          logError('Failed to deactivate session on reuse detection', {
+            module: "auth.middleware.ts/verifyRefreshToken",
+            error: error.message,
+            rootTokenId: storedToken.rootTokenId.toString(),
+          });
         });
-      });
 
       ResponseUtil.unauthorized(res, 'Invalid refresh token');
       return;

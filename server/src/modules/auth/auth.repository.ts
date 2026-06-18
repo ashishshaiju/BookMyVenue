@@ -3,8 +3,8 @@ import { PasswordResetRequestModel } from './models/password-reset-request.model
 import { PasswordResetTokenModel } from './models/password-reset-token.model';
 import { RefreshTokenModel } from './models/refresh-token.model';
 import type { IRefreshToken } from './models/refresh-token.model';
-import { SessionModel } from '../../models/session.model';
-import type { ISession } from '../../models/session.model';
+import { SessionModel } from './models/session.model';
+import type { ISession } from './models/session.model';
 import { EmailTaskModel } from '../../models/email-task.model';
 import { RoleModel } from '../../models/role.model';
 import { UserRoleModel } from '../../models/user-role.model';
@@ -176,7 +176,12 @@ export async function createPasswordResetToken(
 
 export async function createEmailTask(
   data: {
-    intent: 'password_reset' | 'account_notification' | 'email_verification' | 'security_alert' | 'welcome';
+    intent:
+      | 'password_reset'
+      | 'account_notification'
+      | 'email_verification'
+      | 'security_alert'
+      | 'welcome';
     recipient: string;
     subject: string;
     metadata: Record<string, string>;
@@ -189,9 +194,9 @@ export async function createEmailTask(
 export async function markPasswordResetTokenAsUsed(
   tokenHash: string,
   session?: mongoose.ClientSession
-): Promise<mongoose.Document & { userId: mongoose.Types.ObjectId; expiresAt: Date } | null> {
+): Promise<(mongoose.Document & { userId: mongoose.Types.ObjectId; expiresAt: Date }) | null> {
   return PasswordResetTokenModel.findOneAndUpdate(
-    { tokenHash, active: true, used: false, deleted: false },
+    { tokenHash, active: true, used: false, deleted: false, expiresAt: { $gt: new Date() } },
     { $set: { active: false, used: true, usedAt: new Date() } },
     { returnDocument: 'after', session: session ?? null }
   ).exec();

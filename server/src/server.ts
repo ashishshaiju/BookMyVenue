@@ -2,7 +2,7 @@ import 'dotenv/config';
 import compression from 'compression';
 import cors from 'cors';
 import express from 'express';
-import type { Express, Request, Response } from 'express';
+import type { Express, NextFunction, Request, Response } from 'express';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
@@ -16,7 +16,7 @@ import { ResponseUtil } from './utils/responseUtils';
 import { validateEmailConfig } from './services/email.service';
 import { startEmailWorker } from './workers/email.worker';
 import { setupGracefulShutdown } from './utils/shutdownUtils';
-import { requestLogger, logInfo } from './utils/logger';
+import { requestLogger, logInfo, logError } from './utils/logger';
 
 const PORT = parseInt(process.env.PORT ?? '3000', 10);
 
@@ -68,7 +68,8 @@ app.use((_req: Request, res: Response) => {
 });
 
 // Global error handler
-app.use((_req: Request, res: Response, _next: unknown) => {
+app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
+  logError('Unhandled Express error', { error: err.message, stack: err.stack });
   ResponseUtil.internalServerError(res, 'Internal server error');
 });
 
