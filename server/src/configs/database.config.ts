@@ -7,7 +7,7 @@ export const connectDatabase = async (): Promise<typeof mongoose> => {
   const mongodburi = process.env.MONGODB_URI;
 
   if (!mongodburi) {
-    logError('MONGODB_URI environment variable is not set');
+    logError('MONGODB_URI environment variable is not set', {module: "database.config.ts/connectDatabase"});
     process.exit(1);
   }
 
@@ -18,8 +18,10 @@ export const connectDatabase = async (): Promise<typeof mongoose> => {
     logInfo('Connected to MongoDB');
 
     const client = mongoose.connection.getClient();
-    const topologyType = (client as unknown as { topology?: { description?: { type?: string } } }).topology?.description?.type;
-    dbSupportsTransactions = typeof topologyType === 'string' &&
+    const topologyType = (client as unknown as { topology?: { description?: { type?: string } } })
+      .topology?.description?.type;
+    dbSupportsTransactions =
+      typeof topologyType === 'string' &&
       (topologyType.includes('ReplicaSet') || topologyType.includes('Sharded'));
 
     logInfo('MongoDB topology detected', {
@@ -29,7 +31,7 @@ export const connectDatabase = async (): Promise<typeof mongoose> => {
 
     return connection;
   } catch (error) {
-    logError('Failed to connect to MongoDB', { error: (error as Error).message });
+    logError('Failed to connect to MongoDB', { module: "database.config.ts/connectDatabase",error: (error as Error).message });
     process.exit(1);
   }
 };
@@ -39,7 +41,7 @@ export const disconnectDatabase = async (): Promise<void> => {
     await mongoose.disconnect();
     logInfo('Disconnected from MongoDB');
   } catch (error) {
-    logError('Failed to disconnect from MongoDB', { error: (error as Error).message });
+    logError('Failed to disconnect from MongoDB', { module: "database.config.ts/disconnectDatabase",error: (error as Error).message });
     process.exit(1);
   }
 };

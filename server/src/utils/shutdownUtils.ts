@@ -13,16 +13,15 @@ let getServerFn: (() => Server | null) | null = null;
 const withTimeout = async <T>(promise: Promise<T>, ms: number, name: string): Promise<void> => {
   let timeoutHandle: NodeJS.Timeout | undefined;
   const timeoutPromise = new Promise<never>((_, reject) => {
-    timeoutHandle = setTimeout(
-      () => { reject(new Error(`[Timeout] ${name} shutdown exceeded ${ms.toString()}ms`)); },
-      ms
-    );
+    timeoutHandle = setTimeout(() => {
+      reject(new Error(`[Timeout] ${name} shutdown exceeded ${ms.toString()}ms`));
+    }, ms);
   });
 
   try {
     await Promise.race([promise, timeoutPromise]);
   } catch (err) {
-    logError(`[server] ${name} failed to shut down cleanly`, { error: (err as Error).message });
+    logError(`[server] ${name} failed to shut down cleanly`, { module: "shutdownUtils.ts/withTimeout",error: (err as Error).message });
   } finally {
     if (timeoutHandle) {
       clearTimeout(timeoutHandle);
@@ -38,7 +37,7 @@ async function gracefulShutdown(signal: string, exitCode = 0): Promise<void> {
 
   // Global Hard Timeout: If everything completely locks up, OS kills it after 30s.
   const forceExitTimer = setTimeout(() => {
-    logError('[server] GLOBAL shutdown timeout reached (30s). Forcing exit.');
+    logError('[server] GLOBAL shutdown timeout reached (30s). Forcing exit.', { module: "shutdownUtils.ts/gracefulShutdown" });
     process.exit(exitCode);
   }, 30_000);
   forceExitTimer.unref();
@@ -65,7 +64,10 @@ async function gracefulShutdown(signal: string, exitCode = 0): Promise<void> {
 
       const closeHttpPromise = new Promise<void>((resolve, reject) => {
         server.close((err) => {
-          if (err) { reject(err); return; }
+          if (err) {
+            reject(err);
+            return;
+          }
           resolve();
         });
       });
@@ -82,7 +84,10 @@ async function gracefulShutdown(signal: string, exitCode = 0): Promise<void> {
     await withTimeout(mongoose.connection.close(false), 3000, 'MongoDB');
     logInfo('[server] MongoDB connection closed.');
   } catch (err) {
-    logError('[server] Unexpected error during shutdown sequence', { error: (err as Error).message });
+    logError('[server] Unexpected error during shutdown sequence', {
+      module: 'shutdownUtils.ts/gracefulShutdown',
+      error: (err as Error).message,
+    });
   }
 
   logInfo('[server] Shutdown sequence complete.');
@@ -93,12 +98,13 @@ export function setupGracefulShutdown(getServer: () => Server | null): void {
   getServerFn = getServer;
 
   process.on('unhandledRejection', (reason) => {
-    logError('Unhandled Rejection', { reason: String(reason) });
+    logError('Unhandled Rejection', { module: "shutdownUtils.ts/setupGracefulShutdown",reason: String(reason) });
     void gracefulShutdown('Unhandled Rejection', 1);
   });
 
   process.on('uncaughtException', (error) => {
     logError('Uncaught Exception', {
+      module: "shutdownUtils.ts/setupGracefulShutdown",
       error: error.message,
       stack: error.stack,
     });
