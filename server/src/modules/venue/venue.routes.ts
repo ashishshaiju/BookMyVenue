@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { verifyAccessToken } from '../../middlewares/auth.middleware';
-import { requirePermission } from '../../middlewares/rbac.middleware';
+import { requirePermission, requireRole } from '../../middlewares/rbac.middleware';
 import { PERMISSIONS as P } from '../../constants/permissions';
 import * as controller from './venue.controller';
 import {
@@ -28,12 +28,18 @@ router
 // Admin Routes
 router
   .route('/pending')
-  .get(verifyAccessToken, requirePermission(P.venues.activate), controller.getPendingVenues);
+  .get(
+    verifyAccessToken,
+    requireRole('admin'),
+    requirePermission(P.venues.activate),
+    controller.getPendingVenues
+  );
 
 router
   .route('/all')
   .get(
     verifyAccessToken,
+    requireRole('admin'),
     requirePermission(P.venues.activate),
     validateQuery(validator.adminVenueFiltersSchema),
     controller.getAllVenues
@@ -42,11 +48,7 @@ router
 // Parameterised Owner Routes
 router
   .route('/:id')
-  .get(
-    requirePermission(P.venues.read),
-    validateParams(validator.venueIdParamSchema),
-    controller.getVenueById
-  )
+  .get(validateParams(validator.venueIdParamSchema), controller.getVenueById)
   .put(
     verifyAccessToken,
     requirePermission(P.venues.update),
@@ -75,6 +77,7 @@ router
   .route('/:id/approve')
   .post(
     verifyAccessToken,
+    requireRole('admin'),
     requirePermission(P.venues.activate),
     validateParams(validator.venueIdParamSchema),
     controller.approveVenue
@@ -84,6 +87,7 @@ router
   .route('/:id/reject')
   .post(
     verifyAccessToken,
+    requireRole('admin'),
     requirePermission(P.venues.deactivate),
     validateParams(validator.venueIdParamSchema),
     validateBody(validator.rejectVenueSchema),
@@ -94,6 +98,7 @@ router
   .route('/:id/activate')
   .post(
     verifyAccessToken,
+    requireRole('admin'),
     requirePermission(P.venues.activate),
     validateParams(validator.venueIdParamSchema),
     controller.activateVenue
@@ -103,6 +108,7 @@ router
   .route('/:id/deactivate')
   .post(
     verifyAccessToken,
+    requireRole('admin'),
     requirePermission(P.venues.deactivate),
     validateParams(validator.venueIdParamSchema),
     controller.deactivateVenue
