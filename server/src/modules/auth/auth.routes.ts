@@ -16,18 +16,16 @@ const secondaryRateLimiter = rateLimit({
 });
 
 router.route('/register').post(validateBody(authValidator.registerSchema), controller.register);
-router
-  .route('/login')
-  .post(validateBody(authValidator.loginSchema), controller.login);
-router
-  .route('/refresh')
-  .post(verifyRefreshToken, controller.refreshToken);
-router
-  .route('/logout')
-  .post(verifyAccessToken, controller.logout);
+router.route('/login').post(validateBody(authValidator.loginSchema), controller.login);
+router.route('/refresh').post(verifyRefreshToken, controller.refreshToken);
+router.route('/logout').post(verifyAccessToken, verifyRefreshToken, controller.logout);
 router
   .route('/forgot-password')
-  .post(secondaryRateLimiter, validateBody(authValidator.forgotPasswordSchema), controller.forgotPassword);
+  .post(
+    secondaryRateLimiter,
+    validateBody(authValidator.forgotPasswordSchema),
+    controller.forgotPassword
+  );
 router
   .route('/reset-password')
   .post(validateBody(authValidator.resetPasswordSchema), controller.resetPassword);
