@@ -63,7 +63,7 @@ export const generateRefreshToken = async (
   session?: mongoose.ClientSession
 ): Promise<GenerateRefreshTokenResult> => {
   try {
-    const jti = `${userId}-${String(Date.now())}-${crypto.randomBytes(32).toString('hex')}`;
+    const jti = crypto.randomUUID();
 
     const payload: RefreshTokenPayload = {
       id: userId,
@@ -84,9 +84,7 @@ export const generateRefreshToken = async (
     }
 
     const tokenId = new mongoose.Types.ObjectId();
-    const effectiveRootTokenId = rootTokenId
-      ? new mongoose.Types.ObjectId(rootTokenId)
-      : tokenId;
+    const effectiveRootTokenId = rootTokenId ? new mongoose.Types.ObjectId(rootTokenId) : tokenId;
     const effectiveParentTokenId = parentTokenId
       ? new mongoose.Types.ObjectId(parentTokenId)
       : null;
@@ -171,7 +169,7 @@ export const setTokenCookies = (
     secure: isProduction,
     sameSite: 'strict',
     maxAge: refreshTokenMaxAge,
-    path: '/',
+    path: '/api/v1/auth',
   });
 
   return res;
