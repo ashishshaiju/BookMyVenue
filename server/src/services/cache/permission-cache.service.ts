@@ -58,9 +58,7 @@ const resolveAndCache = async (roleId: string, roleName: string): Promise<string
  */
 export const getPerms = async (roleId: string, roleName: string): Promise<IPermission[]> => {
   const cached = getEntry(roleId);
-  const permissions = cached
-    ? cached.permissions
-    : await resolveAndCache(roleId, roleName);
+  const permissions = cached ? cached.permissions : await resolveAndCache(roleId, roleName);
   return permissions as IPermission[];
 };
 

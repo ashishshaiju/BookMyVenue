@@ -1,5 +1,5 @@
-export type EmailIntentType = typeof EmailIntent[keyof typeof EmailIntent];
-export type EmailTaskStatusType = typeof EmailTaskStatus[keyof typeof EmailTaskStatus];
+export type EmailIntentType = (typeof EmailIntent)[keyof typeof EmailIntent];
+export type EmailTaskStatusType = (typeof EmailTaskStatus)[keyof typeof EmailTaskStatus];
 
 export const EmailIntent = {
   ACCOUNT_NOTIFICATION: 'account_notification',

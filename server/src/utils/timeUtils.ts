@@ -1,7 +1,7 @@
 /**
  * Parses a duration string (e.g., '60s', '30m', '24h', '7d') into milliseconds.
  * If the input is already a number or a pure numeric string, it is treated as milliseconds.
- * 
+ *
  * Supports units:
  * - s: seconds
  * - m: minutes
@@ -20,7 +20,9 @@ export const parseDurationToMs = (duration: string | number): number => {
 
   const match = /^(\d+)([smhd])$/i.exec(duration);
   if (!match) {
-    throw new Error(`Invalid duration format: "${duration}". Expected format like "60s", "30m", "24h", "7d".`);
+    throw new Error(
+      `Invalid duration format: "${duration}". Expected format like "60s", "30m", "24h", "7d".`
+    );
   }
 
   const value = parseInt(match[1], 10);

@@ -1,4 +1,10 @@
-import type { IVenue, VenueStatus, AdminVenueFilters, CreateVenueData, UpdateVenueData } from './venue.types';
+import type {
+  IVenue,
+  VenueStatus,
+  AdminVenueFilters,
+  CreateVenueData,
+  UpdateVenueData,
+} from './venue.types';
 import { VenueModel } from './venue.model';
 import mongoose from 'mongoose';
 
@@ -6,6 +12,10 @@ import mongoose from 'mongoose';
 
 const toObjectId = (id: string): mongoose.Types.ObjectId => {
   return new mongoose.Types.ObjectId(id);
+};
+
+function escapeRegex(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 // Read Operations
@@ -22,7 +32,7 @@ export async function existsByOwnerAndName(
 ): Promise<boolean> {
   const query: Record<string, unknown> = {
     ownerUserId: toObjectId(ownerUserId),
-    name: { $regex: new RegExp(`^${name}$`, 'i') }, 
+    name: { $regex: new RegExp(`^${escapeRegex(name)}$`, 'i') },
     deleted: false,
   };
 
@@ -66,7 +76,7 @@ export async function findAllVenues(filters: AdminVenueFilters): Promise<{
 
   const query: Record<string, unknown> = { deleted: false };
   if (status) query.status = status;
-  if (city) query.city = { $regex: new RegExp(`^${city}$`, 'i') };
+  if (city) query.city = { $regex: new RegExp(`^${escapeRegex(city)}$`, 'i') };
 
   const [venues, total] = await Promise.all([
     VenueModel.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit).exec(),
@@ -85,10 +95,7 @@ export async function createVenue(data: CreateVenueData): Promise<IVenue> {
 }
 
 /** Partial update of an existing venue */
-export async function updateVenue(
-  venueId: string,
-  patch: UpdateVenueData
-): Promise<IVenue | null> {
+export async function updateVenue(venueId: string, patch: UpdateVenueData): Promise<IVenue | null> {
   return VenueModel.findOneAndUpdate(
     { _id: toObjectId(venueId), deleted: false },
     { $set: patch },
@@ -112,7 +119,7 @@ export async function softDeleteVenue(venueId: string, updatedBy: string): Promi
   return result.modifiedCount > 0;
 }
 
-// State Machine Operations 
+// State Machine Operations
 
 /**
  * Atomic status update.
@@ -137,9 +144,8 @@ export async function updateVenueStatus(
     patch.$unset = { rejectionReason: '' };
   }
 
-  return VenueModel.findOneAndUpdate(
-    { _id: toObjectId(venueId), deleted: false },
-    patch,
-    { new: true, runValidators: true }
-  ).exec();
+  return VenueModel.findOneAndUpdate({ _id: toObjectId(venueId), deleted: false }, patch, {
+    new: true,
+    runValidators: true,
+  }).exec();
 }

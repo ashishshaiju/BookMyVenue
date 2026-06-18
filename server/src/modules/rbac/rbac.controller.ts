@@ -8,7 +8,7 @@ export const rbacController = {
     ResponseUtil.success(res, 'Cache stats retrieved', {
       totalRoles: stats.size,
       totalPermissions: stats.entries.reduce((sum, entry) => sum + entry.permissionCount, 0),
-      roles: stats.entries
+      roles: stats.entries,
     });
   },
 
@@ -20,5 +20,5 @@ export const rbacController = {
   invalidateRoleCache: (req: Request, res: Response): void => {
     service.invalidateRoleCache(String(req.params.roleId));
     ResponseUtil.success(res, `Cache invalidated for role ${String(req.params.roleId)}`);
-  }
+  },
 };

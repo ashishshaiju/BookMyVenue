@@ -1,5 +1,11 @@
 import * as repo from './venue.repository';
-import type { CreateVenueData, UpdateVenueData, AdminVenueFilters, IVenue, VenueKey } from './venue.types';
+import type {
+  CreateVenueData,
+  UpdateVenueData,
+  AdminVenueFilters,
+  IVenue,
+  VenueKey,
+} from './venue.types';
 import { requireOwnVenue } from './venue.ownership';
 import * as workflow from './venue.workflow';
 import { NotFoundError, ConflictError } from '../../utils/errors';
@@ -9,7 +15,7 @@ import type {
   RejectVenueDTO,
   AdminVenueFiltersDTO,
 } from './venue.validator';
-import {VenueFields} from '../../constants/venue.constants';
+import { VenueFields } from '../../constants/venue.constants';
 
 // Owner Operations
 
@@ -59,7 +65,6 @@ export async function updateVenue(
   userId: string,
   dto: UpdateVenueDTO
 ): Promise<IVenue> {
-
   const venue = await requireOwnVenue(venueId, userId);
 
   workflow.canEdit(venue);

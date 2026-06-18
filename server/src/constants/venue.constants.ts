@@ -1,4 +1,4 @@
-import type { IVenue } from "../modules/venue/venue.types"; 
+import type { IVenue } from '../modules/venue/venue.types';
 
 export const VenueStatusEnum = [
   'Draft',

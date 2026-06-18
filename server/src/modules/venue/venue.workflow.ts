@@ -56,12 +56,16 @@ export function canSubmit(venue: IVenue): void {
 
   // Dependent field validation
   if (venue.bookingType === 'fixedBooking' && venue.fixedPackages.length === 0) {
-    throw new ValidationError('Cannot submit: at least one fixed package is required for fixed booking type');
+    throw new ValidationError(
+      'Cannot submit: at least one fixed package is required for fixed booking type'
+    );
   }
 
   if (venue.bookingType === 'flexibleBooking') {
     if (!venue.workingHours.open || !venue.workingHours.close) {
-      throw new ValidationError('Cannot submit: working hours are required for flexible booking type');
+      throw new ValidationError(
+        'Cannot submit: working hours are required for flexible booking type'
+      );
     }
     if (venue.pricingType === 'timeBasedPricing' && venue.pricingRules.length === 0) {
       throw new ValidationError('Cannot submit: pricing rules are required for time-based pricing');
@@ -92,19 +96,13 @@ export function canActivate(venue: IVenue): void {
 export function canEdit(venue: IVenue): void {
   const editableStatuses: VenueStatus[] = ['Draft', 'Rejected'];
   if (!editableStatuses.includes(venue.status)) {
-    throw new WorkflowError(
-      venue.status,
-      'edit — only Draft or Rejected venues can be edited'
-    );
+    throw new WorkflowError(venue.status, 'edit — only Draft or Rejected venues can be edited');
   }
 }
 
 export function canDelete(venue: IVenue): void {
   const deletableStatuses: VenueStatus[] = ['Draft', 'Rejected'];
   if (!deletableStatuses.includes(venue.status)) {
-    throw new WorkflowError(
-      venue.status,
-      'delete — only Draft or Rejected venues can be deleted'
-    );
+    throw new WorkflowError(venue.status, 'delete — only Draft or Rejected venues can be deleted');
   }
 }

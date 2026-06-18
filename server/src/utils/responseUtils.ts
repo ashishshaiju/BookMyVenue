@@ -52,7 +52,11 @@ export const ResponseUtil = {
     sendError(res, message, error, 409);
   },
 
-  rateLimitExceeded(res: Response, message = 'Too many requests. Please try again later', error?: string): void {
+  rateLimitExceeded(
+    res: Response,
+    message = 'Too many requests. Please try again later',
+    error?: string
+  ): void {
     sendError(res, message, error, 429);
   },
 

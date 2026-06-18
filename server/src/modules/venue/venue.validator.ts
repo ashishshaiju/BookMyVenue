@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-// Shared sub-schemas 
+// Shared sub-schemas
 
 /** [longitude, latitude] */
 const coordinatesSchema = z
@@ -13,10 +13,7 @@ const coordinatesSchema = z
 const phoneSchema = z
   .string()
   .trim()
-  .regex(
-    /^\+?[\d\s\-().]{7,20}$/,
-    'Contact phone must be a valid phone number (7-20 characters)'
-  );
+  .regex(/^\+?[\d\s\-().]{7,20}$/, 'Contact phone must be a valid phone number (7-20 characters)');
 
 const urlSchema = z.string().regex(/^https?:\/\/.+/, 'Must be a valid URL');
 
@@ -96,7 +93,10 @@ export const createVenueSchema = z.object({
   // Contact
   contactName: z.string().trim().min(2).max(100),
   contactPhone: phoneSchema,
-  contactEmail: z.string().regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, 'Must be a valid email').optional(),
+  contactEmail: z
+    .string()
+    .regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, 'Must be a valid email')
+    .optional(),
 
   // Policies
   cancellationPolicy: z.enum(['refundable', 'nonRefundable']),
@@ -109,10 +109,11 @@ export type CreateVenueDTO = z.infer<typeof createVenueSchema>;
 // Update
 
 // PUT /venues/:id
-export const updateVenueSchema = createVenueSchema.partial().refine(
-  (data) => Object.keys(data).length > 0,
-  { message: 'At least one field must be provided for update' }
-);
+export const updateVenueSchema = createVenueSchema
+  .partial()
+  .refine((data) => Object.keys(data).length > 0, {
+    message: 'At least one field must be provided for update',
+  });
 
 export type UpdateVenueDTO = z.infer<typeof updateVenueSchema>;
 
@@ -131,9 +132,7 @@ export type RejectVenueDTO = z.infer<typeof rejectVenueSchema>;
 // Admin list filters
 
 export const adminVenueFiltersSchema = z.object({
-  status: z
-    .enum(['Draft', 'PendingReview', 'Approved', 'Rejected', 'Suspended'])
-    .optional(),
+  status: z.enum(['Draft', 'PendingReview', 'Approved', 'Rejected', 'Suspended']).optional(),
   city: z.string().trim().max(100).optional(),
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().positive().max(100).default(20),

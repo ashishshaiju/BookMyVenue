@@ -42,34 +42,36 @@ export async function registerUser(
   const existingUser = await userRepo.findUserByUsernameOrEmail(username, email);
   if (existingUser) {
     logWarn('Registration attempt with existing user', { username, email });
-    throw new BadRequestError('User already exists! please login instead, or choose a different username/email');
+    throw new BadRequestError(
+      'User already exists! please login instead, or choose a different username/email'
+    );
   }
 
   const defaultRole = await authRepo.findDefaultRole();
   if (!defaultRole) {
     logError('register: default "user" role missing from system configs', {
-      module: 'auth.service.ts:registerUser',
+      module: 'auth.service.ts/registerUser',
     });
-    throw new AppError('System initialization Error, Pls contact admin...', 500, 'INTERNAL_SERVER_ERROR');
+    throw new AppError(
+      'System initialization Error, Pls contact admin...',
+      500,
+      'INTERNAL_SERVER_ERROR'
+    );
   }
 
   let createdUserId = '';
 
   await runInTransaction(async (session) => {
     const hashedPassword = await bcrypt.hash(password, 12);
-    
+
     const newUser = await userRepo.createUser(
       { username, email, passwordHash: hashedPassword },
       session
     );
-    
+
     createdUserId = newUser._id.toString();
 
-    await authRepo.assignRoleToUser(
-      newUser._id,
-      defaultRole._id,
-      session
-    );
+    await authRepo.assignRoleToUser(newUser._id, defaultRole._id, session);
   });
 
   logInfo('New user registered successfully', { username, email });
@@ -111,7 +113,7 @@ export async function loginUser(
   }
 
   if (!authEnvs.accessTokenSecret || !authEnvs.refreshTokenSecret) {
-    logError('JWT secrets not configured');
+    logError('JWT secrets not configured', { module: 'auth.service.ts/loginUser' });
     throw new AppError('Server configuration error', 500, 'INTERNAL_SERVER_ERROR');
   }
 
@@ -127,6 +129,7 @@ export async function loginUser(
       );
     } catch (err: unknown) {
       logError('Failed to cleanup reset tokens on login', {
+        module: 'auth.service.ts/loginUser',
         error: err instanceof Error ? err.message : String(err),
       });
     }
@@ -157,7 +160,7 @@ export async function loginUser(
 
 export async function rotateRefreshToken(
   storedToken: StoredToken | undefined,
-  decodedToken: DecodedToken | undefined,
+  decodedToken: DecodedToken | undefined
 ): Promise<{
   userId: string;
   username: string;
@@ -188,11 +191,7 @@ export async function rotateRefreshToken(
     );
     newRefreshTokenStr = result.token;
 
-    await revokeRefreshToken(
-      storedToken.tokenHash,
-      TokenRevocationReason.TOKEN_ROTATION,
-      session
-    );
+    await revokeRefreshToken(storedToken.tokenHash, TokenRevocationReason.TOKEN_ROTATION, session);
   });
 
   return {
@@ -207,11 +206,7 @@ export async function rotateRefreshToken(
 export async function logoutUser(userId: string, storedToken?: StoredToken): Promise<void> {
   if (storedToken) {
     await runInTransaction(async (session) => {
-      await revokeRefreshToken(
-        storedToken.tokenHash,
-        TokenRevocationReason.USER_LOGOUT,
-        session
-      );
+      await revokeRefreshToken(storedToken.tokenHash, TokenRevocationReason.USER_LOGOUT, session);
       await authRepo.deactivateSessionByRootTokenId(storedToken.rootTokenId.toString(), session);
     });
   }
@@ -257,13 +252,20 @@ export async function processForgotPassword(
         userAgent,
         secondsRemaining,
       });
-      throw new RateLimitError(`Please wait ${secondsRemaining.toString()} seconds before resending reset link`);
+      throw new RateLimitError(
+        `Please wait ${secondsRemaining.toString()} seconds before resending reset link`
+      );
     }
   }
 
   const user = await userRepo.findActiveUserByEmail(normalizedEmail);
   if (!user) {
-    await authRepo.createPasswordResetRequest({ emailHash, ip: ipAddress, userAgent, emailSent: false });
+    await authRepo.createPasswordResetRequest({
+      emailHash,
+      ip: ipAddress,
+      userAgent,
+      emailSent: false,
+    });
     logWarn('forgot-password: user not found or inactive', { ip: ipAddress, userAgent });
     return;
   }
@@ -333,16 +335,10 @@ export async function processResetPassword(
       throw new BadRequestError('Invalid or expired reset token');
     }
 
-    if (tokenRecord.expiresAt < new Date()) {
-      logWarn('reset-password: token expired', {
-        userId: tokenRecord.userId.toString(),
-        ip: ipAddress,
-        userAgent,
-      });
-      throw new BadRequestError('Invalid or expired reset token');
-    }
-
-    const user = await userRepo.findActiveUserByIdWithPassword(tokenRecord.userId.toString(), session);
+    const user = await userRepo.findActiveUserByIdWithPassword(
+      tokenRecord.userId.toString(),
+      session
+    );
 
     if (!user) {
       logWarn('reset-password: user not found or inactive', {
@@ -355,7 +351,7 @@ export async function processResetPassword(
 
     const userId = user._id;
     const isSamePassword = await bcrypt.compare(password, user.password);
-    
+
     if (isSamePassword) {
       await authRepo.revokeAllOtherPasswordResetTokens(
         userId,

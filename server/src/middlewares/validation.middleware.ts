@@ -44,7 +44,7 @@ const validate = (
             bodyResult.error instanceof z.ZodError
               ? formatErrorMessage(bodyResult.error)
               : 'Invalid request body';
-            logWarn('Request body validation failed', { errorLog });
+          logWarn('Request body validation failed', { errorLog });
           ResponseUtil.badRequest(res, errorMessage);
           return;
         }
@@ -63,7 +63,7 @@ const validate = (
             paramsResult.error instanceof z.ZodError
               ? formatErrorMessage(paramsResult.error)
               : 'Invalid request parameters';
-            logWarn('Request params validation failed', { errorLog });
+          logWarn('Request params validation failed', { errorLog });
           ResponseUtil.badRequest(res, errorMessage);
           return;
         }
@@ -81,7 +81,7 @@ const validate = (
             queryResult.error instanceof z.ZodError
               ? formatErrorMessage(queryResult.error)
               : 'Invalid query parameters';
-            logWarn('Request query validation failed', { errorLog });
+          logWarn('Request query validation failed', { errorLog });
           ResponseUtil.badRequest(res, errorMessage);
           return;
         }
@@ -90,7 +90,7 @@ const validate = (
 
       next();
     } catch (error) {
-        logError('Validation middleware error', { module: 'validation.middleware.ts', error });
+      logError('Validation middleware error', { module: 'validation.middleware.ts', error });
       ResponseUtil.internalServerError(res, 'Validation error');
     }
   };

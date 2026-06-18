@@ -1,5 +1,6 @@
 import type { IRefreshToken } from '../modules/auth/models/refresh-token.model';
 import type { IPermission } from '../constants/permissions';
+import type { PaginationParams } from './pagination.types';
 
 export type StoredToken = IRefreshToken;
 
@@ -63,6 +64,7 @@ declare global {
       user?: AuthenticatedUser;
       token?: RequestToken;
       validated?: ValidatedRequest;
+      pagination?: PaginationParams;
     }
   }
 }
