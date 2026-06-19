@@ -6,8 +6,8 @@ import LoginPage from './pages/login';
 import ForgotPasswordPage from './pages/forgotPassword';
 import ResetPasswordPage from './pages/resetPassword';
 import MainLayout from './layout/MainLayout';
-import ListVenueLayout from './layout/ListVenueLayout';
-import MyVenues from './pages/listVenue/MyVenues';
+import ListVenueLayout from './pages/listVenue/layouts';
+import MyVenues from './pages/listVenue/MyVenue';
 import AddVenue from './pages/listVenue/Addvenue';
 import AuthGuard from './components/common/AuthGuard';
 import GuestGuard from './components/common/GuestGuard';
@@ -24,11 +24,11 @@ export function AppRouter() {
           <Route path="venue/:id" element={<VenueDetails />} />
         </Route>
 
-        <Route path="/list-venue" element={<ListVenueLayout />}>
+        {/* <Route path="/list-venue" element={<ListVenueLayout />}>
           <Route path="add-venue" element={<AddVenue />} />
           <Route path="my-venues" element={<MyVenues />} />
           <Route index element={<MyVenues />} />
-        </Route>
+        </Route> */}
 
         {/* Guest-only Routes */}
         <Route element={<GuestGuard />}>

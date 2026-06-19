@@ -1,12 +1,12 @@
 import { Formik, Form } from 'formik';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { useAuth } from '../../../hooks/useAuth';
 import { useToast } from '../../../hooks/useToast';
 import { useImageUpload } from '../../../hooks/useImageUpload';
-import { createVenue, submitVenue } from '../../../services/venueService';
+import { createVenue, upsertVenueDraft, getMyDraft } from '../../../services/venueService';
 import { mapFormToDTO } from '../../../utils/venueFormMapper';
-import { saveDraft, loadDraft, clearDraft } from '../../../utils/venueDraft';
+import { saveDraftSession, loadDraftSession, clearDraftSession, clearDraft } from '../../../utils/venueDraft';
 import type { AddVenueFormValues } from '../../../types/venue.types';
 
 import BasicInfoStep from './components/BasicInfoStep';
@@ -16,91 +16,121 @@ import FinishStep from './components/FinishStep';
 import { finishSchema } from './components/FinishValidation';
 import { middleSchema } from './components/middleValidation';
 
+const BLANK_FORM: AddVenueFormValues = {
+  VenueName: '', VenueDescription: '', venueType: '',
+  district: '', state: '', city: '', pincode: '', fullAddress: '', googleMapsLink: '',
+  spaceAttributes: [], seatingConfigurations: [], maxCapacity: '',
+  bookingType: '', workingDays: [],
+  fixedPackages: [{ slotName: '', startTime: '', endTime: '', price: '' }],
+  workingHours: { open: '', close: '' },
+  slotDuration: '', bufferTime: '', pricingType: '', samePrice: '',
+  pricingRules: [{ fromTime: '', toTime: '', price: '' }],
+  blockedTimes: [{ fromTime: '', toTime: '', reason: '' }],
+  amenities: [], venuePhotos: [],
+  contactName: '', contactPhone: '', cancellationPolicy: '', refundType: '',
+  refundRules: [{ daysBefore: '', refundPercentage: '' }],
+};
+
 const STEP_LABELS = ['Basic Info', 'Booking', 'Final Details'];
 
 const AddVenue = () => {
   const [step, setStep] = useState(0);
+  const [formValues, setFormValues] = useState<AddVenueFormValues>(BLANK_FORM);
+  const [initializing, setInitializing] = useState(true);
+
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const { success: showSuccess } = useToast();
+  const { user, loading: authLoading } = useAuth();
+  const { success: showSuccess, error: showError } = useToast();
   const { uploadFiles, isUploading } = useImageUpload();
 
   const stepSchemas = [basicInfoSchema, middleSchema, finishSchema];
 
-  const initialValues: AddVenueFormValues = {
-    VenueName: '',
-    VenueDescription: '',
-    venueType: '',
-    district: '',
-    state: '',
-    city: '',
-    pincode: '',
-    fullAddress: '',
-    googleMapsLink: '',
-    spaceAttributes: [],
-    seatingConfigurations: [],
-    maxCapacity: '',
-    bookingType: '',
-    workingDays: [],
-    fixedPackages: [{ slotName: '', startTime: '', endTime: '', price: '' }],
-    workingHours: { open: '', close: '' },
-    slotDuration: '',
-    bufferTime: '',
-    pricingType: '',
-    samePrice: '',
-    pricingRules: [{ fromTime: '', toTime: '', price: '' }],
-    blockedTimes: [{ fromTime: '', toTime: '', reason: '' }],
-    amenities: [],
-    venuePhotos: [],
-    contactName: '',
-    contactPhone: '',
-    cancellationPolicy: '',
-    refundType: '',
-    refundRules: [{ daysBefore: '', refundPercentage: '' }],
-  };
+  // ─── Mount: Hydrate from sessionStorage → API → blank ──────────────────
+  useEffect(() => {
+    const init = async () => {
+      if (authLoading) return;
+      if (!user?.id) { setInitializing(false); return; }
 
-  const savedDraft = user?.id ? loadDraft<AddVenueFormValues>(user.id) : null;
-  const resolvedInitialValues = savedDraft ?? initialValues;
+      // 1. sessionStorage is the fastest path — no API call
+      const session = loadDraftSession(user.id);
+      if (session && session.formValues) {
+        console.log('Restoring draft from session:', session.formValues);
+        setStep(session.step || 0);
+        setFormValues({ ...BLANK_FORM, ...session.formValues });
+        setInitializing(false);
+        showSuccess('Draft retrieved, you can continue from here.');
+        return;
+      }
+
+      // 2. No session — check the server for a Draft
+      try {
+        const draft = await getMyDraft();
+        console.log('Draft from API:', draft);
+        if (draft && draft.formValues && Object.keys(draft.formValues).length > 0) {
+          console.log('Restoring draft from API:', draft.formValues);
+          const values = { ...BLANK_FORM, ...(draft.formValues as Partial<AddVenueFormValues>) };
+          const resumeStep = typeof draft.step === 'number' ? draft.step : 0;
+
+          setStep(resumeStep);
+          setFormValues(values);
+          saveDraftSession(user.id, { venueId: 'draft', step: resumeStep, formValues: values });
+          showSuccess('Draft retrieved, you can continue from here.');
+        }
+        // else: no draft → show blank form at step 0 (default state)
+      } catch (err) {
+        console.error('Failed to get draft:', err);
+      } finally {
+        setInitializing(false);
+      }
+    };
+
+    void init();
+  }, [user?.id, authLoading, showSuccess]);
+
+  if (initializing) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center">
+          <div className="w-10 h-10 border-4 border-[var(--bg-green)] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+          <p className="text-[var(--text-secondary)] text-sm">Loading your draft…</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <Formik
-      initialValues={resolvedInitialValues}
+      initialValues={formValues}
       enableReinitialize
       validationSchema={stepSchemas[step] || undefined}
       onSubmit={async (values, { setSubmitting }) => {
-        console.log('Submit triggered. User ID:', user?.id);
         if (!user?.id) {
-          console.warn('No user ID found, exiting submit early.');
+          showError('User not authenticated. Please restart.');
           return;
         }
         try {
-          console.log('Starting submission process...');
           setSubmitting(true);
 
+          // 1. Upload images to Cloudinary
           let imageUrls: string[] = [];
-          if (values.venuePhotos && values.venuePhotos.length > 0) {
-            console.log('Uploading images...');
+          if (values.venuePhotos?.length > 0) {
             imageUrls = await uploadFiles(values.venuePhotos);
-            console.log('Images uploaded:', imageUrls);
           }
 
-          console.log('Mapping form to DTO...');
+          // 2. Map the entire form to DTO
           const dto = mapFormToDTO(values, imageUrls);
-          console.log('DTO:', dto);
 
-          console.log('Calling createVenue API...');
-          const venue = await createVenue(dto);
-          console.log('Venue created:', venue);
+          // 3. Submit full venue
+          await createVenue(dto);
 
-          console.log('Calling submitVenue API...');
-          await submitVenue(venue._id);
-
-          console.log('Cleaning up draft and navigating...');
+          // 4. Cleanup
+          clearDraftSession(user.id);
           clearDraft(user.id);
           showSuccess('Venue submitted for review successfully!');
           navigate('/list-venue/my-venues');
         } catch (error) {
           console.error('Submission failed:', error);
+          showError('Submission failed. Please try again.');
         } finally {
           setSubmitting(false);
         }
@@ -137,14 +167,23 @@ const AddVenue = () => {
             return;
           }
 
-          if (user?.id) saveDraft(user.id, values);
-          setStep((s) => s + 1);
+          if (!user?.id) { showError('User not authenticated'); return; }
+
+          try {
+            // Save raw form values as a draft backup on the server
+            await upsertVenueDraft(step + 1, values);
+            saveDraftSession(user.id, { venueId: 'draft', step: step + 1, formValues: values });
+            setStep((s) => s + 1);
+          } catch (error) {
+            console.error('Save failed:', error);
+            showError('Failed to save progress. Please try again.');
+          }
         };
 
         return (
           <Form className="pb-28">
             {/* Step indicators */}
-            <div className="ml-72 mb-6 flex gap-3 items-center px-6 pt-6">
+            <div className="mb-6 flex gap-2 md:gap-3 items-center px-2 md:px-0 pt-2 overflow-x-auto whitespace-nowrap hide-scrollbar">
               {STEP_LABELS.map((label, i) => (
                 <div key={i} className="flex items-center gap-2">
                   <span
@@ -178,7 +217,7 @@ const AddVenue = () => {
             {step === 2 && <FinishStep />}
 
             {/* Fixed bottom navigation bar */}
-            <div className="fixed bottom-0 left-72 right-0 bg-[var(--bg-tertiary)] border-t border-[var(--bg-grey)] px-8 py-4 flex items-center justify-between z-10">
+            <div className="fixed bottom-[4.5rem] md:bottom-0 left-0 md:left-72 right-0 bg-[var(--bg-tertiary)] border-t border-[var(--bg-grey)] px-4 md:px-8 py-3 md:py-4 flex items-center justify-between z-40 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
               {/* Previous */}
               {step > 0 ? (
                 <button

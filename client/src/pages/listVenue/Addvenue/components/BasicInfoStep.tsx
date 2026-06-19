@@ -51,7 +51,7 @@ const err = 'text-red-500 text-sm mt-1';
 
 const BasicInfoStep = () => {
   return (
-    <section className="font-sans ml-72">
+    <section className="font-sans">
       <div className="mb-8">
         <h2 className="text-3xl font-bold text-[var(--bg-green)]">Venue Registration</h2>
         <p className="text-[var(--text-secondary)] mt-2">
