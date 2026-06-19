@@ -8,5 +8,4 @@ export const loadDraft = <T>(userId: string): T | null => {
   return raw ? (JSON.parse(raw) as T) : null;
 };
 
-export const clearDraft = (userId: string): void =>
-  sessionStorage.removeItem(getDraftKey(userId));
+export const clearDraft = (userId: string): void => sessionStorage.removeItem(getDraftKey(userId));

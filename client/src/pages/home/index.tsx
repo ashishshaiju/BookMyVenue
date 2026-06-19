@@ -1,25 +1,25 @@
-import { useNavigate } from "react-router";
-import { useState } from "react";
-import { Link  } from "react-router";
-import { featuredVenues } from "./featuredVenues";
-import { IoLocationOutline , IoSearch } from "react-icons/io5";
-import { TiStar } from "react-icons/ti";
-import heroImage from '../../assets/hero.png'
+import { useNavigate } from 'react-router';
+import { useState } from 'react';
+import { Link } from 'react-router';
+import { featuredVenues } from './featuredVenues';
+import { IoLocationOutline, IoSearch } from 'react-icons/io5';
+import { TiStar } from 'react-icons/ti';
+import heroImage from '../../assets/hero.png';
 
 const HomePage = () => {
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState('');
 
-const navigate = useNavigate();
+  const navigate = useNavigate();
 
-const handleSearch = () => {
-  const trimmedSearch = search.trim();
+  const handleSearch = () => {
+    const trimmedSearch = search.trim();
 
-  if (trimmedSearch) {
-    navigate(`/explore?search=${encodeURIComponent(trimmedSearch)}`);
-  } else {
-    navigate("/explore");
-  }
-};
+    if (trimmedSearch) {
+      navigate(`/explore?search=${encodeURIComponent(trimmedSearch)}`);
+    } else {
+      navigate('/explore');
+    }
+  };
   return (
     <div>
       <section className="relative h-[550px] md:h-[620px] w-full overflow-hidden flex items-center justify-center">
@@ -43,11 +43,8 @@ const handleSearch = () => {
           </p>
 
           <div className="mt-10 max-w-3xl mx-auto bg-white rounded-2xl p-2 shadow-xl flex flex-col md:flex-row items-center gap-2">
-            
             <div className="flex items-center gap-3 w-full px-4 py-3">
-              <IoLocationOutline
-                className="text-[var(--text-secondary)] text-xl"
-              />
+              <IoLocationOutline className="text-[var(--text-secondary)] text-xl" />
 
               <input
                 type="text"
@@ -71,13 +68,10 @@ const handleSearch = () => {
       </section>
       <section className="px-6 py-16 bg-[var(--bg-primary)]">
         <div className="max-w-7xl mx-auto">
-          
           {/* header */}
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h2 className="text-3xl font-semibold text-[var(--text-primary)]">
-                Featured Venues
-              </h2>
+              <h2 className="text-3xl font-semibold text-[var(--text-primary)]">Featured Venues</h2>
 
               <p className="text-[var(--text-secondary)] mt-2">
                 Explore some of our popular event spaces.
@@ -99,29 +93,20 @@ const handleSearch = () => {
                 key={venue.id}
                 className="bg-[var(--bg-tertiary)] rounded-2xl overflow-hidden border border-[var(--bg-grey)] hover:shadow-lg transition duration-300"
               >
-                <img
-                  src={venue.image}
-                  alt={venue.name}
-                  className="w-full h-56 object-cover"
-                />
+                <img src={venue.image} alt={venue.name} className="w-full h-56 object-cover" />
 
                 <div className="p-5">
-                  <h3 className="text-lg font-semibold text-[var(--text-primary)]">
-                    {venue.name}
-                  </h3>
+                  <h3 className="text-lg font-semibold text-[var(--text-primary)]">{venue.name}</h3>
                   <div className="flex justify-between">
                     <p className="text-sm text-[var(--text-secondary)] mt-2 flex items-center gap-1">
-                      <IoLocationOutline/> {venue.place} , {venue.district}
+                      <IoLocationOutline /> {venue.place} , {venue.district}
                     </p>
-                      <p className="flex items-center">
-                          <TiStar color="#a8dc55"/> {venue.rating}
-                      </p>
+                    <p className="flex items-center">
+                      <TiStar color="#a8dc55" /> {venue.rating}
+                    </p>
                   </div>
-                  
 
-                  <p className="text-sm text-[var(--text-secondary)] mt-2">
-                    Upto {venue.guests}
-                  </p>
+                  <p className="text-sm text-[var(--text-secondary)] mt-2">Upto {venue.guests}</p>
 
                   <Link
                     to={`/venue/${venue.id}`}
@@ -136,10 +121,7 @@ const handleSearch = () => {
 
           {/* Mobile View All */}
           <div className="mt-8 md:hidden text-center">
-            <Link
-              to="/explore"
-              className="text-[var(--bg-green)] font-medium"
-            >
+            <Link to="/explore" className="text-[var(--bg-green)] font-medium">
               View All Venues →
             </Link>
           </div>

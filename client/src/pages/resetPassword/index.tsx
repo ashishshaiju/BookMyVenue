@@ -1,13 +1,13 @@
-import { useState, useEffect } from "react";
-import { FaBuilding } from "react-icons/fa";
-import { Formik, Form, Field, ErrorMessage } from "formik";
-import { Link, useNavigate, useSearchParams } from "react-router";
-import { resetPasswordSchema } from "./validation";
-import { axiosInstance } from "../../config/axios";
-import { API_ENDPOINTS } from "../../constants";
-import { useToast } from "../../hooks/useToast";
-import { extractErrorMessage } from "../../utils/toast";
-import type { FormikHelpers } from "formik";
+import { useState, useEffect } from 'react';
+import { FaBuilding } from 'react-icons/fa';
+import { Formik, Form, Field, ErrorMessage } from 'formik';
+import { Link, useNavigate, useSearchParams } from 'react-router';
+import { resetPasswordSchema } from './validation';
+import { axiosInstance } from '../../config/axios';
+import { API_ENDPOINTS } from '../../constants';
+import { useToast } from '../../hooks/useToast';
+import { extractErrorMessage } from '../../utils/toast';
+import type { FormikHelpers } from 'formik';
 
 interface ResetFormValues {
   password: string;
@@ -18,23 +18,23 @@ const ResetPasswordPage = () => {
   const toast = useToast();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const token = searchParams.get("token");
+  const token = searchParams.get('token');
 
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!token) {
-      toast.error("Reset token is missing from the URL. Please request a new link.");
+      toast.error('Reset token is missing from the URL. Please request a new link.');
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   const handleSubmit = async (
     values: ResetFormValues,
-    { resetForm }: FormikHelpers<ResetFormValues>,
+    { resetForm }: FormikHelpers<ResetFormValues>
   ) => {
     if (!token) {
-      toast.error("Cannot reset password without a valid token.");
+      toast.error('Cannot reset password without a valid token.');
       return;
     }
 
@@ -46,14 +46,16 @@ const ResetPasswordPage = () => {
         password: values.password,
       });
 
-      toast.success(response.data?.message || "Password reset successful!");
+      toast.success(response.data?.message || 'Password reset successful!');
       resetForm();
 
       setTimeout(() => {
-        navigate("/login");
+        navigate('/login');
       }, 3000);
     } catch (error: unknown) {
-      toast.error(extractErrorMessage(error) || "Failed to reset password. Please request a new link.");
+      toast.error(
+        extractErrorMessage(error) || 'Failed to reset password. Please request a new link.'
+      );
     } finally {
       setLoading(false);
     }
@@ -62,9 +64,7 @@ const ResetPasswordPage = () => {
   return (
     <div className="min-h-screen flex flex-col justify-center items-center p-5">
       <div className="flex flex-col items-center gap-4">
-        <h1 className="text-[var(--text-primary)] font-sans text-5xl font-bold">
-          Book My Venue
-        </h1>
+        <h1 className="text-[var(--text-primary)] font-sans text-5xl font-bold">Book My Venue</h1>
 
         <div className="bg-[var(--bg-secondary)] p-2 rounded-sm">
           <FaBuilding className="text-5xl" color="white" />
@@ -77,9 +77,7 @@ const ResetPasswordPage = () => {
             Reset token is missing. Please request a new password reset link.
           </div>
         )}
-        <h2 className="text-3xl text-[var(--text-primary)] mt-10 font-semibold">
-          Reset Password
-        </h2>
+        <h2 className="text-3xl text-[var(--text-primary)] mt-10 font-semibold">Reset Password</h2>
 
         <p className="text-[var(--text-secondary)] mt-2">
           Create a new secure password for your account.
@@ -87,8 +85,8 @@ const ResetPasswordPage = () => {
 
         <Formik
           initialValues={{
-            password: "",
-            confirmPassword: "",
+            password: '',
+            confirmPassword: '',
           }}
           validationSchema={resetPasswordSchema}
           onSubmit={handleSubmit}
@@ -128,7 +126,11 @@ const ResetPasswordPage = () => {
               />
 
               <div className="h-2">
-                <ErrorMessage name="confirmPassword" component="p" className="text-red-500 text-sm" />
+                <ErrorMessage
+                  name="confirmPassword"
+                  component="p"
+                  className="text-red-500 text-sm"
+                />
               </div>
             </div>
 
@@ -137,7 +139,7 @@ const ResetPasswordPage = () => {
               disabled={loading || !token}
               className="w-120 mt-6 bg-[var(--bg-secondary)] border-2 border-transparent hover:bg-[var(--bg-primary)] hover:border-2 hover:text-[var(--text-primary)] hover:border-[var(--bg-secondary)] transition-all duration-200 p-3 rounded-xl text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? "Resetting..." : "Reset Password"}
+              {loading ? 'Resetting...' : 'Reset Password'}
             </button>
           </Form>
         </Formik>
@@ -145,7 +147,10 @@ const ResetPasswordPage = () => {
         <div className="mt-10">
           <p className="text-[var(--text-secondary)]">
             Back to
-            <Link to="/login" className="text-[var(--text-primary)] ml-2 font-medium hover:underline transition-all">
+            <Link
+              to="/login"
+              className="text-[var(--text-primary)] ml-2 font-medium hover:underline transition-all"
+            >
               Sign In
             </Link>
           </p>

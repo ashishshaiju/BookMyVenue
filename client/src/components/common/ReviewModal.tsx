@@ -1,27 +1,20 @@
-import { useState } from "react";
-import { Star } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, } from "@/components/ui/dialog";
+import { useState } from 'react';
+import { Star } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 type ReviewModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   venueName: string;
 };
 
-const ReviewModal = ({
-  open,
-  onOpenChange,
-  venueName,
-}: ReviewModalProps) => {
-
+const ReviewModal = ({ open, onOpenChange, venueName }: ReviewModalProps) => {
   const [rating, setRating] = useState(0);
-  const [review, setReview] = useState("");
+  const [review, setReview] = useState('');
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-
       <DialogContent className="rounded-[32px] border border-[var(--bg-grey)] bg-[var(--bg-tertiary)] p-7 sm:max-w-lg">
-
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-[var(--text-primary)]">
             Add Review
@@ -34,14 +27,10 @@ const ReviewModal = ({
 
         {/* Stars */}
         <div className="mt-3">
-
-          <p className="mb-3 font-medium text-[var(--text-primary)]">
-            Your Rating
-          </p>
+          <p className="mb-3 font-medium text-[var(--text-primary)]">Your Rating</p>
 
           <div className="flex gap-2">
             {[1, 2, 3, 4, 5].map((star) => (
-
               <button
                 key={star}
                 type="button"
@@ -51,22 +40,18 @@ const ReviewModal = ({
                 <Star
                   className={`size-8 ${
                     star <= rating
-                      ? "fill-[var(--bg-green)] text-[var(--bg-green)]"
-                      : "text-[var(--bg-grey)]"
+                      ? 'fill-[var(--bg-green)] text-[var(--bg-green)]'
+                      : 'text-[var(--bg-grey)]'
                   }`}
                 />
               </button>
-
             ))}
           </div>
         </div>
 
         {/* Review */}
         <div className="mt-5">
-
-          <p className="mb-3 font-medium text-[var(--text-primary)]">
-            Review
-          </p>
+          <p className="mb-3 font-medium text-[var(--text-primary)]">Review</p>
 
           <textarea
             value={review}
@@ -78,7 +63,6 @@ const ReviewModal = ({
 
         {/* Buttons */}
         <div className="mt-6 flex justify-end gap-3">
-
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
@@ -87,14 +71,10 @@ const ReviewModal = ({
             Cancel
           </Button>
 
-          <Button
-            className="rounded-2xl bg-[var(--bg-green)] hover:opacity-90 cursor-pointer"
-          >
+          <Button className="rounded-2xl bg-[var(--bg-green)] hover:opacity-90 cursor-pointer">
             Submit Review
           </Button>
-
         </div>
-
       </DialogContent>
     </Dialog>
   );

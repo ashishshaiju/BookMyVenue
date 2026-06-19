@@ -3,7 +3,7 @@ import { API_ENDPOINTS } from '../constants';
 
 export async function createVenue(dto: unknown) {
   const res = await axiosInstance.post(API_ENDPOINTS.VENUES, dto);
-  return res.data?.data ?? res.data;   // returns the created venue object including _id
+  return res.data?.data ?? res.data; // returns the created venue object including _id
 }
 
 export async function submitVenue(venueId: string) {

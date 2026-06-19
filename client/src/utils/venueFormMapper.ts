@@ -1,4 +1,4 @@
-import type { AddVenueFormValues } from "../types/venue.types";
+import type { AddVenueFormValues } from '../types/venue.types';
 
 export function mapFormToDTO(values: AddVenueFormValues, imageUrls: string[]) {
   // Common fields shared by both booking types
@@ -26,7 +26,7 @@ export function mapFormToDTO(values: AddVenueFormValues, imageUrls: string[]) {
     cancellationPolicy: values.cancellationPolicy,
     ...(values.refundType ? { refundType: values.refundType } : {}),
     refundRules: (values.refundRules ?? [])
-      .filter((r) => r.daysBefore !== "" && r.refundPercentage !== "")
+      .filter((r) => r.daysBefore !== '' && r.refundPercentage !== '')
       .map((r) => ({
         daysBefore: Number(r.daysBefore),
         refundPercentage: Number(r.refundPercentage),
@@ -37,7 +37,7 @@ export function mapFormToDTO(values: AddVenueFormValues, imageUrls: string[]) {
   };
 
   // Fixed booking
-  if (values.bookingType === "fixedBooking") {
+  if (values.bookingType === 'fixedBooking') {
     return {
       ...base,
       fixedPackages: (values.fixedPackages ?? []).map((p) => ({
@@ -59,12 +59,10 @@ export function mapFormToDTO(values: AddVenueFormValues, imageUrls: string[]) {
     },
     slotDuration: values.slotDuration,
     bufferTime: values.bufferTime,
-    blockedTimes: (values.blockedTimes ?? []).filter(
-      (b) => b.fromTime && b.toTime
-    ),
+    blockedTimes: (values.blockedTimes ?? []).filter((b) => b.fromTime && b.toTime),
   };
 
-  if (values.pricingType === "fixedPricing") {
+  if (values.pricingType === 'fixedPricing') {
     return {
       ...flexBase,
       samePrice: Number(values.samePrice),
