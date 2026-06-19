@@ -56,3 +56,17 @@ export interface AddVenueFormValues {
   refundType: string;
   refundRules: IRefundRule[];
 }
+
+export type VenueStatus = 'Draft' | 'PendingReview' | 'Approved' | 'Rejected' | 'Suspended';
+
+export interface MyVenue {
+  _id: string;
+  name: string;
+  city: string;
+  state: string;
+  venueType: string;
+  coverImage: string;
+  status: VenueStatus;
+  rejectionReason?: string;
+  createdAt: string;
+}
