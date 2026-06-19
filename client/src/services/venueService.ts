@@ -15,3 +15,26 @@ export async function getUploadSignature() {
   const res = await axiosInstance.get(API_ENDPOINTS.UPLOAD_SIGNATURE);
   return res.data?.data ?? res.data;
 }
+
+export async function getMyVenues() {
+  const res = await axiosInstance.get(API_ENDPOINTS.MY_VENUES);
+  return res.data?.data ?? res.data;
+}
+
+/** PUT /venues/draft — Upsert the raw JSON form values */
+export async function upsertVenueDraft(step: number, formValues: unknown) {
+  const res = await axiosInstance.put(API_ENDPOINTS.VENUE_DRAFT, { step, formValues });
+  return res.data?.data ?? res.data;
+}
+
+/** GET /venues/draft — Fetch the user's current Draft, or null if none */
+export async function getMyDraft(): Promise<Record<string, unknown> | null> {
+  const res = await axiosInstance.get(API_ENDPOINTS.VENUE_DRAFT);
+  return res.data?.data ?? null;
+}
+
+/** PUT /venues/:id — Update an existing venue (used in Phase 2 and Phase 3) */
+export async function updateVenue(venueId: string, dto: unknown) {
+  const res = await axiosInstance.put(API_ENDPOINTS.VENUE_UPDATE(venueId), dto);
+  return res.data?.data ?? res.data;
+}
