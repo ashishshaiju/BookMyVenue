@@ -58,7 +58,7 @@ const BookingStep = () => {
   const closeTime = values.workingHours?.close || undefined;
 
   return (
-    <section className="font-sans ml-72">
+    <section className="font-sans">
       <div className="max-w-5xl mx-auto">
         <div className="mb-8">
           <h2 className="text-3xl font-bold text-[var(--bg-green)]">Booking Configuration</h2>
