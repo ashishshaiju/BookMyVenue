@@ -41,6 +41,20 @@ router
   .route('/my-venues')
   .get(verifyAccessToken, requirePermission(P.venues.read), controller.getMyVenues);
 
+// Draft — UX save and resume
+router
+  .route('/draft')
+  .put(
+    verifyAccessToken,
+    requirePermission(P.venues.create),
+    controller.upsertDraft
+  )
+  .get(
+    verifyAccessToken,
+    requirePermission(P.venues.read),
+    controller.getMyDraft
+  );
+
 // Admin Routes
 router
   .route('/pending')

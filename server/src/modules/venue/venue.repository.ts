@@ -6,6 +6,7 @@ import type {
   UpdateVenueData,
 } from './venue.types';
 import { VenueModel } from './venue.model';
+import { VenueDraftModel, type IVenueDraft } from './venueDraft.model';
 import mongoose from 'mongoose';
 
 // Helpers
@@ -44,13 +45,30 @@ export async function existsByOwnerAndName(
   return count > 0;
 }
 
-/** Get all non-deleted venues for a specific owner */
-export async function findVenuesByOwner(ownerUserId: string): Promise<IVenue[]> {
-  return VenueModel.find({
-    ownerUserId: toObjectId(ownerUserId),
-    deleted: false,
-  })
+/**
+ * Get a lightweight projection of non-deleted venues for the My Venues card list.
+ * Returns only the fields needed for the UI card — avoids sending pricing rules,
+ * gallery arrays, package configs etc. to the client unnecessarily.
+ */
+export async function findMyVenuesProjected(ownerUserId: string): Promise<
+  Pick<IVenue, '_id' | 'name' | 'city' | 'state' | 'venueType' | 'coverImage' | 'status' | 'rejectionReason' | 'createdAt'>[]
+> {
+  return VenueModel.find(
+    { ownerUserId: toObjectId(ownerUserId), deleted: false },
+    {
+      _id: 1,
+      name: 1,
+      city: 1,
+      state: 1,
+      venueType: 1,
+      coverImage: 1,
+      status: 1,
+      rejectionReason: 1,
+      createdAt: 1,
+    }
+  )
     .sort({ createdAt: -1 })
+    .lean()
     .exec();
 }
 
@@ -92,6 +110,24 @@ export async function findAllVenues(filters: AdminVenueFilters): Promise<{
 export async function createVenue(data: CreateVenueData): Promise<IVenue> {
   const venue = new VenueModel(data);
   return venue.save();
+}
+
+// Draft Operations
+
+export async function upsertDraft(userId: string, step: number, formValues: Record<string, unknown>): Promise<IVenueDraft> {
+  return VenueDraftModel.findOneAndUpdate(
+    { userId: toObjectId(userId) },
+    { $set: { step, formValues } },
+    { new: true, upsert: true }
+  ).exec();
+}
+
+export async function getDraft(userId: string): Promise<IVenueDraft | null> {
+  return VenueDraftModel.findOne({ userId: toObjectId(userId) }).exec();
+}
+
+export async function deleteDraft(userId: string): Promise<void> {
+  await VenueDraftModel.deleteOne({ userId: toObjectId(userId) }).exec();
 }
 
 /** Partial update of an existing venue */
