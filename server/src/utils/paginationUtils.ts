@@ -1,9 +1,7 @@
 import type { PaginationMeta, PaginationParams, PaginationQuery } from '../types/pagination.types';
 import type { PaginationMiddlewareOptions } from '../types/pagination.types';
 
-// ---------------------------------------------------------------------------
 // Defaults
-// ---------------------------------------------------------------------------
 
 export const PAGINATION_DEFAULTS = {
   PAGE: 1,
@@ -13,10 +11,7 @@ export const PAGINATION_DEFAULTS = {
   SORT: '-createdAt',
 } as const;
 
-// ---------------------------------------------------------------------------
 // parsePaginationParams
-// ---------------------------------------------------------------------------
-
 /**
  * Parses and validates raw query-string pagination fields into a normalised
  * {@link PaginationParams} object.
@@ -66,9 +61,7 @@ export function parsePaginationParams(
   return { page, limit, skip, sort };
 }
 
-// ---------------------------------------------------------------------------
 // buildPaginationMeta
-// ---------------------------------------------------------------------------
 
 /**
  * Builds the {@link PaginationMeta} object to include in paginated API
@@ -93,10 +86,7 @@ export function buildPaginationMeta(total: number, params: PaginationParams): Pa
   };
 }
 
-// ---------------------------------------------------------------------------
 // parseSortString
-// ---------------------------------------------------------------------------
-
 /**
  * Converts a sort string into a Mongoose-compatible sort object.
  *

@@ -50,7 +50,6 @@ export interface GenerateRefreshTokenResult {
 
 /**
  * Generates a signed refresh token JWT and persists a hashed record to MongoDB.
- *
  * @param userId       - Owner of the token.
  * @param rootTokenId  - ObjectId string of the family root. Omit for a new session (login).
  * @param parentTokenId - ObjectId string of the token being replaced. Omit for login.

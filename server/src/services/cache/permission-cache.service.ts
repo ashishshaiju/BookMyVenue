@@ -21,14 +21,12 @@ const TTL_MS = 15 * 60 * 1000; // 15mins (same as accessToken  TTL)
 const CLEANUP_INTERVAL_MS = 5 * 60 * 1000; // 5mins
 
 // Pure helpers
-
 const isExpired = (entry: CacheEntry): boolean => Date.now() - entry.timestamp > TTL_MS;
 
 const ageInSeconds = (entry: CacheEntry): number =>
   Math.round((Date.now() - entry.timestamp) / 1000);
 
 // Internal read/write
-
 const getEntry = (roleId: string): CacheEntry | null => {
   const entry = store.get(roleId);
   if (!entry) return null;
@@ -62,10 +60,7 @@ export const getPerms = async (roleId: string, roleName: string): Promise<IPermi
   return permissions as IPermission[];
 };
 
-/**
- * Invalidate a single role's cache entry.
- * Call after modifying a role's permission assignments.
- */
+// Invalidate a single role's cache entry.
 export const invalidateRole = (roleId: string): void => {
   const existed = store.delete(roleId);
   if (existed) {
@@ -73,17 +68,14 @@ export const invalidateRole = (roleId: string): void => {
   }
 };
 
-/**
- * Clear the entire cache.
- * Use after bulk permission changes or schema migrations.
- */
+// Clear the entire cache.
+// Use after bulk permission changes or schema migrations.
 export const clearAll = (): void => {
   const size = store.size;
   store.clear();
   logInfo('Permission cache cleared', { removed: size });
 };
 
-/** Returns current cache size and per-entry stats for observability. */
 export const getStats = (): { size: number; entries: CacheStatEntry[] } => {
   const entries = Array.from(store.entries()).map(([roleId, entry]) => ({
     roleId,
@@ -95,7 +87,6 @@ export const getStats = (): { size: number; entries: CacheStatEntry[] } => {
 };
 
 // Background cleanup
-
 const cleanupExpired = (): void => {
   let removed = 0;
   for (const [roleId, entry] of store.entries()) {

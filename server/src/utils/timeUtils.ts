@@ -12,8 +12,6 @@ export const parseDurationToMs = (duration: string | number): number => {
   if (typeof duration === 'number') {
     return duration;
   }
-
-  // If it's a pure number string, parse it as milliseconds
   if (/^\d+$/.test(duration)) {
     return parseInt(duration, 10);
   }

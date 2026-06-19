@@ -20,12 +20,11 @@ function escapeRegex(str: string): string {
 }
 
 // Read Operations
-
 export async function findVenueById(venueId: string): Promise<IVenue | null> {
   return VenueModel.findOne({ _id: toObjectId(venueId), deleted: false }).exec();
 }
 
-/** Check if an active venue with this name already exists for this owner */
+// Check if an active venue with this name already exists for this owner
 export async function existsByOwnerAndName(
   ownerUserId: string,
   name: string,
@@ -45,11 +44,6 @@ export async function existsByOwnerAndName(
   return count > 0;
 }
 
-/**
- * Get a lightweight projection of non-deleted venues for the My Venues card list.
- * Returns only the fields needed for the UI card — avoids sending pricing rules,
- * gallery arrays, package configs etc. to the client unnecessarily.
- */
 export async function findMyVenuesProjected(ownerUserId: string): Promise<
   Pick<IVenue, '_id' | 'name' | 'city' | 'state' | 'venueType' | 'coverImage' | 'status' | 'rejectionReason' | 'createdAt'>[]
 > {
@@ -72,7 +66,7 @@ export async function findMyVenuesProjected(ownerUserId: string): Promise<
     .exec();
 }
 
-/** Admin: Get all venues in PendingReview status */
+// Admin
 export async function findPendingVenues(): Promise<IVenue[]> {
   return VenueModel.find({
     status: 'PendingReview',
@@ -82,7 +76,7 @@ export async function findPendingVenues(): Promise<IVenue[]> {
     .exec();
 }
 
-/** Admin: Get paginated venues with optional filters */
+// Admin
 export async function findAllVenues(filters: AdminVenueFilters): Promise<{
   venues: IVenue[];
   total: number;
@@ -105,15 +99,12 @@ export async function findAllVenues(filters: AdminVenueFilters): Promise<{
 }
 
 // Write Operations
-
-/** Insert a new venue document */
 export async function createVenue(data: CreateVenueData): Promise<IVenue> {
   const venue = new VenueModel(data);
   return venue.save();
 }
 
 // Draft Operations
-
 export async function upsertDraft(userId: string, step: number, formValues: Record<string, unknown>): Promise<IVenueDraft> {
   return VenueDraftModel.findOneAndUpdate(
     { userId: toObjectId(userId) },
@@ -130,7 +121,6 @@ export async function deleteDraft(userId: string): Promise<void> {
   await VenueDraftModel.deleteOne({ userId: toObjectId(userId) }).exec();
 }
 
-/** Partial update of an existing venue */
 export async function updateVenue(venueId: string, patch: UpdateVenueData): Promise<IVenue | null> {
   return VenueModel.findOneAndUpdate(
     { _id: toObjectId(venueId), deleted: false },
@@ -139,7 +129,6 @@ export async function updateVenue(venueId: string, patch: UpdateVenueData): Prom
   ).exec();
 }
 
-/** Soft-delete a venue */
 export async function softDeleteVenue(venueId: string, updatedBy: string): Promise<boolean> {
   const result = await VenueModel.updateOne(
     { _id: toObjectId(venueId), deleted: false },
@@ -156,11 +145,6 @@ export async function softDeleteVenue(venueId: string, updatedBy: string): Promi
 }
 
 // State Machine Operations
-
-/**
- * Atomic status update.
- * @param extraFields allows injecting rejectionReason during a rejection
- */
 export async function updateVenueStatus(
   venueId: string,
   newStatus: VenueStatus,
@@ -174,8 +158,7 @@ export async function updateVenueStatus(
       ...(extraFields ?? {}),
     },
   };
-
-  // If status is anything but Rejected, clear the rejection reason automatically
+  
   if (newStatus !== 'Rejected') {
     patch.$unset = { rejectionReason: '' };
   }

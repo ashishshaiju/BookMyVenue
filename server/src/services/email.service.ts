@@ -4,10 +4,7 @@ import type { EmailIntentType } from '../constants/email.constants';
 import { resendConfig } from '../constants/env';
 import { logError, logInfo } from '../utils/logger';
 
-/**
- * Call this during server startup to catch
- * missing email env vars before the server begins accepting requests.
- */
+// Call this during server startup to catch 
 export function validateEmailConfig(): void {
   const missing: string[] = [];
 

@@ -6,10 +6,7 @@ import { logInfo, logWarn, logError } from '../utils/logger';
 let isShuttingDown = false;
 let getServerFn: (() => Server | null) | null = null;
 
-/**
- * Utility to wrap a promise with a hard timeout.
- * Prevents any single shutdown step from blocking the rest of the sequence.
- */
+// Utility 
 const withTimeout = async <T>(promise: Promise<T>, ms: number, name: string): Promise<void> => {
   let timeoutHandle: NodeJS.Timeout | undefined;
   const timeoutPromise = new Promise<never>((_, reject) => {
@@ -35,7 +32,7 @@ async function gracefulShutdown(signal: string, exitCode = 0): Promise<void> {
 
   logInfo(`[server] ${signal} received. Initiating graceful shutdown...`);
 
-  // Global Hard Timeout: If everything completely locks up, OS kills it after 30s.
+  // Global Hard Timeout
   const forceExitTimer = setTimeout(() => {
     logError('[server] GLOBAL shutdown timeout reached (30s). Forcing exit.', { module: "shutdownUtils.ts/gracefulShutdown" });
     process.exit(exitCode);
@@ -49,8 +46,7 @@ async function gracefulShutdown(signal: string, exitCode = 0): Promise<void> {
     if (server) {
       logInfo('[server] Stopping HTTP server...');
 
-      // If it's a fatal crash, destroy all active connections instantly.
-      // If it's a polite signal, just destroy idle connections.
+      // Fatal crash
       if (signal === 'Uncaught Exception' || signal === 'Unhandled Rejection') {
         if ('closeAllConnections' in server) {
           logWarn('[server] Fatal crash detected. Severing all active HTTP connections.');

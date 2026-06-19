@@ -23,21 +23,11 @@ import { getUserRole } from '../../services/roles.service';
 import mongoose from 'mongoose';
 import { logError } from '../../utils/logger';
 
-// Owner Operations
-
-/**
- * Promote a user from 'user' role to 'owner' role if they are not already
- * an owner, admin, or superAdmin. Uses the existing assignRoleToUser upsert —
- * safe to call multiple times.
- *
- * Fails silently (logs error) if the owner role is not seeded — avoids
- * crashing the entire venue creation flow due to a configuration issue.
- */
 async function assignOwnerRoleIfNeeded(userId: string): Promise<void> {
   const current = await getUserRole(userId);
 
   if (current && ['owner', 'admin', 'superAdmin'].includes(current.roleName)) {
-    return; // already elevated — nothing to do
+    return; 
   }
 
   const ownerRole = await RoleModel
@@ -74,14 +64,13 @@ export async function createVenue(userId: string, dto: CreateVenueDTO): Promise<
     ownerUserId: userId,
     createdBy: userId,
     updatedBy: userId,
-    status: 'PendingReview', // Skip Draft state entirely
+    status: 'PendingReview',
   } as unknown as CreateVenueData;
   if (!dto.coordinates) delete (data as unknown as Record<string, unknown>).location;
   delete (data as unknown as Record<string, unknown>).coordinates;
 
   const venue = await repo.createVenue(data);
 
-  // Promote user and cleanup draft UX state
   await assignOwnerRoleIfNeeded(userId);
   await repo.deleteDraft(userId);
 

@@ -49,7 +49,7 @@ export function canSubmit(venue: IVenue): void {
       `Cannot submit: the following required fields are missing or empty — ${missingFields.join(', ')}`
     );
   }
-
+  
   // Working days — required for ALL booking types
   // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   if (!venue.workingDays || venue.workingDays.length === 0) {

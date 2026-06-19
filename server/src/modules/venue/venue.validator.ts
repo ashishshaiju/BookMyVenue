@@ -47,9 +47,7 @@ export const refundRuleSchema = z.object({
   refundPercentage: z.number().min(0).max(100, 'Percentage must be between 0 and 100'),
 });
 
-// ─── Venue Creation Validation ───────────────────────────────────────────────
-
-// Full Venue Creation Validation (Phase 3)
+// Venue Creation Validation
 export const createVenueSchema = z
   .object({
     // Basic Info
