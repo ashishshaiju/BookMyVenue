@@ -9,24 +9,20 @@ export interface PaginationQuery {
   sort?: string;
 }
 
-/**
- * Normalised, validated pagination parameters attached to `req.pagination`
- * after the pagination middleware runs.
- */
+// Normalised, validated pagination parameters attached to `req.pagination`
+// after the pagination middleware runs.
 export interface PaginationParams {
-  /** 1-based current page number. */
+  // 1-based current page number.
   page: number;
-  /** Number of documents per page. */
+  // Number of documents per page.
   limit: number;
-  /** Number of documents to skip — derived from page/limit or an explicit skip query param. */
+  // Number of documents to skip — derived from page/limit or an explicit skip query param.
   skip: number;
-  /** Mongo-style sort string, e.g. `-createdAt` or `name,-updatedAt`. */
+  // Mongo-style sort string, e.g. `-createdAt` or `name,-updatedAt`.
   sort: string;
 }
 
-/**
- * Pagination metadata included in every paginated API response.
- */
+// Pagination metadata included in every paginated API response.
 export interface PaginationMeta {
   total: number;
   page: number;
@@ -37,18 +33,11 @@ export interface PaginationMeta {
   hasPrevPage: boolean;
 }
 
-/**
- * Generic wrapper for paginated list responses.
- * Used as the `data` field when returning paginated results.
- */
 export interface PaginatedResponse<T> {
   items: T[];
   pagination: PaginationMeta;
 }
 
-/**
- * Optional configuration passed to `paginationMiddleware()`.
- */
 export interface PaginationMiddlewareOptions {
   defaultLimit?: number;
   maxLimit?: number;

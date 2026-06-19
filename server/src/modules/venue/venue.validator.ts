@@ -42,14 +42,12 @@ const blockedTimeSchema = z.object({
   toTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Invalid time format (HH:MM)'),
 });
 
-const refundRuleSchema = z.object({
-  daysBefore: z.coerce.number().int().min(0),
-  refundPercentage: z.coerce.number().min(0).max(100),
+export const refundRuleSchema = z.object({
+  daysBefore: z.number().int().min(0, 'Days before must be positive'),
+  refundPercentage: z.number().min(0).max(100, 'Percentage must be between 0 and 100'),
 });
 
-// Create
-
-// POST /venues
+// Venue Creation Validation
 export const createVenueSchema = z
   .object({
     // Basic Info

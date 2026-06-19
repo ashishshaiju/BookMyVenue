@@ -1,12 +1,7 @@
 interface VenueCardSkeletonProps {
-  /** Number of skeleton cards to render. Defaults to 3. */
   count?: number;
 }
 
-/**
- * Animated pulse skeleton for the venue card grid.
- * Used while venue data is loading.
- */
 const VenueCardSkeleton = ({ count = 3 }: VenueCardSkeletonProps) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

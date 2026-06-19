@@ -3,7 +3,7 @@ import { API_ENDPOINTS } from '../constants';
 
 export async function createVenue(dto: unknown) {
   const res = await axiosInstance.post(API_ENDPOINTS.VENUES, dto);
-  return res.data?.data ?? res.data; // returns the created venue object including _id
+  return res.data?.data ?? res.data;
 }
 
 export async function submitVenue(venueId: string) {
@@ -21,19 +21,19 @@ export async function getMyVenues() {
   return res.data?.data ?? res.data;
 }
 
-/** PUT /venues/draft — Upsert the raw JSON form values */
+// PUT /venues/draft
 export async function upsertVenueDraft(step: number, formValues: unknown) {
   const res = await axiosInstance.put(API_ENDPOINTS.VENUE_DRAFT, { step, formValues });
   return res.data?.data ?? res.data;
 }
 
-/** GET /venues/draft — Fetch the user's current Draft, or null if none */
+// GET /venues/draft
 export async function getMyDraft(): Promise<Record<string, unknown> | null> {
   const res = await axiosInstance.get(API_ENDPOINTS.VENUE_DRAFT);
   return res.data?.data ?? null;
 }
 
-/** PUT /venues/:id — Update an existing venue (used in Phase 2 and Phase 3) */
+// PUT /venues/:id
 export async function updateVenue(venueId: string, dto: unknown) {
   const res = await axiosInstance.put(API_ENDPOINTS.VENUE_UPDATE(venueId), dto);
   return res.data?.data ?? res.data;
