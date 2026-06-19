@@ -1,5 +1,5 @@
 import { Outlet } from 'react-router';
-import ListSidebar from '../components/common/ListSidebar';
+import ListSidebar from '../../components/common/ListSidebar';
 
 const ListVenueLayout = () => {
   return (
@@ -8,7 +8,7 @@ const ListVenueLayout = () => {
       <ListSidebar />
 
       {/* Right Content */}
-      <main className="flex-1 p-8">
+      <main className="flex-1 md:ml-72 p-4 md:p-8 w-full max-w-full pb-24 md:pb-8">
         <Outlet />
       </main>
     </div>
