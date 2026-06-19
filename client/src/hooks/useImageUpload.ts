@@ -35,7 +35,6 @@ export const useImageUpload = () => {
       const sig = await getUploadSignature();
       const urls: string[] = [];
 
-
       for (const file of files) {
         const formData = new FormData();
         formData.append('file', file);

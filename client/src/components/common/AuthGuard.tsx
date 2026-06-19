@@ -1,7 +1,7 @@
-import React, { useEffect, useState, useRef } from "react";
-import { Navigate, Outlet, useLocation } from "react-router";
-import { useAuth } from "../../hooks/useAuth";
-import { showError } from "../../utils/toast";
+import React, { useEffect, useState, useRef } from 'react';
+import { Navigate, Outlet, useLocation } from 'react-router';
+import { useAuth } from '../../hooks/useAuth';
+import { showError } from '../../utils/toast';
 
 const AuthGuard: React.FC = () => {
   const { isAuthenticated, loading, verifySession } = useAuth();
@@ -21,7 +21,7 @@ const AuthGuard: React.FC = () => {
       try {
         await verifySession();
       } catch {
-        showError("Session expired. Please log in again.");
+        showError('Session expired. Please log in again.');
       } finally {
         setChecking(false);
         checkedRef.current = true;
@@ -41,7 +41,7 @@ const AuthGuard: React.FC = () => {
   if (!isAuthenticated) {
     const redirectUrl = `${location.pathname}${location.search}`;
     try {
-      localStorage.setItem("redirectUrl", redirectUrl);
+      localStorage.setItem('redirectUrl', redirectUrl);
     } catch {
       // Ignore localStorage errors
     }

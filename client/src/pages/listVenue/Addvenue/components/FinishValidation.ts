@@ -1,4 +1,4 @@
-import * as Yup from "yup";
+import * as Yup from 'yup';
 export const finishSchema = Yup.object({
   contactName: Yup.string().trim().required('Contact name is required'),
   contactPhone: Yup.string()
@@ -12,8 +12,7 @@ export const finishSchema = Yup.object({
       schema.oneOf(['fullRefund', 'timeBasedRefund']).required('Select refund type'),
   }),
   refundRules: Yup.array().when(['cancellationPolicy', 'refundType'], {
-    is: (policy: string, type: string) =>
-      policy === 'refundable' && type === 'timeBasedRefund',
+    is: (policy: string, type: string) => policy === 'refundable' && type === 'timeBasedRefund',
     then: () =>
       Yup.array()
         .of(

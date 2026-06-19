@@ -1,10 +1,9 @@
-import { Outlet } from "react-router";
-import ListSidebar from "../components/common/ListSidebar";
+import { Outlet } from 'react-router';
+import ListSidebar from '../components/common/ListSidebar';
 
 const ListVenueLayout = () => {
   return (
     <div className="flex min-h-screen bg-[var(--bg-primary)]">
-
       {/* Sidebar */}
       <ListSidebar />
 
@@ -12,9 +11,8 @@ const ListVenueLayout = () => {
       <main className="flex-1 p-8">
         <Outlet />
       </main>
-      
     </div>
-  )
-}
+  );
+};
 
-export default ListVenueLayout
+export default ListVenueLayout;

@@ -1,11 +1,6 @@
-import axios from "axios";
-import type {
-  AxiosError,
-  AxiosInstance,
-  AxiosResponse,
-  InternalAxiosRequestConfig,
-} from "axios";
-import { API_BASE_URL, API_ENDPOINTS } from "../constants";
+import axios from 'axios';
+import type { AxiosError, AxiosInstance, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
+import { API_BASE_URL, API_ENDPOINTS } from '../constants';
 
 // Types
 interface QueuedRequest {
@@ -19,14 +14,11 @@ const extractErrorMessage = (error: unknown): string => {
   if (axios.isAxiosError(error)) {
     const data = error.response?.data as Record<string, unknown>;
     return (
-      (data?.message as string) ||
-      (data?.error as string) ||
-      error.message ||
-      "Request failed"
+      (data?.message as string) || (data?.error as string) || error.message || 'Request failed'
     );
   }
   if (error instanceof Error) return error.message;
-  return "An unexpected error occurred";
+  return 'An unexpected error occurred';
 };
 
 export const createAxiosInstance = (): AxiosInstance => {
@@ -35,21 +27,21 @@ export const createAxiosInstance = (): AxiosInstance => {
     withCredentials: true,
     timeout: 30000,
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
   });
 
   instance.interceptors.request.use((config) => {
-		// let sessionToken = localStorage.getItem("x-session-token");
-		// if (!sessionToken) {
-		//   sessionToken = crypto.randomUUID();
-		//   localStorage.setItem("x-session-token", sessionToken);
-		// }
+    // let sessionToken = localStorage.getItem("x-session-token");
+    // if (!sessionToken) {
+    //   sessionToken = crypto.randomUUID();
+    //   localStorage.setItem("x-session-token", sessionToken);
+    // }
 
-		// config.headers["x-session-token"] = sessionToken;
+    // config.headers["x-session-token"] = sessionToken;
 
-		return config;
-	});
+    return config;
+  });
 
   // Response interceptor
   let isRefreshing = false;
@@ -88,9 +80,9 @@ export const createAxiosInstance = (): AxiosInstance => {
         ) {
           if (originalRequest.url?.includes(API_ENDPOINTS.REFRESH)) {
             window.dispatchEvent(
-              new CustomEvent("auth:logout", {
-                detail: { message: "Session expired. Please login again." },
-              }),
+              new CustomEvent('auth:logout', {
+                detail: { message: 'Session expired. Please login again.' },
+              })
             );
           }
           return Promise.reject(error);
@@ -121,9 +113,9 @@ export const createAxiosInstance = (): AxiosInstance => {
           refreshPromise = null;
 
           window.dispatchEvent(
-            new CustomEvent("auth:logout", {
-              detail: { message: "Session expired. Please login again." },
-            }),
+            new CustomEvent('auth:logout', {
+              detail: { message: 'Session expired. Please login again.' },
+            })
           );
 
           return Promise.reject(refreshError);
@@ -134,14 +126,14 @@ export const createAxiosInstance = (): AxiosInstance => {
 
       if (error.response.status === 403) {
         window.dispatchEvent(
-          new CustomEvent("auth:forbidden", {
-            detail: { message: errorMessage || "Access denied" },
-          }),
+          new CustomEvent('auth:forbidden', {
+            detail: { message: errorMessage || 'Access denied' },
+          })
         );
       }
 
       return Promise.reject(error);
-    },
+    }
   );
 
   return instance;

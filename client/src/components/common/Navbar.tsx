@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState } from 'react';
 
-import { Link } from "react-router";
-import ProfileDropdown from "./ProfileDropdown";
-import { useAuth } from "../../hooks/useAuth";
-import { FiUser } from "react-icons/fi";
+import { Link } from 'react-router';
+import ProfileDropdown from './ProfileDropdown';
+import { useAuth } from '../../hooks/useAuth';
+import { FiUser } from 'react-icons/fi';
 
 const Navbar = () => {
   const [openProfile, setOpenProfile] = useState(false);
@@ -61,9 +61,7 @@ const Navbar = () => {
               >
                 <FiUser className="text-lg" />
               </button>
-              {openProfile && (
-                <ProfileDropdown onClose={() => setOpenProfile(false)} />
-              )}
+              {openProfile && <ProfileDropdown onClose={() => setOpenProfile(false)} />}
             </div>
           ) : (
             <Link

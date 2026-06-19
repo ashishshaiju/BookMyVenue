@@ -1,8 +1,8 @@
-import React, { createContext, useState, useEffect, type ReactNode } from "react";
-import { axiosInstance } from "../config/axios";
-import { API_ENDPOINTS, STORAGE_KEYS } from "../constants";
-import { showSuccess, showError } from "../utils/toast";
-import { clearDraft } from "../utils/venueDraft";
+import React, { createContext, useState, useEffect, type ReactNode } from 'react';
+import { axiosInstance } from '../config/axios';
+import { API_ENDPOINTS, STORAGE_KEYS } from '../constants';
+import { showSuccess, showError } from '../utils/toast';
+import { clearDraft } from '../utils/venueDraft';
 
 export interface User {
   id: string;
@@ -23,9 +23,7 @@ interface AuthContextType {
 // eslint-disable-next-line react-refresh/only-export-components
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const clearAuthData = (
-  setUser: React.Dispatch<React.SetStateAction<User | null>>,
-) => {
+const clearAuthData = (setUser: React.Dispatch<React.SetStateAction<User | null>>) => {
   setUser(null);
   localStorage.removeItem(STORAGE_KEYS.IS_LOGGED_IN);
   localStorage.removeItem(STORAGE_KEYS.USER_ID);
@@ -41,7 +39,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const verifySession = async () => {
     const isLoggedIn = localStorage.getItem(STORAGE_KEYS.IS_LOGGED_IN);
-    if (isLoggedIn === "true") {
+    if (isLoggedIn === 'true') {
       try {
         const response = await axiosInstance.get(API_ENDPOINTS.PROFILE);
         const userData = response.data?.data || response.data;
@@ -54,10 +52,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           localStorage.setItem(STORAGE_KEYS.USER_ID, userData._id || userData.id);
           localStorage.setItem(STORAGE_KEYS.USER_NAME, userData.username);
         } else {
-          throw new Error("No user data returned");
+          throw new Error('No user data returned');
         }
       } catch (error) {
-        console.error("Failed to verify session", error);
+        console.error('Failed to verify session', error);
         clearAuthData(setUser);
         throw error;
       }
@@ -85,14 +83,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       clearAuthData(setUser);
     };
 
-    window.addEventListener("auth:logout", handleLogoutEvent);
+    window.addEventListener('auth:logout', handleLogoutEvent);
     return () => {
-      window.removeEventListener("auth:logout", handleLogoutEvent);
+      window.removeEventListener('auth:logout', handleLogoutEvent);
     };
   }, []);
 
   const login = async (email: string, password: string) => {
-    const response = await axiosInstance.post(API_ENDPOINTS.LOGIN, { email, password });
+    const response = await axiosInstance.post(API_ENDPOINTS.LOGIN, {
+      email,
+      password,
+    });
     const data = response.data?.data || response.data;
     if (data) {
       setUser({
@@ -100,22 +101,26 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         username: data.username,
         email: data.email,
       });
-      localStorage.setItem(STORAGE_KEYS.IS_LOGGED_IN, "true");
+      localStorage.setItem(STORAGE_KEYS.IS_LOGGED_IN, 'true');
       localStorage.setItem(STORAGE_KEYS.USER_ID, data.userId || data.id);
       localStorage.setItem(STORAGE_KEYS.USER_NAME, data.username);
     }
   };
 
   const register = async (username: string, email: string, password: string) => {
-    await axiosInstance.post(API_ENDPOINTS.REGISTER, { username, email, password });
+    await axiosInstance.post(API_ENDPOINTS.REGISTER, {
+      username,
+      email,
+      password,
+    });
   };
 
   const logout = async () => {
     try {
       await axiosInstance.post(API_ENDPOINTS.LOGOUT);
-      showSuccess("Logged out successfully.");
+      showSuccess('Logged out successfully.');
     } catch {
-      showError("Failed to log out. Please try again.");
+      showError('Failed to log out. Please try again.');
     } finally {
       if (user?.id) clearDraft(user.id);
       clearAuthData(setUser);
@@ -123,7 +128,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, loading, login, register, logout, verifySession }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        isAuthenticated,
+        loading,
+        login,
+        register,
+        logout,
+        verifySession,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

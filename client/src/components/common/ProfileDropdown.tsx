@@ -1,39 +1,34 @@
-import { useRef, useEffect } from "react";
-import { Link, useNavigate } from "react-router";
-import { FiLogOut, FiUser, FiX } from "react-icons/fi";
-import { LuCalendarDays } from "react-icons/lu";
-import { MdOutlineMeetingRoom } from "react-icons/md";
-import { useAuth } from "../../hooks/useAuth";
+import { useRef, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router';
+import { FiLogOut, FiUser, FiX } from 'react-icons/fi';
+import { LuCalendarDays } from 'react-icons/lu';
+import { MdOutlineMeetingRoom } from 'react-icons/md';
+import { useAuth } from '../../hooks/useAuth';
 
 type ProfileDropdownProps = {
   onClose: () => void;
 };
 
-const ProfileDropdown = ({
-  onClose,
-}: ProfileDropdownProps) => {
+const ProfileDropdown = ({ onClose }: ProfileDropdownProps) => {
   const { user, logout } = useAuth();
   const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         onClose();
       }
     };
 
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [onClose]);
 
   const handleLogout = async () => {
     await logout();
     onClose();
-    navigate("/login");
+    navigate('/login');
   };
 
   return (
@@ -57,10 +52,10 @@ const ProfileDropdown = ({
           {/* User info */}
           <div className="flex-1 min-w-0">
             <h3 className="font-semibold text-[var(--text-primary)] truncate">
-              {user?.username || "User"}
+              {user?.username || 'User'}
             </h3>
             <p className="text-sm text-[var(--text-secondary)] truncate">
-              {user?.email || "user@example.com"}
+              {user?.email || 'user@example.com'}
             </p>
           </div>
 

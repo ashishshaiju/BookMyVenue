@@ -1,6 +1,6 @@
-import { Field, FieldArray, ErrorMessage, useFormikContext } from "formik";
-import { useState, useEffect } from "react";
-import { useToast } from "../../../../hooks/useToast";
+import { Field, FieldArray, ErrorMessage, useFormikContext } from 'formik';
+import { useState, useEffect } from 'react';
+import { useToast } from '../../../../hooks/useToast';
 
 type FinishStepValues = {
   cancellationPolicy: string;
@@ -13,9 +13,9 @@ type FinishStepValues = {
 };
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
-const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
-const err = "text-red-500 text-sm mt-1";
+const err = 'text-red-500 text-sm mt-1';
 
 const FinishStep = () => {
   const [previewImages, setPreviewImages] = useState<string[]>([]);
@@ -33,7 +33,6 @@ const FinishStep = () => {
   return (
     <section className="font-sans ml-72">
       <div className="max-w-5xl mx-auto">
-
         <div className="mb-8">
           <h2 className="text-3xl font-bold text-[var(--bg-green)]">Final Details</h2>
           <p className="text-[var(--text-secondary)] mt-2">
@@ -42,7 +41,6 @@ const FinishStep = () => {
         </div>
 
         <div className="bg-[var(--bg-tertiary)] rounded-3xl p-8 border border-[var(--bg-grey)] shadow-sm space-y-10">
-
           {/* Photos */}
           <div>
             <h3 className="font-semibold text-lg mb-4">Venue Photos</h3>
@@ -60,7 +58,9 @@ const FinishStep = () => {
                   const files = Array.from(e.target.files || []);
                   const validFiles = files.filter((file) => {
                     if (!ALLOWED_TYPES.includes(file.type)) {
-                      showError(`Invalid file type: ${file.name}. Only JPG, PNG and WEBP are allowed.`);
+                      showError(
+                        `Invalid file type: ${file.name}. Only JPG, PNG and WEBP are allowed.`
+                      );
                       return false;
                     }
                     if (file.size > MAX_FILE_SIZE) {
@@ -71,14 +71,16 @@ const FinishStep = () => {
                   });
                   if (validFiles.length > 0) {
                     const currentFiles = values.venuePhotos || [];
-                    setFieldValue("venuePhotos", [...currentFiles, ...validFiles]);
+                    setFieldValue('venuePhotos', [...currentFiles, ...validFiles]);
                   }
-                  e.target.value = "";
+                  e.target.value = '';
                 }}
               />
               <div className="text-center">
                 <p className="font-semibold text-[var(--text-primary)]">Click to Upload Images</p>
-                <p className="text-sm text-[var(--text-secondary)] mt-1">JPG, PNG, WEBP · Max 5MB each</p>
+                <p className="text-sm text-[var(--text-secondary)] mt-1">
+                  JPG, PNG, WEBP · Max 5MB each
+                </p>
               </div>
             </label>
 
@@ -96,7 +98,7 @@ const FinishStep = () => {
                 <div
                   key={index}
                   className={`relative rounded-2xl overflow-hidden border-2 ${
-                    index === 0 ? "border-[var(--bg-green)]" : "border-[var(--bg-grey)]"
+                    index === 0 ? 'border-[var(--bg-green)]' : 'border-[var(--bg-grey)]'
                   }`}
                 >
                   <img src={image} alt="preview" className="w-full h-40 object-cover" />
@@ -112,7 +114,7 @@ const FinishStep = () => {
                     onClick={() => {
                       const newFiles = [...(values.venuePhotos || [])];
                       newFiles.splice(index, 1);
-                      setFieldValue("venuePhotos", newFiles);
+                      setFieldValue('venuePhotos', newFiles);
                     }}
                     className="absolute top-2 right-2 bg-white w-8 h-8 rounded-full shadow flex items-center justify-center text-red-500"
                   >
@@ -167,7 +169,7 @@ const FinishStep = () => {
           </div>
 
           {/* Refund Rules — only for refundable */}
-          {values.cancellationPolicy === "refundable" && (
+          {values.cancellationPolicy === 'refundable' && (
             <div>
               <h3 className="font-semibold text-lg mb-4">Refund Rules</h3>
               <p className="text-[var(--text-secondary)] mb-4">
@@ -191,15 +193,12 @@ const FinishStep = () => {
               </div>
 
               {/* Refund Rules — only for time based */}
-              {values.refundType === "timeBasedRefund" && (
+              {values.refundType === 'timeBasedRefund' && (
                 <FieldArray name="refundRules">
                   {({ push, remove }) => (
                     <div className="space-y-5">
                       {values.refundRules.map((_, index) => (
-                        <div
-                          key={index}
-                          className="border border-[var(--bg-grey)] rounded-2xl p-5"
-                        >
+                        <div key={index} className="border border-[var(--bg-grey)] rounded-2xl p-5">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                               <label className="block mb-2 font-bold">Days Before</label>
@@ -209,7 +208,11 @@ const FinishStep = () => {
                                 placeholder="7"
                                 className="w-full rounded-xl border border-[var(--bg-grey)] px-4 py-3"
                               />
-                              <ErrorMessage name={`refundRules.${index}.daysBefore`} component="p" className={err} />
+                              <ErrorMessage
+                                name={`refundRules.${index}.daysBefore`}
+                                component="p"
+                                className={err}
+                              />
                             </div>
                             <div>
                               <label className="block mb-2 font-bold">Refund %</label>
@@ -219,7 +222,11 @@ const FinishStep = () => {
                                 placeholder="90"
                                 className="w-full rounded-xl border border-[var(--bg-grey)] px-4 py-3"
                               />
-                              <ErrorMessage name={`refundRules.${index}.refundPercentage`} component="p" className={err} />
+                              <ErrorMessage
+                                name={`refundRules.${index}.refundPercentage`}
+                                component="p"
+                                className={err}
+                              />
                             </div>
                           </div>
                           {index > 0 && (
@@ -236,7 +243,7 @@ const FinishStep = () => {
 
                       <button
                         type="button"
-                        onClick={() => push({ daysBefore: "", refundPercentage: "" })}
+                        onClick={() => push({ daysBefore: '', refundPercentage: '' })}
                         className="bg-[var(--bg-green)] text-white px-5 py-3 rounded-xl"
                       >
                         + Add Rule
@@ -247,7 +254,6 @@ const FinishStep = () => {
               )}
             </div>
           )}
-
         </div>
       </div>
     </section>

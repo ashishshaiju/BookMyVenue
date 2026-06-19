@@ -1,61 +1,59 @@
-import { Field, ErrorMessage } from "formik";
-import { INDIA_STATES } from "@/constants";
+import { Field, ErrorMessage } from 'formik';
+import { INDIA_STATES } from '@/constants';
 
 const venueTypes = [
-  "Hall",
-  "Turf",
-  "Swimming Pool",
-  "Open Ground",
-  "Auditorium",
-  "Convention Center",
-  "Resort",
-  "Party Hall",
-  "Conference Space",
-  "Other",
+  'Hall',
+  'Turf',
+  'Swimming Pool',
+  'Open Ground',
+  'Auditorium',
+  'Convention Center',
+  'Resort',
+  'Party Hall',
+  'Conference Space',
+  'Other',
 ];
 
 const districts = [
-  "Thiruvananthapuram",
-  "Kollam",
-  "Pathanamthitta",
-  "Alappuzha",
-  "Kottayam",
-  "Idukki",
-  "Ernakulam",
-  "Thrissur",
-  "Palakkad",
-  "Malappuram",
-  "Kozhikode",
-  "Wayanad",
-  "Kannur",
-  "Kasaragod",
+  'Thiruvananthapuram',
+  'Kollam',
+  'Pathanamthitta',
+  'Alappuzha',
+  'Kottayam',
+  'Idukki',
+  'Ernakulam',
+  'Thrissur',
+  'Palakkad',
+  'Malappuram',
+  'Kozhikode',
+  'Wayanad',
+  'Kannur',
+  'Kasaragod',
 ];
 
 const spaceAttributes = [
-  "Indoor",
-  "Outdoor (Garden/Lawn)",
-  "Rooftop",
-  "Poolside",
-  "Both Indoor & Outdoor",
+  'Indoor',
+  'Outdoor (Garden/Lawn)',
+  'Rooftop',
+  'Poolside',
+  'Both Indoor & Outdoor',
 ];
 
 const seatingConfigs = [
-  "Floating",
-  "Theatre Seating",
-  "Round Table",
-  "Banquet Seating",
-  "Standing",
+  'Floating',
+  'Theatre Seating',
+  'Round Table',
+  'Banquet Seating',
+  'Standing',
 ];
 
-const err = "text-red-500 text-sm mt-1";
+const err = 'text-red-500 text-sm mt-1';
 
 const BasicInfoStep = () => {
   return (
     <section className="font-sans ml-72">
       <div className="mb-8">
-        <h2 className="text-3xl font-bold text-[var(--bg-green)]">
-          Venue Registration
-        </h2>
+        <h2 className="text-3xl font-bold text-[var(--bg-green)]">Venue Registration</h2>
         <p className="text-[var(--text-secondary)] mt-2">
           Add your venue details to help customers discover your space.
         </p>
@@ -63,12 +61,9 @@ const BasicInfoStep = () => {
 
       <div className="bg-[var(--bg-tertiary)] rounded-3xl p-8 border border-[var(--bg-grey)] shadow-sm">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-
           {/* Venue Name */}
           <div className="md:col-span-2">
-            <label className="block mb-2 font-bold text-[var(--text-primary)]">
-              Venue Name
-            </label>
+            <label className="block mb-2 font-bold text-[var(--text-primary)]">Venue Name</label>
             <Field
               name="VenueName"
               type="text"
@@ -95,9 +90,7 @@ const BasicInfoStep = () => {
 
           {/* Venue Type */}
           <div>
-            <label className="block mb-2 font-bold">
-              Venue Type
-            </label>
+            <label className="block mb-2 font-bold">Venue Type</label>
             <Field
               as="select"
               name="venueType"
@@ -105,7 +98,9 @@ const BasicInfoStep = () => {
             >
               <option value="">Select venue type</option>
               {venueTypes.map((type) => (
-                <option key={type} value={type}>{type}</option>
+                <option key={type} value={type}>
+                  {type}
+                </option>
               ))}
             </Field>
             <ErrorMessage name="venueType" component="p" className={err} />
@@ -113,9 +108,7 @@ const BasicInfoStep = () => {
 
           {/* District */}
           <div>
-            <label className="block mb-2 font-bold">
-              District
-            </label>
+            <label className="block mb-2 font-bold">District</label>
             <Field
               as="select"
               name="district"
@@ -123,7 +116,9 @@ const BasicInfoStep = () => {
             >
               <option value="">Select district</option>
               {districts.map((district) => (
-                <option key={district} value={district}>{district}</option>
+                <option key={district} value={district}>
+                  {district}
+                </option>
               ))}
             </Field>
             <ErrorMessage name="district" component="p" className={err} />
@@ -131,9 +126,7 @@ const BasicInfoStep = () => {
 
           {/* State */}
           <div>
-            <label className="block mb-2 font-bold">
-              State
-            </label>
+            <label className="block mb-2 font-bold">State</label>
             <Field
               as="select"
               name="state"
@@ -141,7 +134,9 @@ const BasicInfoStep = () => {
             >
               <option value="">Select state</option>
               {INDIA_STATES.map((stateName) => (
-                <option key={stateName} value={stateName}>{stateName}</option>
+                <option key={stateName} value={stateName}>
+                  {stateName}
+                </option>
               ))}
             </Field>
             <ErrorMessage name="state" component="p" className={err} />
@@ -149,9 +144,7 @@ const BasicInfoStep = () => {
 
           {/* City */}
           <div>
-            <label className="block mb-2 font-bold">
-              City / Place
-            </label>
+            <label className="block mb-2 font-bold">City / Place</label>
             <Field
               name="city"
               type="text"
@@ -163,9 +156,7 @@ const BasicInfoStep = () => {
 
           {/* Pincode */}
           <div>
-            <label className="block mb-2 font-bold">
-              Pincode
-            </label>
+            <label className="block mb-2 font-bold">Pincode</label>
             <Field
               name="pincode"
               type="text"
@@ -177,9 +168,7 @@ const BasicInfoStep = () => {
 
           {/* Full Address */}
           <div className="md:col-span-2">
-            <label className="block mb-2 font-bold">
-              Full Address
-            </label>
+            <label className="block mb-2 font-bold">Full Address</label>
             <Field
               as="textarea"
               name="fullAddress"
@@ -193,7 +182,8 @@ const BasicInfoStep = () => {
           {/* Google Maps */}
           <div className="md:col-span-2">
             <label className="block mb-2 font-bold">
-              Google Maps Link <span className="text-[var(--text-secondary)] font-normal text-sm">(optional)</span>
+              Google Maps Link{' '}
+              <span className="text-[var(--text-secondary)] font-normal text-sm">(optional)</span>
             </label>
             <Field
               name="googleMapsLink"
@@ -242,7 +232,8 @@ const BasicInfoStep = () => {
         {/* Max Capacity */}
         <div className="mt-8">
           <label className="block mb-2 font-bold">
-            Maximum Capacity <span className="text-[var(--text-secondary)] font-normal text-sm">(optional)</span>
+            Maximum Capacity{' '}
+            <span className="text-[var(--text-secondary)] font-normal text-sm">(optional)</span>
           </label>
           <Field
             name="maxCapacity"

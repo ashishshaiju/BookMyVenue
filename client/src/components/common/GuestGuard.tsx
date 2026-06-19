@@ -1,7 +1,7 @@
-import React from "react";
-import { Navigate, Outlet, useLocation } from "react-router";
-import { getSafeRedirectUrl } from "../../utils/redirect";
-import { useAuth } from "../../hooks/useAuth";
+import React from 'react';
+import { Navigate, Outlet, useLocation } from 'react-router';
+import { getSafeRedirectUrl } from '../../utils/redirect';
+import { useAuth } from '../../hooks/useAuth';
 
 const GuestGuard: React.FC = () => {
   const { isAuthenticated, loading } = useAuth();
@@ -17,7 +17,7 @@ const GuestGuard: React.FC = () => {
 
   if (isAuthenticated) {
     const searchParams = new URLSearchParams(location.search);
-    const redirectParam = searchParams.get("redirect");
+    const redirectParam = searchParams.get('redirect');
     const safeRedirect = getSafeRedirectUrl(redirectParam);
     return <Navigate to={safeRedirect} replace />;
   }
