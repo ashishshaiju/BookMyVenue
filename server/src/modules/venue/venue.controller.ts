@@ -84,6 +84,38 @@ export const getMyVenues = async (req: Request, res: Response): Promise<void> =>
   }
 };
 
+// PUT /venues/draft
+export const upsertDraft = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.userId;
+    if (!userId) { ResponseUtil.unauthorized(res, 'Unauthorized'); return; }
+
+    const { step, formValues } = req.body as { step: number; formValues: Record<string, unknown> };
+    if (typeof step !== "number") {
+      ResponseUtil.badRequest(res, 'Invalid draft payload');
+      return;
+    }
+
+    const draft = await service.upsertDraft(userId, step, formValues);
+    ResponseUtil.success(res, 'Draft saved', draft);
+  } catch (e) {
+    handleError(res, e, 'upsertDraft');
+  }
+};
+
+// GET /venues/draft
+export const getMyDraft = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.userId;
+    if (!userId) { ResponseUtil.unauthorized(res, 'Unauthorized'); return; }
+
+    const draft = await service.getDraft(userId);
+    ResponseUtil.success(res, 'Draft retrieved', draft);
+  } catch (e) {
+    handleError(res, e, 'getMyDraft');
+  }
+};
+
 export const getVenueById = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.validated?.params as z.infer<typeof venueIdParamSchema>;

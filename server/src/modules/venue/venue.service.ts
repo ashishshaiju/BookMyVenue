@@ -6,6 +6,7 @@ import type {
   IVenue,
   VenueKey,
 } from './venue.types';
+import type { IVenueDraft } from "./venueDraft.model";
 import { requireOwnVenue } from './venue.ownership';
 import * as workflow from './venue.workflow';
 import { NotFoundError, ConflictError } from '../../utils/errors';
@@ -16,8 +17,37 @@ import type {
   AdminVenueFiltersDTO,
 } from './venue.validator';
 import { VenueFields } from '../../constants/venue.constants';
+import { RoleModel } from '../../models/role.model';
+import * as authRepo from '../auth/auth.repository';
+import { getUserRole } from '../../services/roles.service';
+import mongoose from 'mongoose';
+import { logError } from '../../utils/logger';
 
-// Owner Operations
+async function assignOwnerRoleIfNeeded(userId: string): Promise<void> {
+  const current = await getUserRole(userId);
+
+  if (current && ['owner', 'admin', 'superAdmin'].includes(current.roleName)) {
+    return; 
+  }
+
+  const ownerRole = await RoleModel
+    .findOne({ name: 'owner', active: true, deleted: false })
+    .lean()
+    .exec();
+
+  if (!ownerRole) {
+    logError('assignOwnerRoleIfNeeded: owner role not found in DB — user not promoted', {
+      module: 'venue.service.ts/assignOwnerRoleIfNeeded',
+      userId,
+    });
+    return;
+  }
+
+  await authRepo.assignRoleToUser(
+    new mongoose.Types.ObjectId(userId),
+    ownerRole._id
+  );
+}
 
 export async function createVenue(userId: string, dto: CreateVenueDTO): Promise<IVenue> {
   const nameExists = await repo.existsByOwnerAndName(userId, dto.name);
@@ -34,15 +64,29 @@ export async function createVenue(userId: string, dto: CreateVenueDTO): Promise<
     ownerUserId: userId,
     createdBy: userId,
     updatedBy: userId,
+    status: 'PendingReview',
   } as unknown as CreateVenueData;
   if (!dto.coordinates) delete (data as unknown as Record<string, unknown>).location;
   delete (data as unknown as Record<string, unknown>).coordinates;
 
-  return repo.createVenue(data);
+  const venue = await repo.createVenue(data);
+
+  await assignOwnerRoleIfNeeded(userId);
+  await repo.deleteDraft(userId);
+
+  return venue;
 }
 
-export async function getMyVenues(userId: string): Promise<IVenue[]> {
-  return repo.findVenuesByOwner(userId);
+export async function upsertDraft(userId: string, step: number, formValues: Record<string, unknown>): Promise<IVenueDraft> {
+  return repo.upsertDraft(userId, step, formValues);
+}
+
+export async function getDraft(userId: string): Promise<IVenueDraft | null> {
+  return repo.getDraft(userId);
+}
+
+export async function getMyVenues(userId: string): Promise<Pick<IVenue, "_id" | "name" | "city" | "state" | "venueType" | "coverImage" | "status" | "rejectionReason" | "createdAt">[]> {
+  return repo.findMyVenuesProjected(userId);
 }
 
 export async function getVenueById(
