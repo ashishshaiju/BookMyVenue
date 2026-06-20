@@ -1,10 +1,12 @@
 import * as repo from './venue.repository';
+import type { PaginationParams, PaginatedResponse } from '../../types/pagination.types';
 import type {
   CreateVenueData,
   UpdateVenueData,
   AdminVenueFilters,
   IVenue,
   VenueKey,
+  PublicVenueFilters,
 } from './venue.types';
 import type { IVenueDraft } from "./venueDraft.model";
 import { requireOwnVenue } from './venue.ownership';
@@ -77,6 +79,17 @@ export async function createVenue(userId: string, dto: CreateVenueDTO): Promise<
   return venue;
 }
 
+export async function getActiveVenues(): Promise<IVenue[]> {
+  return repo.findActiveVenues();
+}
+
+export async function getPaginatedActiveVenues(
+  pagination: PaginationParams,
+  filters?: PublicVenueFilters
+): Promise<PaginatedResponse<IVenue, 'venues'>> {
+  return repo.findPaginatedActiveVenues(pagination, filters);
+}
+
 export async function upsertDraft(userId: string, step: number, formValues: Record<string, unknown>): Promise<IVenueDraft> {
   return repo.upsertDraft(userId, step, formValues);
 }
@@ -85,7 +98,7 @@ export async function getDraft(userId: string): Promise<IVenueDraft | null> {
   return repo.getDraft(userId);
 }
 
-export async function getMyVenues(userId: string): Promise<Pick<IVenue, "_id" | "name" | "city" | "state" | "venueType" | "coverImage" | "status" | "rejectionReason" | "createdAt">[]> {
+export async function getMyVenues(userId: string): Promise<Pick<IVenue, "_id" | "name" | "city" | "venueType" | "coverImage" | "status" | "rejectionReason" | "createdAt">[]> {
   return repo.findMyVenuesProjected(userId);
 }
 

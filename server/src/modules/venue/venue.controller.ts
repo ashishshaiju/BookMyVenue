@@ -8,6 +8,7 @@ import type {
   rejectVenueSchema,
   adminVenueFiltersSchema,
   venueIdParamSchema,
+  publicVenueFiltersSchema,
 } from './venue.validator';
 import { handleError } from '../../utils/errors';
 import { v2 as cloudinary } from 'cloudinary';
@@ -50,6 +51,18 @@ export const getUploadSignature = (req: Request, res: Response): void => {
     handleError(res, e, 'getUploadSignature');
   }
 };
+
+export const getPaginatedActiveVenues = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const filters = req.validated?.query as z.infer<typeof publicVenueFiltersSchema>;
+    const paginationParams = req.pagination ?? { page: 1, limit: 20, skip: 0, sort: '' };
+    const venuesData = await service.getPaginatedActiveVenues(paginationParams, filters);
+    ResponseUtil.paginated(res, 'Venues retrieved successfully', venuesData.venues, venuesData.pagination, 'venues');
+  } catch (e) {
+    handleError(res, e, 'getPaginatedActiveVenues');
+  }
+};
+
 
 // Owner Handlers
 export const createVenue = async (req: Request, res: Response): Promise<void> => {

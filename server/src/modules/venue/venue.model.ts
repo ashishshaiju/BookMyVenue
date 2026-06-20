@@ -70,7 +70,6 @@ const VenueSchema = new Schema<IVenue>(
     address: { type: String, required: true, trim: true },
     city: { type: String, required: true, trim: true },
     district: { type: String, required: true, trim: true },
-    state: { type: String, required: true, trim: true },
     pincode: { type: String, required: true, trim: true },
     location: { type: GeoPointSchema, required: false },
     googleMapsUrl: { type: String, trim: true, default: null },

@@ -8,6 +8,23 @@ export const VenueStatusEnum = [
   'Suspended',
 ] as const;
 
+export const KERALA_DISTRICTS = [
+  'Thiruvananthapuram',
+  'Kollam',
+  'Pathanamthitta',
+  'Alappuzha',
+  'Kottayam',
+  'Idukki',
+  'Ernakulam',
+  'Thrissur',
+  'Palakkad',
+  'Malappuram',
+  'Kozhikode',
+  'Wayanad',
+  'Kannur',
+  'Kasaragod',
+] as const;
+
 export const VenueFields = [
   'name',
   'description',
@@ -15,7 +32,6 @@ export const VenueFields = [
   'address',
   'city',
   'district',
-  'state',
   'pincode',
   'googleMapsUrl',
   'spaceAttributes',
@@ -51,7 +67,6 @@ export const SUBMISSION_REQUIRED_FIELDS: (keyof IVenue)[] = [
   'address',
   'city',
   'district',
-  'state',
   'pincode',
   'bookingType',
   'pricingType',

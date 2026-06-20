@@ -29,14 +29,13 @@ export interface PaginationMeta {
   limit: number;
   skip: number;
   totalPages: number;
-  hasNextPage: boolean;
-  hasPrevPage: boolean;
+  hasNext: boolean;
+  hasPrev: boolean;
 }
 
-export interface PaginatedResponse<T> {
-  items: T[];
+export type PaginatedResponse<T, K extends string = 'items'> = Record<K, T[]> & {
   pagination: PaginationMeta;
-}
+};
 
 export interface PaginationMiddlewareOptions {
   defaultLimit?: number;

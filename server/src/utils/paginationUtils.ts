@@ -81,8 +81,8 @@ export function buildPaginationMeta(total: number, params: PaginationParams): Pa
     limit,
     skip,
     totalPages,
-    hasNextPage: currentPage < totalPages,
-    hasPrevPage: currentPage > 1,
+    hasNext: currentPage < totalPages,
+    hasPrev: currentPage > 1,
   };
 }
 
