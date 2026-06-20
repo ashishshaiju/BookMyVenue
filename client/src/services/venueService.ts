@@ -1,5 +1,6 @@
 import { axiosInstance } from '../config/axios';
 import { API_ENDPOINTS } from '../constants';
+import type { VenueFilters } from '../types/venue.types';
 
 export async function createVenue(dto: unknown) {
   const res = await axiosInstance.post(API_ENDPOINTS.VENUES, dto);
@@ -36,5 +37,12 @@ export async function getMyDraft(): Promise<Record<string, unknown> | null> {
 // PUT /venues/:id
 export async function updateVenue(venueId: string, dto: unknown) {
   const res = await axiosInstance.put(API_ENDPOINTS.VENUE_UPDATE(venueId), dto);
+  return res.data?.data ?? res.data;
+}
+// GET /venues
+export async function getPublicVenues(filters: VenueFilters, page: number, limit: number) {
+  const res = await axiosInstance.get(API_ENDPOINTS.VENUES, {
+    params: { ...filters, page, limit },
+  });
   return res.data?.data ?? res.data;
 }

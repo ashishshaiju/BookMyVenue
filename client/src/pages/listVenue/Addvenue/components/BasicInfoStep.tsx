@@ -1,5 +1,5 @@
 import { Field, ErrorMessage } from 'formik';
-import { INDIA_STATES } from '@/constants';
+import { KERALA_DISTRICTS } from '@/constants';
 
 const venueTypes = [
   'Hall',
@@ -12,23 +12,6 @@ const venueTypes = [
   'Party Hall',
   'Conference Space',
   'Other',
-];
-
-const districts = [
-  'Thiruvananthapuram',
-  'Kollam',
-  'Pathanamthitta',
-  'Alappuzha',
-  'Kottayam',
-  'Idukki',
-  'Ernakulam',
-  'Thrissur',
-  'Palakkad',
-  'Malappuram',
-  'Kozhikode',
-  'Wayanad',
-  'Kannur',
-  'Kasaragod',
 ];
 
 const spaceAttributes = [
@@ -115,31 +98,13 @@ const BasicInfoStep = () => {
               className="w-full rounded-xl border border-[var(--bg-grey)] px-4 py-3 outline-none focus:border-[var(--bg-green)]"
             >
               <option value="">Select district</option>
-              {districts.map((district) => (
+              {KERALA_DISTRICTS.map((district) => (
                 <option key={district} value={district}>
                   {district}
                 </option>
               ))}
             </Field>
             <ErrorMessage name="district" component="p" className={err} />
-          </div>
-
-          {/* State */}
-          <div>
-            <label className="block mb-2 font-bold">State</label>
-            <Field
-              as="select"
-              name="state"
-              className="w-full rounded-xl border border-[var(--bg-grey)] px-4 py-3 outline-none focus:border-[var(--bg-green)]"
-            >
-              <option value="">Select state</option>
-              {INDIA_STATES.map((stateName) => (
-                <option key={stateName} value={stateName}>
-                  {stateName}
-                </option>
-              ))}
-            </Field>
-            <ErrorMessage name="state" component="p" className={err} />
           </div>
 
           {/* City */}

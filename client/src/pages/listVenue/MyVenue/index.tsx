@@ -13,24 +13,27 @@ interface MyVenuesResponse {
 }
 
 const MyVenues = () => {
-  const { data, isLoading, isError, refetch } = useApiQuery<MyVenuesResponse>(
-    'my-venues',
-    { url: API_ENDPOINTS.MY_VENUES, method: 'GET' }
-  );
+  const { data, isLoading, isError, refetch } = useApiQuery<MyVenuesResponse>('my-venues', {
+    url: API_ENDPOINTS.MY_VENUES,
+    method: 'GET',
+  });
 
   return (
     <section className="animate-slide-in-right">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 md:mb-8">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-[var(--text-primary)]">My Venues</h1>
-          <p className="mt-1 md:mt-2 text-sm md:text-base text-[var(--text-secondary)]">Manage your listed venues and check their approval status.</p>
+          <p className="mt-1 md:mt-2 text-sm md:text-base text-[var(--text-secondary)]">
+            Manage your listed venues and check their approval status.
+          </p>
         </div>
-        
+
         {data?.venues && data.venues.length > 0 && (
-          <Button className="w-full md:w-auto bg-[var(--bg-green)] text-white hover:bg-[var(--bg-green)]/90" asChild>
-            <Link to="/list-venue/add-venue">
-              Add New Venue
-            </Link>
+          <Button
+            className="w-full md:w-auto bg-[var(--bg-green)] text-white hover:bg-[var(--bg-green)]/90"
+            asChild
+          >
+            <Link to="/list-venue/add-venue">Add New Venue</Link>
           </Button>
         )}
       </div>
@@ -53,12 +56,15 @@ const MyVenues = () => {
           </div>
           <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-3">No venues yet</h2>
           <p className="text-[var(--text-secondary)] max-w-md mx-auto mb-8">
-            You haven't listed any venues yet. Start earning by listing your space for events, weddings, and parties.
+            You haven't listed any venues yet. Start earning by listing your space for events,
+            weddings, and parties.
           </p>
-          <Button size="lg" className="bg-[var(--bg-green)] text-white hover:bg-[var(--bg-green)]/90 rounded-xl" asChild>
-            <Link to="/list-venue/add-venue">
-              List Your First Venue
-            </Link>
+          <Button
+            size="lg"
+            className="bg-[var(--bg-green)] text-white hover:bg-[var(--bg-green)]/90 rounded-xl"
+            asChild
+          >
+            <Link to="/list-venue/add-venue">List Your First Venue</Link>
           </Button>
         </div>
       )}

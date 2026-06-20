@@ -7,8 +7,8 @@ import type { AddVenueFormValues } from '../types/venue.types';
  * Cleared on submit or logout.
  */
 export interface DraftSession {
-  venueId: string;              // MongoDB _id of the Draft venue document
-  step: number;                 // which step to resume on: 0 | 1 | 2
+  venueId: string; // MongoDB _id of the Draft venue document
+  step: number; // which step to resume on: 0 | 1 | 2
   formValues: AddVenueFormValues;
 }
 
@@ -42,5 +42,4 @@ export const loadDraft = <T>(userId: string): T | null => {
 };
 
 /** @deprecated use clearDraftSession */
-export const clearDraft = (userId: string): void =>
-  sessionStorage.removeItem(getDraftKey(userId));
+export const clearDraft = (userId: string): void => sessionStorage.removeItem(getDraftKey(userId));

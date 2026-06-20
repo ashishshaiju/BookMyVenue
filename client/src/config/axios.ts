@@ -29,6 +29,9 @@ export const createAxiosInstance = (): AxiosInstance => {
     headers: {
       'Content-Type': 'application/json',
     },
+    paramsSerializer: {
+      indexes: null,
+    },
   });
 
   instance.interceptors.request.use((config) => {
