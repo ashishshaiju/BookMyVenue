@@ -18,7 +18,7 @@ import { middleSchema } from './components/middleValidation';
 
 const BLANK_FORM: AddVenueFormValues = {
   VenueName: '', VenueDescription: '', venueType: '',
-  district: '', state: '', city: '', pincode: '', fullAddress: '', googleMapsLink: '',
+  district: '', city: '', pincode: '', fullAddress: '', googleMapsLink: '',
   spaceAttributes: [], seatingConfigurations: [], maxCapacity: '',
   bookingType: '', workingDays: [],
   fixedPackages: [{ slotName: '', startTime: '', endTime: '', price: '' }],
