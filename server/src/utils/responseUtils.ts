@@ -1,5 +1,6 @@
 import type { Response } from 'express';
 import type { ApiResponse } from '../types/express';
+import type { PaginationMeta } from '../types/pagination.types';
 
 function sendSuccess(res: Response, message: string, data?: unknown, statusCode = 200): void {
   const response: ApiResponse = {
@@ -22,6 +23,19 @@ function sendError(res: Response, message: string, error?: string, statusCode = 
 export const ResponseUtil = {
   success(res: Response, message: string, data?: unknown, statusCode = 200): void {
     sendSuccess(res, message, data, statusCode);
+  },
+
+  paginated(
+    res: Response,
+    message: string,
+    items: unknown[],
+    pagination: PaginationMeta,
+    dataKey = 'items'
+  ): void {
+    sendSuccess(res, message, {
+      [dataKey]: items,
+      pagination,
+    });
   },
 
   error(res: Response, message: string, error?: string, statusCode = 500): void {
