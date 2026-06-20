@@ -21,29 +21,36 @@ import { PRICE_STEPS, KERALA_DISTRICTS } from '@/constants';
 const ExplorePage = () => {
   const [filters, setFilters] = useState<VenueFilters>({});
   const [searchTerm, setSearchTerm] = useState('');
-  const [priceRangeIndex, setPriceRangeIndex] = useState<[number, number]>([0, PRICE_STEPS.length - 1]);
-  
+  const [priceRangeIndex, setPriceRangeIndex] = useState<[number, number]>([
+    0,
+    PRICE_STEPS.length - 1,
+  ]);
+
   const debouncedSearchTerm = useDebounce(searchTerm, 400);
   const debouncedPriceRangeIndex = useDebounce(priceRangeIndex, 400);
 
-  const { data, isLoading, isError, hasNextPage, fetchNextPage, isFetchingNextPage } = useExploreVenues({
-    ...filters,
-    searchTerm: debouncedSearchTerm || undefined,
-    minPrice: PRICE_STEPS[debouncedPriceRangeIndex[0]],
-    maxPrice: PRICE_STEPS[debouncedPriceRangeIndex[1]],
-  });
+  const { data, isLoading, isError, hasNextPage, fetchNextPage, isFetchingNextPage } =
+    useExploreVenues({
+      ...filters,
+      searchTerm: debouncedSearchTerm || undefined,
+      minPrice: PRICE_STEPS[debouncedPriceRangeIndex[0]],
+      maxPrice: PRICE_STEPS[debouncedPriceRangeIndex[1]],
+    });
 
   const observerRef = useRef<IntersectionObserver | null>(null);
-  const lastVenueElementRef = useCallback((node: HTMLDivElement | null) => {
-    if (isLoading || isFetchingNextPage) return;
-    if (observerRef.current) observerRef.current.disconnect();
-    observerRef.current = new IntersectionObserver(entries => {
-      if (entries[0].isIntersecting && hasNextPage) {
-        fetchNextPage();
-      }
-    });
-    if (node) observerRef.current.observe(node);
-  }, [isLoading, isFetchingNextPage, hasNextPage, fetchNextPage]);
+  const lastVenueElementRef = useCallback(
+    (node: HTMLDivElement | null) => {
+      if (isLoading || isFetchingNextPage) return;
+      if (observerRef.current) observerRef.current.disconnect();
+      observerRef.current = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting && hasNextPage) {
+          fetchNextPage();
+        }
+      });
+      if (node) observerRef.current.observe(node);
+    },
+    [isLoading, isFetchingNextPage, hasNextPage, fetchNextPage]
+  );
 
   const venueTypes = [
     'Hall',
@@ -57,7 +64,7 @@ const ExplorePage = () => {
     'Conference Space',
     'Other',
   ];
-  
+
   const amenitiesList = [
     'Parking',
     'AC',
@@ -72,7 +79,7 @@ const ExplorePage = () => {
     'Decoration Space',
     'Catering Area',
   ];
-  
+
   const spaceAttributes = [
     'Indoor',
     'Outdoor (Garden/Lawn)',
@@ -89,17 +96,16 @@ const ExplorePage = () => {
     'Standing',
   ];
 
-
   const toggleArrayFilter = (key: keyof VenueFilters, value: string) => {
-    setFilters(prev => {
+    setFilters((prev) => {
       const currentArray = (prev[key] as string[]) || [];
       const newArray = currentArray.includes(value)
-        ? currentArray.filter(item => item !== value)
+        ? currentArray.filter((item) => item !== value)
         : [...currentArray, value];
-      
+
       return {
         ...prev,
-        [key]: newArray.length > 0 ? newArray : undefined
+        [key]: newArray.length > 0 ? newArray : undefined,
       };
     });
   };
@@ -122,31 +128,39 @@ const ExplorePage = () => {
             {/* header */}
             <div className="flex items-center justify-between">
               <h2 className="text-2xl font-bold text-[var(--text-primary)]">Filters</h2>
-              <Button onClick={handleClearFilters} variant="ghost" className="text-[var(--bg-green)] cursor-pointer">
+              <Button
+                onClick={handleClearFilters}
+                variant="ghost"
+                className="text-[var(--bg-green)] cursor-pointer"
+              >
                 Clear
               </Button>
             </div>
             <Separator className="my-5" />
-            
+
             {/* price */}
             <div>
               <h3 className="font-semibold text-[var(--text-primary)] mb-4">Price Range</h3>
-              <Slider 
-                value={priceRangeIndex} 
+              <Slider
+                value={priceRangeIndex}
                 min={0}
-                max={PRICE_STEPS.length - 1} 
-                step={1} 
-                className="cursor-pointer" 
+                max={PRICE_STEPS.length - 1}
+                step={1}
+                className="cursor-pointer"
                 onValueChange={(val) => setPriceRangeIndex([val[0], val[1]])}
               />
               <div className="flex gap-3 mt-5">
                 <div className="flex-1 rounded-2xl border border-[var(--bg-grey)] p-3">
                   <p className="text-xs text-[var(--text-secondary)]">Min</p>
-                  <p className="font-medium text-[var(--text-primary)]">₹{PRICE_STEPS[priceRangeIndex[0]]}</p>
+                  <p className="font-medium text-[var(--text-primary)]">
+                    ₹{PRICE_STEPS[priceRangeIndex[0]]}
+                  </p>
                 </div>
                 <div className="flex-1 rounded-2xl border border-[var(--bg-grey)] p-3">
                   <p className="text-xs text-[var(--text-secondary)]">Max</p>
-                  <p className="font-medium text-[var(--text-primary)]">₹{PRICE_STEPS[priceRangeIndex[1]]}</p>
+                  <p className="font-medium text-[var(--text-primary)]">
+                    ₹{PRICE_STEPS[priceRangeIndex[1]]}
+                  </p>
                 </div>
               </div>
             </div>
@@ -159,8 +173,8 @@ const ExplorePage = () => {
               <div className="space-y-4">
                 {venueTypes.map((type) => (
                   <div key={type} className="flex items-center gap-3">
-                    <Checkbox 
-                      id={`type-${type}`} 
+                    <Checkbox
+                      id={`type-${type}`}
                       checked={filters.venueType?.includes(type)}
                       onCheckedChange={() => toggleArrayFilter('venueType', type)}
                     />
@@ -175,9 +189,11 @@ const ExplorePage = () => {
             {/* District */}
             <div>
               <h3 className="font-semibold text-[var(--text-primary)] mb-4">District</h3>
-              <Select 
-                value={filters.district || 'all'} 
-                onValueChange={(value) => setFilters(prev => ({ ...prev, district: value === 'all' ? undefined : value }))}
+              <Select
+                value={filters.district || 'all'}
+                onValueChange={(value) =>
+                  setFilters((prev) => ({ ...prev, district: value === 'all' ? undefined : value }))
+                }
               >
                 <SelectTrigger className="w-full rounded-2xl h-12 cursor-pointer">
                   <SelectValue placeholder="Select District" />
@@ -198,10 +214,15 @@ const ExplorePage = () => {
             {/* Capacity */}
             <div>
               <h3 className="font-semibold text-[var(--text-primary)] mb-4">Capacity</h3>
-              <RadioGroup 
+              <RadioGroup
                 className="space-y-4"
                 value={filters.capacity ? filters.capacity.toString() : 'any'}
-                onValueChange={(val) => setFilters(prev => ({ ...prev, capacity: val === 'any' ? undefined : Number(val) }))}
+                onValueChange={(val) =>
+                  setFilters((prev) => ({
+                    ...prev,
+                    capacity: val === 'any' ? undefined : Number(val),
+                  }))
+                }
               >
                 <div className="flex items-center gap-3">
                   <RadioGroupItem value="any" id="cap-any" />
@@ -234,8 +255,8 @@ const ExplorePage = () => {
               <div className="space-y-4">
                 {spaceAttributes.map((space) => (
                   <div key={space} className="flex items-center gap-3">
-                    <Checkbox 
-                      id={`space-${space}`} 
+                    <Checkbox
+                      id={`space-${space}`}
                       checked={filters.spaceAttributes?.includes(space)}
                       onCheckedChange={() => toggleArrayFilter('spaceAttributes', space)}
                     />
@@ -244,7 +265,7 @@ const ExplorePage = () => {
                 ))}
               </div>
             </div>
-            
+
             <Separator className="my-6" />
 
             {/* seating type */}
@@ -253,8 +274,8 @@ const ExplorePage = () => {
               <div className="space-y-4">
                 {seatingConfigs.map((seat) => (
                   <div key={seat} className="flex items-center gap-3">
-                    <Checkbox 
-                      id={`seat-${seat}`} 
+                    <Checkbox
+                      id={`seat-${seat}`}
                       checked={filters.seatingConfigurations?.includes(seat)}
                       onCheckedChange={() => toggleArrayFilter('seatingConfigurations', seat)}
                     />
@@ -272,8 +293,8 @@ const ExplorePage = () => {
               <div className="space-y-4">
                 {amenitiesList.map((amenity) => (
                   <div key={amenity} className="flex items-center gap-3">
-                    <Checkbox 
-                      id={`amenity-${amenity}`} 
+                    <Checkbox
+                      id={`amenity-${amenity}`}
                       checked={filters.amenities?.includes(amenity)}
                       onCheckedChange={() => toggleArrayFilter('amenities', amenity)}
                     />
@@ -295,7 +316,7 @@ const ExplorePage = () => {
               <p className="mt-2 mb-5 text-[var(--text-secondary)]">
                 Discover halls, resorts, auditoriums, turfs and more for every occasion.
               </p>
-              
+
               {/* Search */}
               <div className="flex items-center gap-4">
                 <input
@@ -307,15 +328,17 @@ const ExplorePage = () => {
                 />
               </div>
             </div>
-            
+
             {/* results + sort */}
             <div className="mb-6 flex items-center justify-between">
               <h2 className="text-lg font-semibold text-[var(--text-primary)]">
                 {totalVenues} Venues Found
               </h2>
-              <Select 
-                value={filters.sortBy || ''} 
-                onValueChange={(value) => setFilters(prev => ({ ...prev, sortBy: value as VenueFilters['sortBy'] }))}
+              <Select
+                value={filters.sortBy || ''}
+                onValueChange={(value) =>
+                  setFilters((prev) => ({ ...prev, sortBy: value as VenueFilters['sortBy'] }))
+                }
               >
                 <SelectTrigger className="w-[220px] rounded-2xl h-12">
                   <SelectValue placeholder="Sort By" />
@@ -327,32 +350,47 @@ const ExplorePage = () => {
                 </SelectContent>
               </Select>
             </div>
-            
+
             {/* Cards */}
             {isError ? (
               <div className="text-center py-10 text-red-500">Failed to load venues.</div>
             ) : venues.length === 0 && !isLoading ? (
-              <div className="text-center py-10 text-[var(--text-secondary)]">No venues found matching your criteria.</div>
+              <div className="text-center py-10 text-[var(--text-secondary)]">
+                No venues found matching your criteria.
+              </div>
             ) : (
               <div className="grid grid-cols-4 gap-6">
                 {venues.map((venue, index) => {
                   const isLastItem = index === venues.length - 1;
                   return (
-                    <div 
-                      key={venue._id} 
+                    <div
+                      key={venue._id}
                       ref={isLastItem ? lastVenueElementRef : null}
                       className="overflow-hidden rounded-3xl border border-[var(--bg-grey)] bg-[var(--bg-tertiary)] hover:shadow-lg transition duration-300 flex flex-col"
                     >
-                      <img src={venue.coverImage} alt={venue.name} className="w-full h-56 object-cover" />
+                      <img
+                        src={venue.coverImage}
+                        alt={venue.name}
+                        className="w-full h-56 object-cover"
+                      />
                       <div className="p-5 flex-1 flex flex-col">
                         <div className="mb-auto">
-                          <span className="inline-block px-2 py-1 bg-gray-100 dark:bg-gray-800 text-xs rounded-md mb-2">{venue.venueType}</span>
-                          <h3 className="text-lg font-semibold text-[var(--text-primary)] line-clamp-1" title={venue.name}>
+                          <span className="inline-block px-2 py-1 bg-gray-100 dark:bg-gray-800 text-xs rounded-md mb-2">
+                            {venue.venueType}
+                          </span>
+                          <h3
+                            className="text-lg font-semibold text-[var(--text-primary)] line-clamp-1"
+                            title={venue.name}
+                          >
                             {venue.name}
                           </h3>
                           <div className="flex justify-between items-center mt-2">
-                            <p className="text-sm text-[var(--text-secondary)] flex items-center gap-1 line-clamp-1" title={`${venue.city}, ${venue.district}`}>
-                              <IoLocationOutline className="shrink-0" /> {venue.city}, {venue.district}
+                            <p
+                              className="text-sm text-[var(--text-secondary)] flex items-center gap-1 line-clamp-1"
+                              title={`${venue.city}, ${venue.district}`}
+                            >
+                              <IoLocationOutline className="shrink-0" /> {venue.city},{' '}
+                              {venue.district}
                             </p>
                           </div>
                           <p className="text-sm text-[var(--text-secondary)] mt-2">
@@ -371,11 +409,10 @@ const ExplorePage = () => {
                 })}
               </div>
             )}
-            
+
             {/* Loading indicators */}
             {isLoading && <div className="text-center py-5">Loading initial venues...</div>}
             {isFetchingNextPage && <div className="text-center py-5">Loading more...</div>}
-            
           </div>
         </main>
       </div>

@@ -1,5 +1,6 @@
 import { axiosInstance } from '../config/axios';
 import { API_ENDPOINTS } from '../constants';
+import type { VenueFilters } from '../types/venue.types';
 
 export async function createVenue(dto: unknown) {
   const res = await axiosInstance.post(API_ENDPOINTS.VENUES, dto);
@@ -39,7 +40,7 @@ export async function updateVenue(venueId: string, dto: unknown) {
   return res.data?.data ?? res.data;
 }
 // GET /venues
-export async function getPublicVenues(filters: unknown, page: number, limit: number) {
+export async function getPublicVenues(filters: VenueFilters, page: number, limit: number) {
   const res = await axiosInstance.get(API_ENDPOINTS.VENUES, {
     params: { ...filters, page, limit },
   });

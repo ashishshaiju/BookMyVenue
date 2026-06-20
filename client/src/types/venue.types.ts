@@ -27,6 +27,7 @@ export interface AddVenueFormValues {
   VenueDescription: string;
   venueType: string;
   district: string;
+  state: string;
   city: string;
   pincode: string;
   fullAddress: string;

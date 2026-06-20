@@ -19,8 +19,8 @@ const ListSidebar = () => {
           <Link
             to="/list-venue/add-venue"
             className={`flex items-center gap-3 rounded-xl px-4 py-3 transition ${
-              isActive('add-venue') 
-                ? 'bg-[var(--bg-green)] text-white shadow-md' 
+              isActive('add-venue')
+                ? 'bg-[var(--bg-green)] text-white shadow-md'
                 : 'text-[var(--text-primary)] hover:bg-[var(--bg-primary)]'
             }`}
           >
@@ -32,7 +32,7 @@ const ListSidebar = () => {
             to="/list-venue/my-venues"
             className={`flex items-center gap-3 rounded-xl px-4 py-3 transition ${
               isActive('my-venues') || location.pathname === '/list-venue'
-                ? 'bg-[var(--bg-green)] text-white shadow-md' 
+                ? 'bg-[var(--bg-green)] text-white shadow-md'
                 : 'text-[var(--text-primary)] hover:bg-[var(--bg-primary)]'
             }`}
           >
@@ -47,17 +47,21 @@ const ListSidebar = () => {
         <Link
           to="/list-venue/add-venue"
           className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-colors w-24 ${
-            isActive('add-venue') ? 'text-[var(--bg-green)]' : 'text-[var(--text-secondary)] hover:bg-[var(--bg-primary)]'
+            isActive('add-venue')
+              ? 'text-[var(--bg-green)]'
+              : 'text-[var(--text-secondary)] hover:bg-[var(--bg-primary)]'
           }`}
         >
           <IoAddCircleOutline size={22} />
           <span className="text-[10px] font-medium">Add Venue</span>
         </Link>
-        
+
         <Link
           to="/list-venue/my-venues"
           className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-colors w-24 ${
-            isActive('my-venues') || location.pathname === '/list-venue' ? 'text-[var(--bg-green)]' : 'text-[var(--text-secondary)] hover:bg-[var(--bg-primary)]'
+            isActive('my-venues') || location.pathname === '/list-venue'
+              ? 'text-[var(--bg-green)]'
+              : 'text-[var(--text-secondary)] hover:bg-[var(--bg-primary)]'
           }`}
         >
           <MdOutlineMeetingRoom size={22} />
