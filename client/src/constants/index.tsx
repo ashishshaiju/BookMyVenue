@@ -1,4 +1,5 @@
 import { INDIA_STATES } from './india';
+export { PRICE_STEPS, KERALA_DISTRICTS } from './filterConstants';
 
 // API Configuration
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3003';
