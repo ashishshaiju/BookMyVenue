@@ -47,7 +47,6 @@ export interface IVenue extends Document {
   address: string;
   city: string;
   district: string;
-  state: string;
   pincode: string;
   location: IGeoPoint; // $geoNear / 2dsphere queries - future usecase
   googleMapsUrl?: string;
@@ -127,4 +126,17 @@ export interface AdminVenueFilters {
   city?: string;
   page: number;
   limit: number;
+}
+
+export interface PublicVenueFilters {
+  searchTerm?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  venueType?: string[];
+  district?: string;
+  capacity?: number;
+  spaceAttributes?: string[];
+  seatingConfigurations?: string[];
+  amenities?: string[];
+  sortBy?: 'price-low' | 'price-high' | 'rating';
 }

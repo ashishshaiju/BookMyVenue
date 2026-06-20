@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { KERALA_DISTRICTS } from '../../constants/venue.constants';
 
 // Shared sub-schemas
 
@@ -58,8 +59,7 @@ export const createVenueSchema = z
     // Location
     address: z.string().trim().min(5, 'Address must be at least 5 characters'),
     city: z.string().trim().min(2).max(100),
-    district: z.string().trim().min(2).max(100),
-    state: z.string().trim().min(2).max(100),
+    district: z.enum(KERALA_DISTRICTS),
     pincode: z.string().trim().min(4).max(20),
     coordinates: coordinatesSchema.optional(),
     googleMapsUrl: urlSchema.optional(),
@@ -292,7 +292,6 @@ export const updateVenueSchema = z
     address: z.string().trim().min(5, 'Address must be at least 5 characters'),
     city: z.string().trim().min(2).max(100),
     district: z.string().trim().min(2).max(100),
-    state: z.string().trim().min(2).max(100),
     pincode: z.string().trim().min(4).max(20),
     coordinates: coordinatesSchema.optional(),
     googleMapsUrl: urlSchema.optional(),
@@ -354,6 +353,28 @@ export const adminVenueFiltersSchema = z.object({
 });
 
 export type AdminVenueFiltersDTO = z.infer<typeof adminVenueFiltersSchema>;
+
+const stringOrArray = z.preprocess(
+  (val) => (Array.isArray(val) ? val : val ? [val] : undefined),
+  z.array(z.string()).optional()
+);
+
+export const publicVenueFiltersSchema = z.object({
+  searchTerm: z.string().trim().max(100).optional(),
+  minPrice: z.coerce.number().min(0).optional(),
+  maxPrice: z.coerce.number().min(0).optional(),
+  venueType: stringOrArray,
+  district: z.enum(KERALA_DISTRICTS).optional(),
+  capacity: z.coerce.number().int().positive().optional(),
+  spaceAttributes: stringOrArray,
+  seatingConfigurations: stringOrArray,
+  amenities: stringOrArray,
+  sortBy: z.enum(['price-low', 'price-high', 'rating']).optional(),
+  page: z.coerce.number().int().positive().default(1),
+  limit: z.coerce.number().int().positive().max(100).default(20),
+});
+
+export type PublicVenueFiltersDTO = z.infer<typeof publicVenueFiltersSchema>;
 
 // Route param
 

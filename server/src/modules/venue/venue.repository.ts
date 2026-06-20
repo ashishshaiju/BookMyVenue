@@ -1,9 +1,12 @@
+import type { PaginationParams, PaginatedResponse } from '../../types/pagination.types';
+import { buildPaginationMeta } from '../../utils/paginationUtils';
 import type {
   IVenue,
   VenueStatus,
   AdminVenueFilters,
   CreateVenueData,
   UpdateVenueData,
+  PublicVenueFilters,
 } from './venue.types';
 import { VenueModel } from './venue.model';
 import { VenueDraftModel, type IVenueDraft } from './venueDraft.model';
@@ -17,6 +20,114 @@ const toObjectId = (id: string): mongoose.Types.ObjectId => {
 
 function escapeRegex(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+export async function findActiveVenues(): Promise<IVenue[]> {
+  return VenueModel.find({ status: 'Approved', active: true, deleted: false })
+    .sort({ createdAt: -1 })
+    .select(
+      '_id name description venueType city district coverImage maxCapacity slotDuration'
+    )
+    .exec();
+}
+
+export async function findPaginatedActiveVenues(
+  paginationParams: PaginationParams,
+  filters?: PublicVenueFilters
+): Promise<PaginatedResponse<IVenue, 'venues'>> {
+  const { limit, skip } = paginationParams;
+  const conditions: Record<string, unknown>[] = [
+    { status: 'Approved', active: true, deleted: false },
+  ];
+
+  if (filters?.searchTerm) {
+    const searchRegex = new RegExp(escapeRegex(filters.searchTerm), 'i');
+    conditions.push({
+      $or: [
+        { name: searchRegex },
+        { city: searchRegex },
+        { district: searchRegex },
+        { description: searchRegex },
+      ],
+    });
+  }
+
+  if (filters?.minPrice !== undefined || filters?.maxPrice !== undefined) {
+    const priceCondition: { $gte?: number; $lte?: number } = {};
+    if (filters.minPrice !== undefined) priceCondition.$gte = filters.minPrice;
+    if (filters.maxPrice !== undefined) priceCondition.$lte = filters.maxPrice;
+
+    conditions.push({
+      $or: [
+        { samePrice: priceCondition },
+        { 'fixedPackages.price': priceCondition },
+        { 'pricingRules.price': priceCondition },
+      ],
+    });
+  }
+
+  if (filters?.venueType && filters.venueType.length > 0) {
+    conditions.push({ venueType: { $in: filters.venueType } });
+  }
+
+  if (filters?.district) {
+    conditions.push({
+      district: { $regex: new RegExp(`^${escapeRegex(filters.district)}$`, 'i') },
+    });
+  }
+
+  if (filters?.capacity) {
+    conditions.push({ maxCapacity: { $gte: filters.capacity } });
+  }
+
+  if (filters?.spaceAttributes && filters.spaceAttributes.length > 0) {
+    conditions.push({ spaceAttributes: { $in: filters.spaceAttributes } });
+  }
+
+  if (filters?.seatingConfigurations && filters.seatingConfigurations.length > 0) {
+    conditions.push({ seatingConfigurations: { $in: filters.seatingConfigurations } });
+  }
+
+  if (filters?.amenities && filters.amenities.length > 0) {
+    conditions.push({ amenities: { $all: filters.amenities } });
+  }
+
+  const query = { $and: conditions };
+
+  let sortOption: Record<string, 1 | -1> = { createdAt: -1 };
+  if (filters?.sortBy) {
+    switch (filters.sortBy) {
+      case 'price-low':
+        sortOption = { samePrice: 1 };
+        break;
+      case 'price-high':
+        sortOption = { samePrice: -1 };
+        break;
+      case 'rating':
+        sortOption = { createdAt: -1 }; // Replace with actual rating sort if exists
+        break;
+      default:
+        sortOption = { createdAt: -1 };
+        break;
+    }
+  }
+
+  const [venues, total] = await Promise.all([
+    VenueModel.find(query)
+      .sort(sortOption)
+      .skip(skip)
+      .limit(limit)
+      .select(
+        '_id name description venueType city district coverImage maxCapacity slotDuration'
+      )
+      .exec(),
+    VenueModel.countDocuments(query).exec(),
+  ]);
+
+  return {
+    venues,
+    pagination: buildPaginationMeta(total, paginationParams),
+  };
 }
 
 // Read Operations
@@ -44,8 +155,20 @@ export async function existsByOwnerAndName(
   return count > 0;
 }
 
-export async function findMyVenuesProjected(ownerUserId: string): Promise<
-  Pick<IVenue, '_id' | 'name' | 'city' | 'state' | 'venueType' | 'coverImage' | 'status' | 'rejectionReason' | 'createdAt'>[]
+export async function findMyVenuesProjected(
+  ownerUserId: string
+): Promise<
+  Pick<
+    IVenue,
+    | '_id'
+    | 'name'
+    | 'city'
+    | 'venueType'
+    | 'coverImage'
+    | 'status'
+    | 'rejectionReason'
+    | 'createdAt'
+  >[]
 > {
   return VenueModel.find(
     { ownerUserId: toObjectId(ownerUserId), deleted: false },
@@ -53,7 +176,6 @@ export async function findMyVenuesProjected(ownerUserId: string): Promise<
       _id: 1,
       name: 1,
       city: 1,
-      state: 1,
       venueType: 1,
       coverImage: 1,
       status: 1,
@@ -105,7 +227,11 @@ export async function createVenue(data: CreateVenueData): Promise<IVenue> {
 }
 
 // Draft Operations
-export async function upsertDraft(userId: string, step: number, formValues: Record<string, unknown>): Promise<IVenueDraft> {
+export async function upsertDraft(
+  userId: string,
+  step: number,
+  formValues: Record<string, unknown>
+): Promise<IVenueDraft> {
   return VenueDraftModel.findOneAndUpdate(
     { userId: toObjectId(userId) },
     { $set: { step, formValues } },
@@ -158,7 +284,7 @@ export async function updateVenueStatus(
       ...(extraFields ?? {}),
     },
   };
-  
+
   if (newStatus !== 'Rejected') {
     patch.$unset = { rejectionReason: '' };
   }
