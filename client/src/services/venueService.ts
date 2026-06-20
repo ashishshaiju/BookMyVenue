@@ -38,3 +38,10 @@ export async function updateVenue(venueId: string, dto: unknown) {
   const res = await axiosInstance.put(API_ENDPOINTS.VENUE_UPDATE(venueId), dto);
   return res.data?.data ?? res.data;
 }
+// GET /venues
+export async function getPublicVenues(filters: unknown, page: number, limit: number) {
+  const res = await axiosInstance.get(API_ENDPOINTS.VENUES, {
+    params: { ...filters, page, limit },
+  });
+  return res.data?.data ?? res.data;
+}
