@@ -10,6 +10,7 @@ import {
 } from '../../middlewares/validation.middleware';
 import * as validator from './venue.validator';
 import rateLimit from 'express-rate-limit';
+import { paginationMiddleware } from '../../middlewares/pagination.middleware';
 
 const router: Router = Router();
 
@@ -36,12 +37,17 @@ router
     requirePermission(P.venues.create),
     validateBody(validator.createVenueSchema),
     controller.createVenue
+  )
+  .get(
+    validateQuery(validator.publicVenueFiltersSchema),
+    paginationMiddleware(),
+    controller.getPaginatedActiveVenues
   );
+
 router
   .route('/my-venues')
   .get(verifyAccessToken, requirePermission(P.venues.read), controller.getMyVenues);
 
-// Draft — UX save and resume
 router
   .route('/draft')
   .put(
