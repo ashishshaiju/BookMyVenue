@@ -133,9 +133,12 @@ const ExplorePage = () => {
   const totalVenues = data?.pages[0]?.pagination?.total || 0;
 
   const getStartingPrice = (venue: PublicVenue) => {
-    if (venue.samePrice !== undefined) return venue.samePrice;
-    if (venue.pricingRules?.length) {
-      return Math.min(...venue.pricingRules.map((r) => r.price));
+    if (venue.pricing) {
+      const rules = venue.pricing.pricingRules || [];
+      if (rules.length > 0) {
+        return Math.min(venue.pricing.basePrice, ...rules.map((r) => r.price));
+      }
+      return venue.pricing.basePrice;
     }
     if (venue.fixedPackages?.length) {
       return Math.min(...venue.fixedPackages.map((p) => p.price));
@@ -549,9 +552,9 @@ const ExplorePage = () => {
                                     <span className="text-xl font-bold text-[var(--text-primary)]">
                                       ₹ {price.toLocaleString()}
                                     </span>
-                                    {venue.slotDuration ? (
+                                    {venue.flexibleBooking?.slotDuration ? (
                                       <span className="text-xs text-[var(--text-secondary)]">
-                                        / {venue.slotDuration} mins
+                                        / {venue.flexibleBooking.slotDuration} mins
                                       </span>
                                     ) : (
                                       <span className="text-xs text-[var(--text-secondary)]">
