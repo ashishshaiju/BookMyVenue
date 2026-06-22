@@ -24,6 +24,7 @@ export const corsOptions: CorsOptions = {
           'http://localhost:3000',
           'http://localhost:5174',
           'http://localhost:3001',
+          'http://192.168.220.33'
         ]),
   credentials: true,
   optionsSuccessStatus: 204,
