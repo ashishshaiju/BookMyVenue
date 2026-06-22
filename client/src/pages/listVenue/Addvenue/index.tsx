@@ -6,7 +6,12 @@ import { useToast } from '../../../hooks/useToast';
 import { useImageUpload } from '../../../hooks/useImageUpload';
 import { createVenue, upsertVenueDraft, getMyDraft } from '../../../services/venueService';
 import { mapFormToDTO } from '../../../utils/venueFormMapper';
-import { saveDraftSession, loadDraftSession, clearDraftSession, clearDraft } from '../../../utils/venueDraft';
+import {
+  saveDraftSession,
+  loadDraftSession,
+  clearDraftSession,
+  clearDraft,
+} from '../../../utils/venueDraft';
 import type { AddVenueFormValues } from '../../../types/venue.types';
 
 import BasicInfoStep from './components/BasicInfoStep';
@@ -17,17 +22,34 @@ import { finishSchema } from './components/FinishValidation';
 import { middleSchema } from './components/middleValidation';
 
 const BLANK_FORM: AddVenueFormValues = {
-  VenueName: '', VenueDescription: '', venueType: '',
-  district: '', state: '', city: '', pincode: '', fullAddress: '', googleMapsLink: '',
-  spaceAttributes: [], seatingConfigurations: [], maxCapacity: '',
-  bookingType: '', workingDays: [],
+  VenueName: '',
+  VenueDescription: '',
+  venueType: '',
+  district: '',
+  state: '',
+  city: '',
+  pincode: '',
+  fullAddress: '',
+  googleMapsLink: '',
+  spaceAttributes: [],
+  seatingConfigurations: [],
+  maxCapacity: '',
+  bookingType: '',
+  workingDays: [],
   fixedPackages: [{ slotName: '', startTime: '', endTime: '', price: '' }],
   workingHours: { open: '', close: '' },
-  slotDuration: '', bufferTime: '', pricingType: '', samePrice: '',
+  slotDuration: '',
+  bufferTime: '',
+  pricingType: '',
+  samePrice: '',
   pricingRules: [{ fromTime: '', toTime: '', price: '' }],
   blockedTimes: [{ fromTime: '', toTime: '', reason: '' }],
-  amenities: [], venuePhotos: [],
-  contactName: '', contactPhone: '', cancellationPolicy: '', refundType: '',
+  amenities: [],
+  venuePhotos: [],
+  contactName: '',
+  contactPhone: '',
+  cancellationPolicy: '',
+  refundType: '',
   refundRules: [{ daysBefore: '', refundPercentage: '' }],
 };
 
@@ -49,7 +71,10 @@ const AddVenue = () => {
   useEffect(() => {
     const init = async () => {
       if (authLoading) return;
-      if (!user?.id) { setInitializing(false); return; }
+      if (!user?.id) {
+        setInitializing(false);
+        return;
+      }
 
       // 1. sessionStorage is the fastest path — no API call
       const session = loadDraftSession(user.id);
@@ -167,7 +192,10 @@ const AddVenue = () => {
             return;
           }
 
-          if (!user?.id) { showError('User not authenticated'); return; }
+          if (!user?.id) {
+            showError('User not authenticated');
+            return;
+          }
 
           try {
             // Save raw form values as a draft backup on the server

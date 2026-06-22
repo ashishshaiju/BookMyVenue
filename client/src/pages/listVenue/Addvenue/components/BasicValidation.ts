@@ -16,8 +16,6 @@ export const basicInfoSchema = Yup.object({
 
   district: Yup.string().required('District is required'),
 
-  state: Yup.string().required('State is required'),
-
   city: Yup.string().required('City / Place is required'),
 
   pincode: Yup.string()
