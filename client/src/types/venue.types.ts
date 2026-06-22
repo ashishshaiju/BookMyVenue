@@ -2,13 +2,13 @@ export interface IFixedPackage {
   slotName: string;
   startTime: string;
   endTime: string;
-  price: string;
+  price: number;
 }
 
 export interface IPricingRule {
   fromTime: string;
   toTime: string;
-  price: string;
+  price: number;
 }
 
 export interface IBlockedTime {
@@ -17,9 +17,47 @@ export interface IBlockedTime {
   reason: string;
 }
 
+export interface IPricing {
+  pricingType: 'fixedPricing' | 'timeBasedPricing';
+  basePrice: number;
+  pricingRules: IPricingRule[];
+}
+
 export interface IRefundRule {
-  daysBefore: string;
-  refundPercentage: string;
+  daysBefore: number;
+  refundPercentage: number;
+}
+
+export interface IContact {
+  name: string;
+  phone: string;
+  email?: string | null;
+}
+
+export interface ICancellation {
+  policy: 'refundable' | 'nonRefundable';
+  refundType?: 'fullRefund' | 'timeBasedRefund';
+  refundRules: IRefundRule[];
+}
+
+// ─── Form-only types (pre-coercion, values may be strings) ──────────────────
+
+export interface IAddVenueFixedPackage {
+  slotName: string;
+  startTime: string;
+  endTime: string;
+  price: number | string;
+}
+
+export interface IAddVenuePricingRule {
+  fromTime: string;
+  toTime: string;
+  price: number | string;
+}
+
+export interface IAddVenueRefundRule {
+  daysBefore: number | string;
+  refundPercentage: number | string;
 }
 
 export interface AddVenueFormValues {
@@ -36,25 +74,38 @@ export interface AddVenueFormValues {
   seatingConfigurations: string[];
   maxCapacity: string;
   bookingType: string;
-  fixedPackages: IFixedPackage[];
+  fixedPackages: IAddVenueFixedPackage[];
   workingDays: string[];
   workingHours: {
     open: string;
     close: string;
   };
-  slotDuration: string;
-  bufferTime: string;
-  pricingType: string;
-  samePrice: string;
-  pricingRules: IPricingRule[];
+  // Nested flexible booking config
+  flexibleBooking: {
+    slotDuration: number | string;
+    bufferTime: number | string;
+  };
+  // Nested pricing config
+  pricing: {
+    pricingType: string;
+    basePrice: number | string;
+    pricingRules: IAddVenuePricingRule[];
+  };
   blockedTimes: IBlockedTime[];
   amenities: string[];
   venuePhotos: File[];
-  contactName: string;
-  contactPhone: string;
-  cancellationPolicy: string;
-  refundType: string;
-  refundRules: IRefundRule[];
+  // Nested contact
+  contact: {
+    name: string;
+    phone: string;
+    email?: string;
+  };
+  // Nested cancellation
+  cancellation: {
+    policy: string;
+    refundType: string;
+    refundRules: IAddVenueRefundRule[];
+  };
 }
 
 export type VenueStatus = 'Draft' | 'PendingReview' | 'Approved' | 'Rejected' | 'Suspended';
@@ -71,6 +122,40 @@ export interface MyVenue {
   createdAt: string;
 }
 
+export interface VenueDetail {
+  _id: string;
+  name: string;
+  description: string;
+  venueType: string;
+  address: string;
+  city: string;
+  district: string;
+  pincode: string;
+  googleMapsUrl?: string;
+  spaceAttributes: string[];
+  seatingConfigurations: string[];
+  maxCapacity?: number;
+  bookingType: 'fixedBooking' | 'flexibleBooking';
+  fixedPackages: IFixedPackage[];
+  workingDays: string[];
+  workingHours: {
+    open: string;
+    close: string;
+  };
+  flexibleBooking?: {
+    slotDuration: number;
+    bufferTime: number;
+  };
+  pricing: IPricing;
+  amenities: string[];
+  coverImage: string;
+  galleryImages: string[];
+  contact: IContact;
+  cancellation: ICancellation;
+  status: VenueStatus;
+  createdAt: string;
+}
+
 export interface PublicVenue {
   _id: string;
   name: string;
@@ -80,7 +165,14 @@ export interface PublicVenue {
   district: string;
   coverImage: string;
   maxCapacity: number;
-  slotDuration: number;
+  flexibleBooking?: {
+    slotDuration: number;
+    bufferTime: number;
+  };
+  amenities?: string[];
+  bookingType?: 'fixedBooking' | 'flexibleBooking';
+  pricing?: IPricing;
+  fixedPackages?: { price: number }[];
 }
 
 export interface VenueFilters {
