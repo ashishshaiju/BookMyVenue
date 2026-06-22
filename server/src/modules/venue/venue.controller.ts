@@ -15,12 +15,12 @@ import { v2 as cloudinary } from 'cloudinary';
 
 
 // Helpers
-function isCallerAdmin(req: Request): boolean {
-  return (
-    req.user?.role.isSuperAdmin === true ||
-    req.user?.role.permissions?.has('approve:venues') === true
-  );
-}
+// function isCallerAdmin(req: Request): boolean {
+//   return (
+//     req.user?.role.isSuperAdmin === true ||
+//     req.user?.role.permissions?.has('approve:venues') === true
+//   );
+// }
 
 export const getUploadSignature = (req: Request, res: Response): void => {
   try {
@@ -129,16 +129,18 @@ export const getMyDraft = async (req: Request, res: Response): Promise<void> => 
   }
 };
 
+
+
 export const getVenueById = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.validated?.params as z.infer<typeof venueIdParamSchema>;
-    const userId = req.user?.userId;
-    if (!userId) {
-      ResponseUtil.unauthorized(res, 'Unauthorized');
-      return;
-    }
-    const admin = isCallerAdmin(req);
-    const venue = await service.getVenueById(id, userId, admin);
+    // const userId = req.user?.userId;
+    // if (!userId) {
+    //   ResponseUtil.unauthorized(res, 'Unauthorized');
+    //   return;
+    // }
+    // const admin = isCallerAdmin(req);
+    const venue = await service.getVenueById(id);
     ResponseUtil.success(res, 'Venue retrieved successfully', venue);
   } catch (e) {
     handleError(res, e, 'getVenueById');

@@ -71,15 +71,12 @@ export const createVenueSchema = z
 
     // Booking & Pricing Config
     bookingType: z.enum(['fixedBooking', 'flexibleBooking']),
-    pricingType: z.enum(['fixedPricing', 'timeBasedPricing']),
 
     // Fixed booking fields
     fixedPackages: z.array(fixedPackageSchema).default([]),
 
     // Both booking types
-    workingDays: z
-      .array(z.enum(DAYS_OF_WEEK))
-      .min(1, 'At least one working day is required'),
+    workingDays: z.array(z.enum(DAYS_OF_WEEK)).min(1, 'At least one working day is required'),
 
     // Flexible booking fields
     workingHours: z
@@ -88,11 +85,19 @@ export const createVenueSchema = z
         close: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Invalid time format (HH:MM)'),
       })
       .optional(),
-    slotDuration: z.string().optional(),
-    bufferTime: z.string().optional(),
-    samePrice: z.coerce.number().min(0).optional(),
-    pricingRules: z.array(pricingRuleSchema).default([]),
+    flexibleBooking: z
+      .object({
+        slotDuration: z.coerce.number().int().positive().default(60),
+        bufferTime: z.coerce.number().int().min(0).default(0),
+      })
+      .default({ slotDuration: 60, bufferTime: 0 }),
+    pricing: z.object({
+      pricingType: z.enum(['fixedPricing', 'timeBasedPricing']),
+      basePrice: z.coerce.number().min(0, 'Base price must be 0 or higher'),
+      pricingRules: z.array(pricingRuleSchema).default([]),
+    }),
     blockedTimes: z.array(blockedTimeSchema).default([]),
+    blockedDates: z.array(z.coerce.date()).default([]),
 
     // Amenities
     amenities: z.array(z.string()).min(1, 'At least one amenity is required'),
@@ -102,17 +107,21 @@ export const createVenueSchema = z
     galleryImages: z.array(urlSchema).max(20).optional(),
 
     // Contact
-    contactName: z.string().trim().min(2).max(100),
-    contactPhone: phoneSchema,
-    contactEmail: z
-      .string()
-      .regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, 'Must be a valid email')
-      .optional(),
+    contact: z.object({
+      name: z.string().trim().min(2).max(100),
+      phone: phoneSchema,
+      email: z
+        .string()
+        .regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, 'Must be a valid email')
+        .optional(),
+    }),
 
-    // Policies
-    cancellationPolicy: z.enum(['refundable', 'nonRefundable']),
-    refundType: z.enum(['fullRefund', 'timeBasedRefund']).optional(),
-    refundRules: z.array(refundRuleSchema).default([]),
+    // Cancellation & Refund
+    cancellation: z.object({
+      policy: z.enum(['refundable', 'nonRefundable']),
+      refundType: z.enum(['fullRefund', 'timeBasedRefund']).optional(),
+      refundRules: z.array(refundRuleSchema).default([]),
+    }),
   })
   .superRefine((data, ctx) => {
     // Helper: HH:MM → minutes since midnight
@@ -132,7 +141,7 @@ export const createVenueSchema = z
       }
     }
 
-    // Flexible booking: requires workingHours, slotDuration, bufferTime, pricingType
+    // Flexible booking: requires workingHours, flexibleBooking, and pricing
     if (data.bookingType === 'flexibleBooking') {
       if (!data.workingHours) {
         ctx.addIssue({
@@ -167,53 +176,38 @@ export const createVenueSchema = z
         }
       }
 
-      if (!data.slotDuration) {
+      if (!data.flexibleBooking.slotDuration) {
         ctx.addIssue({
           code: 'custom',
           message: 'Slot duration is required for flexible booking',
-          path: ['slotDuration'],
-        });
-      }
-      if (data.bufferTime === undefined || data.bufferTime === '') {
-        ctx.addIssue({
-          code: 'custom',
-          message: 'Buffer time is required for flexible booking',
-          path: ['bufferTime'],
+          path: ['flexibleBooking', 'slotDuration'],
         });
       }
 
+
       // Time-based pricing: must have at least one pricing rule
-      if (data.pricingType === 'timeBasedPricing' && data.pricingRules.length === 0) {
+      if (data.pricing.pricingType === 'timeBasedPricing' && data.pricing.pricingRules.length === 0) {
         ctx.addIssue({
           code: 'custom',
           message: 'At least one pricing rule is required for time-based pricing',
-          path: ['pricingRules'],
+          path: ['pricing', 'pricingRules'],
         });
       }
 
-      // Same price pricing: must have samePrice
-      if (data.pricingType === 'fixedPricing' && data.samePrice === undefined) {
-        ctx.addIssue({
-          code: 'custom',
-          message: 'Price per slot is required for fixed pricing',
-          path: ['samePrice'],
-        });
-      }
-
-      // Working-hours boundary checks
+      // Working-hours boundary checks for pricing rules
       const wh = data.workingHours;
-      const openMin  = wh?.open  ? toMin(wh.open)  : null;
+      const openMin = wh?.open ? toMin(wh.open) : null;
       const closeMin = wh?.close ? toMin(wh.close) : null;
 
       if (openMin !== null && closeMin !== null && wh) {
-        data.pricingRules.forEach((rule, i) => {
+        data.pricing.pricingRules.forEach((rule, i) => {
           if (rule.fromTime) {
             const from = toMin(rule.fromTime);
             if (from < openMin) {
               ctx.addIssue({
                 code: 'custom',
                 message: `From time must be on or after open time (${wh.open})`,
-                path: ['pricingRules', i, 'fromTime'],
+                path: ['pricing', 'pricingRules', i, 'fromTime'],
               });
             }
           }
@@ -223,7 +217,7 @@ export const createVenueSchema = z
               ctx.addIssue({
                 code: 'custom',
                 message: `To time must be on or before close time (${wh.close})`,
-                path: ['pricingRules', i, 'toTime'],
+                path: ['pricing', 'pricingRules', i, 'toTime'],
               });
             }
           }
@@ -231,7 +225,7 @@ export const createVenueSchema = z
             ctx.addIssue({
               code: 'custom',
               message: 'To time must be after from time',
-              path: ['pricingRules', i, 'toTime'],
+              path: ['pricing', 'pricingRules', i, 'toTime'],
             });
           }
         });
@@ -270,11 +264,11 @@ export const createVenueSchema = z
     }
 
     // Refundable policy: must have refund rules
-    if (data.cancellationPolicy === 'refundable' && data.refundRules.length === 0) {
+    if (data.cancellation.policy === 'refundable' && data.cancellation.refundRules.length === 0) {
       ctx.addIssue({
         code: 'custom',
         message: 'At least one refund rule is required for refundable policy',
-        path: ['refundRules'],
+        path: ['cancellation', 'refundRules'],
       });
     }
   });
@@ -299,30 +293,39 @@ export const updateVenueSchema = z
     seatingConfigurations: z.array(z.string()),
     maxCapacity: z.coerce.number().int().positive().optional(),
     bookingType: z.enum(['fixedBooking', 'flexibleBooking']),
-    pricingType: z.enum(['fixedPricing', 'timeBasedPricing']),
     fixedPackages: z.array(fixedPackageSchema),
     workingDays: z.array(z.enum(DAYS_OF_WEEK)).min(1, 'At least one working day is required'),
     workingHours: z.object({
       open: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/),
       close: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/),
     }),
-    slotDuration: z.string().optional(),
-    bufferTime: z.string().optional(),
-    samePrice: z.coerce.number().min(0).optional(),
-    pricingRules: z.array(pricingRuleSchema),
+    flexibleBooking: z.object({
+      slotDuration: z.coerce.number().int().positive(),
+      bufferTime: z.coerce.number().int().min(0),
+    }),
+    pricing: z.object({
+      pricingType: z.enum(['fixedPricing', 'timeBasedPricing']),
+      basePrice: z.coerce.number().min(0),
+      pricingRules: z.array(pricingRuleSchema).default([]),
+    }),
     blockedTimes: z.array(blockedTimeSchema),
+    blockedDates: z.array(z.coerce.date()),
     amenities: z.array(z.string()),
     coverImage: urlSchema,
     galleryImages: z.array(urlSchema).max(20).optional(),
-    contactName: z.string().trim().min(2).max(100),
-    contactPhone: phoneSchema,
-    contactEmail: z
-      .string()
-      .regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, 'Must be a valid email')
-      .optional(),
-    cancellationPolicy: z.enum(['refundable', 'nonRefundable']),
-    refundType: z.enum(['fullRefund', 'timeBasedRefund']).optional(),
-    refundRules: z.array(refundRuleSchema),
+    contact: z.object({
+      name: z.string().trim().min(2).max(100),
+      phone: phoneSchema,
+      email: z
+        .string()
+        .regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, 'Must be a valid email')
+        .optional(),
+    }),
+    cancellation: z.object({
+      policy: z.enum(['refundable', 'nonRefundable']),
+      refundType: z.enum(['fullRefund', 'timeBasedRefund']).optional(),
+      refundRules: z.array(refundRuleSchema).default([]),
+    }),
   })
   .partial()
   .refine((data) => Object.keys(data).length > 0, {

@@ -50,9 +50,7 @@ export function canSubmit(venue: IVenue): void {
     );
   }
   
-  // Working days — required for ALL booking types
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-  if (!venue.workingDays || venue.workingDays.length === 0) {
+  if (venue.workingDays.length === 0) {
     throw new ValidationError('Cannot submit: at least one working day must be selected');
   }
 
@@ -72,42 +70,28 @@ export function canSubmit(venue: IVenue): void {
         'Cannot submit: working hours (open & close) are required for flexible booking type'
       );
     }
-
-    if (!venue.slotDuration) {
+    if (!venue.flexibleBooking.slotDuration) {
       throw new ValidationError(
         'Cannot submit: slot duration is required for flexible booking type'
       );
     }
 
-    // bufferTime of "0" (No Buffer) is a valid selection
-    if (venue.bufferTime === undefined) {
-      throw new ValidationError(
-        'Cannot submit: buffer time is required for flexible booking type'
-      );
-    }
-
     // Pricing checks inside flexible booking
-    if (venue.pricingType === 'timeBasedPricing' && venue.pricingRules.length === 0) {
+    if (venue.pricing.pricingType === 'timeBasedPricing' && venue.pricing.pricingRules.length === 0) {
       throw new ValidationError(
         'Cannot submit: at least one pricing rule is required for time-based pricing'
-      );
-    }
-
-    if (venue.pricingType === 'fixedPricing' && venue.samePrice === undefined) {
-      throw new ValidationError(
-        'Cannot submit: a price per slot is required for fixed pricing'
       );
     }
   }
 
   // Refund policy checks
-  if (venue.cancellationPolicy === 'refundable') {
-    if (!venue.refundType) {
+  if (venue.cancellation.policy === 'refundable') {
+    if (!venue.cancellation.refundType) {
       throw new ValidationError(
         'Cannot submit: refund type is required for refundable cancellation policy'
       );
     }
-    if (venue.refundType === 'timeBasedRefund' && venue.refundRules.length === 0) {
+    if (venue.cancellation.refundType === 'timeBasedRefund' && venue.cancellation.refundRules.length === 0) {
       throw new ValidationError(
         'Cannot submit: at least one refund rule is required for time-based refund policy'
       );

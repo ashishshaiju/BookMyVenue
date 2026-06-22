@@ -26,7 +26,7 @@ export async function findActiveVenues(): Promise<IVenue[]> {
   return VenueModel.find({ status: 'Approved', active: true, deleted: false })
     .sort({ createdAt: -1 })
     .select(
-      '_id name description venueType city district coverImage maxCapacity slotDuration'
+      '_id name description venueType city district coverImage maxCapacity flexibleBooking amenities pricing fixedPackages bookingType'
     )
     .exec();
 }
@@ -59,9 +59,9 @@ export async function findPaginatedActiveVenues(
 
     conditions.push({
       $or: [
-        { samePrice: priceCondition },
+        { 'pricing.basePrice': priceCondition },
+        { 'pricing.pricingRules.price': priceCondition },
         { 'fixedPackages.price': priceCondition },
-        { 'pricingRules.price': priceCondition },
       ],
     });
   }
@@ -98,10 +98,10 @@ export async function findPaginatedActiveVenues(
   if (filters?.sortBy) {
     switch (filters.sortBy) {
       case 'price-low':
-        sortOption = { samePrice: 1 };
+        sortOption = { 'pricing.basePrice': 1 };
         break;
       case 'price-high':
-        sortOption = { samePrice: -1 };
+        sortOption = { 'pricing.basePrice': -1 };
         break;
       case 'rating':
         sortOption = { createdAt: -1 }; // Replace with actual rating sort if exists
@@ -118,7 +118,7 @@ export async function findPaginatedActiveVenues(
       .skip(skip)
       .limit(limit)
       .select(
-        '_id name description venueType city district coverImage maxCapacity slotDuration'
+        '_id name description venueType city district coverImage maxCapacity flexibleBooking amenities pricing fixedPackages bookingType'
       )
       .exec(),
     VenueModel.countDocuments(query).exec(),

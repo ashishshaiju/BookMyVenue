@@ -104,8 +104,8 @@ export async function getMyVenues(userId: string): Promise<Pick<IVenue, "_id" | 
 
 export async function getVenueById(
   venueId: string,
-  userId: string,
-  isAdmin: boolean
+  // userId: string,
+  // isAdmin: boolean
 ): Promise<IVenue> {
   const venue = await repo.findVenueById(venueId);
 
@@ -113,9 +113,9 @@ export async function getVenueById(
     throw new NotFoundError('Venue not found');
   }
 
-  if (!isAdmin && venue.ownerUserId.toString() !== userId) {
-    throw new NotFoundError('Venue not found');
-  }
+  // if (!isAdmin && venue.ownerUserId.toString() !== userId) {
+  //   throw new NotFoundError('Venue not found');
+  // }
 
   return venue;
 }
