@@ -10,7 +10,7 @@ const Navbar = () => {
   const { isAuthenticated, loading } = useAuth();
 
   return (
-    <header className="fixed top-0 left-0 z-50 w-full border-b bg-[var(--bg-primary)] shadow-sm ">
+    <header className="fixed top-0 left-0 z-100 w-full border-b bg-[var(--bg-primary)] shadow-sm ">
       <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
         {/* left - logo */}
         <Link to="/" className="text-2xl font-bold text-[var(--text-primary)]">

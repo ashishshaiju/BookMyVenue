@@ -1,15 +1,12 @@
-# pnpm-workspace
-
 packages:
-
-  - 'server'
-  - 'client'
-  - 'admin'
+  - server
+  - client
+  - admin
 
 allowBuilds:
   bcrypt: true
   esbuild: true
 
 onlyBuiltDependencies:
-
   - bcrypt
+  - esbuild

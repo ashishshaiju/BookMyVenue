@@ -4,8 +4,11 @@ import type {
   IGeoPoint,
   IFixedPackage,
   IPricingRule,
+  IPricing,
   IBlockedTime,
   IRefundRule,
+  IContact,
+  ICancellation,
   IVenue,
 } from './venue.types';
 
@@ -43,6 +46,15 @@ const PricingRuleSchema = new Schema<IPricingRule>(
   { _id: false }
 );
 
+const PricingSchema = new Schema<IPricing>(
+  {
+    pricingType: { type: String, enum: ['fixedPricing', 'timeBasedPricing'], required: true },
+    basePrice: { type: Number, required: true, min: 0 },
+    pricingRules: { type: [PricingRuleSchema], default: [] },
+  },
+  { _id: false }
+);
+
 const BlockedTimeSchema = new Schema<IBlockedTime>(
   {
     fromTime: { type: String, required: true },
@@ -55,6 +67,24 @@ const RefundRuleSchema = new Schema<IRefundRule>(
   {
     daysBefore: { type: Number, required: true },
     refundPercentage: { type: Number, required: true },
+  },
+  { _id: false }
+);
+
+const ContactSchema = new Schema<IContact>(
+  {
+    name: { type: String, required: true, trim: true },
+    phone: { type: String, required: true, trim: true },
+    email: { type: String, trim: true, default: null },
+  },
+  { _id: false }
+);
+
+const CancellationSchema = new Schema<ICancellation>(
+  {
+    policy: { type: String, enum: ['refundable', 'nonRefundable'], required: true },
+    refundType: { type: String, enum: ['fullRefund', 'timeBasedRefund'] },
+    refundRules: { type: [RefundRuleSchema], default: [] },
   },
   { _id: false }
 );
@@ -79,20 +109,23 @@ const VenueSchema = new Schema<IVenue>(
     seatingConfigurations: { type: [String], default: [] },
     maxCapacity: { type: Number },
 
-    // Booking & Pricing Config
+    // Booking Config
     bookingType: { type: String, enum: ['fixedBooking', 'flexibleBooking'], required: true },
-    pricingType: { type: String, enum: ['fixedPricing', 'timeBasedPricing'], required: true },
     fixedPackages: { type: [FixedPackageSchema], default: [] },
     workingDays: { type: [String], default: [] },
     workingHours: {
       open: { type: String, required: true },
       close: { type: String, required: true },
     },
-    slotDuration: { type: String },
-    bufferTime: { type: String },
-    samePrice: { type: Number },
-    pricingRules: { type: [PricingRuleSchema], default: [] },
     blockedTimes: { type: [BlockedTimeSchema], default: [] },
+    blockedDates: { type: [Date], default: [] },
+    flexibleBooking: {
+      slotDuration: { type: Number, default: 60 },
+      bufferTime: { type: Number, default: 0 },
+    },
+
+    // Pricing
+    pricing: { type: PricingSchema, required: true },
 
     // Amenities
     amenities: { type: [String], default: [] },
@@ -102,14 +135,10 @@ const VenueSchema = new Schema<IVenue>(
     galleryImages: { type: [String], default: [] },
 
     // Contact
-    contactName: { type: String, required: true, trim: true },
-    contactPhone: { type: String, required: true, trim: true },
-    contactEmail: { type: String, trim: true, default: null },
+    contact: { type: ContactSchema, required: true },
 
-    // Policies
-    cancellationPolicy: { type: String, enum: ['refundable', 'nonRefundable'], required: true },
-    refundType: { type: String, enum: ['fullRefund', 'timeBasedRefund'] },
-    refundRules: { type: [RefundRuleSchema], default: [] },
+    // Cancellation & Refund
+    cancellation: { type: CancellationSchema, required: true },
 
     // Operational
     status: {

@@ -81,7 +81,6 @@ router
     controller.getAllVenues
   );
 
-// Parameterised Owner Routes
 router
   .route('/:id')
   .get(validateParams(validator.venueIdParamSchema), controller.getVenueById)

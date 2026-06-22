@@ -7,7 +7,7 @@ export function assertVenueOwner(venue: IVenue, userId: string): void {
     throw new ForbiddenError('You do not have permission to modify this venue');
   }
 }
-
+ 
 export async function requireOwnVenue(venueId: string, userId: string): Promise<IVenue> {
   const venue = await findVenueById(venueId);
 

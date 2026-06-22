@@ -1,4 +1,4 @@
-import mongoose, { Schema } from 'mongoose';
+import mongoose, { type Document, Schema } from 'mongoose';
 
 export interface IVenueDraft extends Document {
   userId: mongoose.Types.ObjectId;

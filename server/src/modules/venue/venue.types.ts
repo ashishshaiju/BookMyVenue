@@ -15,7 +15,7 @@ export interface IGeoPoint {
 export interface IFixedPackage {
   slotName: string;
   startTime: string; // 09:00
-  endTime: string; // 13:00
+  endTime: string;   // 13:00
   price: number;
 }
 
@@ -23,6 +23,12 @@ export interface IPricingRule {
   fromTime: string;
   toTime: string;
   price: number;
+}
+
+export interface IPricing {
+  pricingType: 'fixedPricing' | 'timeBasedPricing';
+  basePrice: number;
+  pricingRules: IPricingRule[];
 }
 
 export interface IBlockedTime {
@@ -33,6 +39,18 @@ export interface IBlockedTime {
 export interface IRefundRule {
   daysBefore: number;
   refundPercentage: number;
+}
+
+export interface IContact {
+  name: string;
+  phone: string;
+  email?: string;
+}
+
+export interface ICancellation {
+  policy: 'refundable' | 'nonRefundable';
+  refundType?: 'fullRefund' | 'timeBasedRefund';
+  refundRules: IRefundRule[];
 }
 
 // Main Interface
@@ -56,20 +74,23 @@ export interface IVenue extends Document {
   seatingConfigurations: string[];
   maxCapacity?: number;
 
-  // Booking & Pricing Config
+  // Booking Config
   bookingType: 'fixedBooking' | 'flexibleBooking';
-  pricingType: 'fixedPricing' | 'timeBasedPricing';
   fixedPackages: IFixedPackage[];
   workingDays: string[];
   workingHours: {
     open: string;
     close: string;
   };
-  slotDuration?: string;
-  bufferTime?: string;
-  samePrice?: number;
-  pricingRules: IPricingRule[];
   blockedTimes: IBlockedTime[];
+  blockedDates: Date[];
+  flexibleBooking: {
+    slotDuration: number;
+    bufferTime: number;
+  };
+
+  // Pricing
+  pricing: IPricing;
 
   // Amenities
   amenities: string[];
@@ -79,14 +100,10 @@ export interface IVenue extends Document {
   galleryImages: string[];
 
   // Contact
-  contactName: string;
-  contactPhone: string;
-  contactEmail?: string;
+  contact: IContact;
 
-  // Policies
-  cancellationPolicy: 'refundable' | 'nonRefundable';
-  refundType?: 'fullRefund' | 'timeBasedRefund';
-  refundRules: IRefundRule[];
+  // Cancellation & Refund
+  cancellation: ICancellation;
 
   // Operational
   status: VenueStatus;
