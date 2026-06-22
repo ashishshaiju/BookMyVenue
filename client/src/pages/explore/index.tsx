@@ -135,10 +135,10 @@ const ExplorePage = () => {
   const getStartingPrice = (venue: PublicVenue) => {
     if (venue.samePrice !== undefined) return venue.samePrice;
     if (venue.pricingRules?.length) {
-      return Math.min(...venue.pricingRules.map(r => r.price));
+      return Math.min(...venue.pricingRules.map((r) => r.price));
     }
     if (venue.fixedPackages?.length) {
-      return Math.min(...venue.fixedPackages.map(p => p.price));
+      return Math.min(...venue.fixedPackages.map((p) => p.price));
     }
     return null;
   };
@@ -147,21 +147,25 @@ const ExplorePage = () => {
     <section className="px-8 pt-24 mb-20 mx-auto">
       <div className="flex flex-col lg:grid lg:grid-cols-[300px_1fr] gap-6 items-start">
         {/* Mobile Sidebar Overlay */}
-        <div 
+        <div
           className={`fixed inset-0 z-40 bg-black/50 transition-opacity lg:hidden ${isMobileFiltersOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
           onClick={() => setIsMobileFiltersOpen(false)}
         />
-        
+
         {/* Left Sidebar */}
-        <aside className={`
+        <aside
+          className={`
           fixed inset-y-0 top-16 left-0 z-50 w-[300px] bg-[var(--bg-primary)] h-full overflow-y-auto transition-transform duration-300
           lg:sticky lg:top-24 lg:w-auto lg:h-auto lg:bg-transparent lg:translate-x-0 lg:pt-0 lg:overflow-visible lg:self-start
           ${isMobileFiltersOpen ? 'translate-x-0' : '-translate-x-full'}
-        `}>
-          <div className={`
+        `}
+        >
+          <div
+            className={`
             p-6 lg:p-6 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto lg:rounded-3xl lg:border lg:border-[var(--bg-grey)] lg:bg-[var(--bg-tertiary)]
             ${isFetching && !isLoading ? 'opacity-50 pointer-events-none' : ''}
-          `}>
+          `}
+          >
             {/* header */}
             <div className="flex items-center justify-between mb-4 lg:mb-0">
               <h2 className="text-2xl font-bold text-[var(--text-primary)]">Filters</h2>
@@ -173,9 +177,9 @@ const ExplorePage = () => {
                 >
                   Clear
                 </Button>
-                <Button 
-                  variant="ghost" 
-                  className="lg:hidden text-[var(--text-secondary)] px-2" 
+                <Button
+                  variant="ghost"
+                  className="lg:hidden text-[var(--text-secondary)] px-2"
                   onClick={() => setIsMobileFiltersOpen(false)}
                 >
                   <X size={20} />
@@ -355,20 +359,28 @@ const ExplorePage = () => {
         <main>
           {/* Header */}
           <div className="mb-8 mt-0">
-            <div className={`sticky top-18 z-20 bg-[var(--bg-primary)] transition-all duration-300 ${isScrolled ? 'pt-2 pb-3' : 'pt-4 pb-5'}`}>
-              <h1 className={`font-bold text-[var(--text-primary)] transition-all duration-300 ${isScrolled ? 'text-2xl' : 'text-4xl'}`}>
+            <div
+              className={`sticky top-18 z-20 bg-[var(--bg-primary)] transition-all duration-300 ${isScrolled ? 'pt-2 pb-3' : 'pt-4 pb-5'}`}
+            >
+              <h1
+                className={`font-bold text-[var(--text-primary)] transition-all duration-300 ${isScrolled ? 'text-2xl' : 'text-4xl'}`}
+              >
                 Find Your Perfect Venue
               </h1>
-              <div className={`transition-all duration-300 overflow-hidden ${isScrolled ? 'max-h-0 opacity-0' : 'max-h-20 opacity-100'}`}>
+              <div
+                className={`transition-all duration-300 overflow-hidden ${isScrolled ? 'max-h-0 opacity-0' : 'max-h-20 opacity-100'}`}
+              >
                 <p className="mt-2 mb-5 text-[var(--text-secondary)]">
                   Discover halls, resorts, auditoriums, turfs and more for every occasion.
                 </p>
               </div>
 
               {/* Search */}
-              <div className={`flex items-center gap-3 transition-all duration-300 ${isScrolled ? 'mt-3' : ''}`}>
-                <Button 
-                  variant="outline" 
+              <div
+                className={`flex items-center gap-3 transition-all duration-300 ${isScrolled ? 'mt-3' : ''}`}
+              >
+                <Button
+                  variant="outline"
                   className={`lg:hidden rounded-2xl border border-[var(--bg-grey)] bg-[var(--bg-tertiary)] px-5 flex items-center justify-center gap-2 shrink-0 text-xs lg:text-sm text-[var(--text-primary)] transition-all duration-300 h-auto ${isScrolled ? 'py-3' : 'py-4'}`}
                   onClick={() => setIsMobileFiltersOpen(true)}
                 >
@@ -416,140 +428,165 @@ const ExplorePage = () => {
               )}
               {isError ? (
                 <div className="flex flex-col items-center justify-center py-20 text-red-500 bg-red-50 dark:bg-red-950/20 rounded-3xl border border-red-100 dark:border-red-900">
-                <AlertCircle className="w-12 h-12 mb-4" />
-                <p className="text-lg font-medium">Failed to load venues.</p>
-                <p className="text-sm opacity-80">Please try adjusting your filters or try again later.</p>
-              </div>
-            ) : isLoading ? (
-              <div className="grid grid-cols-1 gap-6">
-                {[1, 2, 3, 4, 5, 6].map((i) => (
-                  <div key={i} className="flex flex-col sm:flex-row h-auto sm:min-h-[16rem] rounded-3xl border border-[var(--bg-grey)] bg-[var(--bg-tertiary)] overflow-hidden">
-                    <Skeleton className="w-full sm:w-[40%] h-52 sm:h-auto shrink-0" />
-                    <div className="flex-1 p-5 flex flex-col justify-between">
-                      <div>
-                        <div className="flex justify-between items-start mb-2">
-                          <Skeleton className="h-6 w-1/2" />
-                          <Skeleton className="h-6 w-16 rounded-full" />
+                  <AlertCircle className="w-12 h-12 mb-4" />
+                  <p className="text-lg font-medium">Failed to load venues.</p>
+                  <p className="text-sm opacity-80">
+                    Please try adjusting your filters or try again later.
+                  </p>
+                </div>
+              ) : isLoading ? (
+                <div className="grid grid-cols-1 gap-6">
+                  {[1, 2, 3, 4, 5, 6].map((i) => (
+                    <div
+                      key={i}
+                      className="flex flex-col sm:flex-row h-auto sm:min-h-[16rem] rounded-3xl border border-[var(--bg-grey)] bg-[var(--bg-tertiary)] overflow-hidden"
+                    >
+                      <Skeleton className="w-full sm:w-[40%] h-52 sm:h-auto shrink-0" />
+                      <div className="flex-1 p-5 flex flex-col justify-between">
+                        <div>
+                          <div className="flex justify-between items-start mb-2">
+                            <Skeleton className="h-6 w-1/2" />
+                            <Skeleton className="h-6 w-16 rounded-full" />
+                          </div>
+                          <Skeleton className="h-4 w-3/4 mb-4" />
+                          <div className="flex gap-2">
+                            <Skeleton className="h-6 w-16 border rounded-md" />
+                            <Skeleton className="h-6 w-16 border rounded-md" />
+                          </div>
                         </div>
-                        <Skeleton className="h-4 w-3/4 mb-4" />
-                        <div className="flex gap-2">
-                          <Skeleton className="h-6 w-16 border rounded-md" />
-                          <Skeleton className="h-6 w-16 border rounded-md" />
+                        <div className="flex justify-between items-end mt-4">
+                          <Skeleton className="h-10 w-32" />
+                          <Skeleton className="h-10 w-28 rounded-xl" />
                         </div>
-                      </div>
-                      <div className="flex justify-between items-end mt-4">
-                        <Skeleton className="h-10 w-32" />
-                        <Skeleton className="h-10 w-28 rounded-xl" />
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            ) : venues.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-20 text-[var(--text-secondary)] bg-[var(--bg-tertiary)] rounded-3xl border border-[var(--bg-grey)]">
-                <p className="text-lg font-medium">No venues found matching your criteria.</p>
-                <Button variant="link" onClick={handleClearFilters} className="mt-2 text-[var(--bg-green)]">
-                  Clear all filters
-                </Button>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 gap-6">
-                {venues.map((venue, index) => {
-                  const isLastItem = index === venues.length - 1;
-                  const price = getStartingPrice(venue);
-                  
-                  return (
-                    <div
-                      key={venue._id}
-                      ref={isLastItem ? lastVenueElementRef : null}
-                      className="group overflow-hidden rounded-3xl border border-[var(--bg-grey)] bg-[var(--bg-tertiary)] hover:shadow-lg transition duration-300 flex flex-col sm:flex-row sm:min-h-[16rem]"
-                    >
-                      {/* Left Image */}
-                      <div className="w-full sm:w-[40%] h-52 sm:h-64 shrink-0 overflow-hidden flex">
-                        <img
-                          src={venue.coverImage}
-                          alt={venue.name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
-                        />
-                      </div>
-                      
-                      {/* Right Content */}
-                      <div className="p-5 flex-1 flex flex-col justify-between overflow-hidden">
-                        <div>
-                          <div className="flex justify-between items-start gap-2 mb-1">
-                            <h3
-                              className="text-xl font-bold text-[var(--text-primary)] line-clamp-1 uppercase"
-                              title={venue.name}
+                  ))}
+                </div>
+              ) : venues.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-20 text-[var(--text-secondary)] bg-[var(--bg-tertiary)] rounded-3xl border border-[var(--bg-grey)]">
+                  <p className="text-lg font-medium">No venues found matching your criteria.</p>
+                  <Button
+                    variant="link"
+                    onClick={handleClearFilters}
+                    className="mt-2 text-[var(--bg-green)]"
+                  >
+                    Clear all filters
+                  </Button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 gap-6">
+                  {venues.map((venue, index) => {
+                    const isLastItem = index === venues.length - 1;
+                    const price = getStartingPrice(venue);
+
+                    return (
+                      <div
+                        key={venue._id}
+                        ref={isLastItem ? lastVenueElementRef : null}
+                        className="group overflow-hidden rounded-3xl border border-[var(--bg-grey)] bg-[var(--bg-tertiary)] hover:shadow-lg transition duration-300 flex flex-col sm:flex-row sm:min-h-[16rem]"
+                      >
+                        {/* Left Image */}
+                        <div className="w-full sm:w-[40%] h-52 sm:h-64 shrink-0 overflow-hidden flex">
+                          <img
+                            src={venue.coverImage}
+                            alt={venue.name}
+                            className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
+                          />
+                        </div>
+
+                        {/* Right Content */}
+                        <div className="p-5 flex-1 flex flex-col justify-between overflow-hidden">
+                          <div>
+                            <div className="flex justify-between items-start gap-2 mb-1">
+                              <h3
+                                className="text-xl font-bold text-[var(--text-primary)] line-clamp-1 uppercase"
+                                title={venue.name}
+                              >
+                                {venue.name}
+                              </h3>
+                              <span className="shrink-0 inline-block px-3 py-1 bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 text-[10px] font-bold tracking-wider rounded-full border border-orange-200 dark:border-orange-800">
+                                {venue.venueType}
+                              </span>
+                            </div>
+
+                            <p
+                              className="text-sm text-[var(--text-secondary)] flex items-center gap-1 line-clamp-1 mb-4"
+                              title={`${venue.city}, ${venue.district}`}
                             >
-                              {venue.name}
-                            </h3>
-                            <span className="shrink-0 inline-block px-3 py-1 bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 text-[10px] font-bold tracking-wider rounded-full border border-orange-200 dark:border-orange-800">
-                              {venue.venueType}
-                            </span>
+                              <IoLocationOutline className="shrink-0 text-gray-400" size={16} />{' '}
+                              {venue.city}, {venue.district}
+                            </p>
+
+                            {/* Amenities Tags */}
+                            {venue.amenities && venue.amenities.length > 0 && (
+                              <div className="flex flex-wrap gap-2 mb-1">
+                                {venue.amenities.slice(0, 3).map((amenity, i) => (
+                                  <span
+                                    key={i}
+                                    className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium border border-[var(--bg-grey)] rounded-md text-[var(--text-secondary)]"
+                                  >
+                                    {amenity === 'AC' && <Snowflake size={12} />}
+                                    {amenity}
+                                  </span>
+                                ))}
+                                {venue.amenities.length > 3 && (
+                                  <span className="inline-flex items-center px-2.5 py-1 text-xs font-medium border border-[var(--bg-grey)] rounded-md text-[var(--text-secondary)]">
+                                    + {venue.amenities.length - 3} more
+                                  </span>
+                                )}
+                              </div>
+                            )}
                           </div>
-                          
-                          <p
-                            className="text-sm text-[var(--text-secondary)] flex items-center gap-1 line-clamp-1 mb-4"
-                            title={`${venue.city}, ${venue.district}`}
-                          >
-                            <IoLocationOutline className="shrink-0 text-gray-400" size={16} /> {venue.city}, {venue.district}
-                          </p>
-                          
-                          {/* Amenities Tags */}
-                          {venue.amenities && venue.amenities.length > 0 && (
-                            <div className="flex flex-wrap gap-2 mb-1">
-                              {venue.amenities.slice(0, 3).map((amenity, i) => (
-                                <span key={i} className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium border border-[var(--bg-grey)] rounded-md text-[var(--text-secondary)]">
-                                  {amenity === 'AC' && <Snowflake size={12} />}
-                                  {amenity}
-                                </span>
-                              ))}
-                              {venue.amenities.length > 3 && (
-                                <span className="inline-flex items-center px-2.5 py-1 text-xs font-medium border border-[var(--bg-grey)] rounded-md text-[var(--text-secondary)]">
-                                  + {venue.amenities.length - 3} more
+
+                          <div className="flex flex-wrap sm:flex-nowrap justify-between items-end gap-4 mt-2 pt-2 border-t border-[var(--bg-grey)]/50">
+                            <div className="flex flex-col">
+                              {price !== null ? (
+                                <>
+                                  <span className="text-[10px] font-bold text-gray-400 tracking-wider uppercase mb-0.5">
+                                    Starts From
+                                  </span>
+                                  <div className="flex items-baseline gap-1">
+                                    <span className="text-xl font-bold text-[var(--text-primary)]">
+                                      ₹ {price.toLocaleString()}
+                                    </span>
+                                    {venue.slotDuration ? (
+                                      <span className="text-xs text-[var(--text-secondary)]">
+                                        / {venue.slotDuration} mins
+                                      </span>
+                                    ) : (
+                                      <span className="text-xs text-[var(--text-secondary)]">
+                                        / slot
+                                      </span>
+                                    )}
+                                  </div>
+                                  <span className="text-xs text-[var(--bg-green)] font-medium mt-1">
+                                    {venue.bookingType === 'fixedBooking'
+                                      ? 'Fixed Packages Available'
+                                      : 'Flexible Booking'}
+                                  </span>
+                                </>
+                              ) : (
+                                <span className="text-sm text-[var(--text-secondary)]">
+                                  Price on request
                                 </span>
                               )}
                             </div>
-                          )}
-                        </div>
 
-                        <div className="flex flex-wrap sm:flex-nowrap justify-between items-end gap-4 mt-2 pt-2 border-t border-[var(--bg-grey)]/50">
-                          <div className="flex flex-col">
-                            {price !== null ? (
-                              <>
-                                <span className="text-[10px] font-bold text-gray-400 tracking-wider uppercase mb-0.5">Starts From</span>
-                                <div className="flex items-baseline gap-1">
-                                  <span className="text-xl font-bold text-[var(--text-primary)]">₹ {price.toLocaleString()}</span>
-                                  {venue.slotDuration ? (
-                                    <span className="text-xs text-[var(--text-secondary)]">/ {venue.slotDuration} mins</span>
-                                  ) : (
-                                    <span className="text-xs text-[var(--text-secondary)]">/ slot</span>
-                                  )}
-                                </div>
-                                <span className="text-xs text-[var(--bg-green)] font-medium mt-1">
-                                  {venue.bookingType === 'fixedBooking' ? 'Fixed Packages Available' : 'Flexible Booking'}
-                                </span>
-                              </>
-                            ) : (
-                              <span className="text-sm text-[var(--text-secondary)]">Price on request</span>
-                            )}
+                            <Link
+                              to={`/venue/${venue._id}`}
+                              className="shrink-0 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl font-semibold transition shadow-md hover:shadow-lg"
+                            >
+                              Book Now
+                            </Link>
                           </div>
-                          
-                          <Link
-                            to={`/venue/${venue._id}`}
-                            className="shrink-0 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl font-semibold transition shadow-md hover:shadow-lg"
-                          >
-                            Book Now
-                          </Link>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+                    );
+                  })}
+                </div>
+              )}
             </div>
-            
+
             {/* Infinite Scroll Loader */}
             {isFetchingNextPage && (
               <div className="mt-8 flex justify-center">

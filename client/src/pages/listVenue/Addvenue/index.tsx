@@ -39,12 +39,20 @@ const BLANK_FORM: AddVenueFormValues = {
   fixedPackages: [{ slotName: '', startTime: '', endTime: '', price: 0 }],
   workingHours: { open: '', close: '' },
   flexibleBooking: { slotDuration: '', bufferTime: '' },
-  pricing: { pricingType: '', basePrice: 0, pricingRules: [{ fromTime: '', toTime: '', price: 0 }] },
+  pricing: {
+    pricingType: '',
+    basePrice: 0,
+    pricingRules: [{ fromTime: '', toTime: '', price: 0 }],
+  },
   blockedTimes: [{ fromTime: '', toTime: '', reason: '' }],
   amenities: [],
   venuePhotos: [],
   contact: { name: '', phone: '', email: '' },
-  cancellation: { policy: '', refundType: '', refundRules: [{ daysBefore: '', refundPercentage: '' }] },
+  cancellation: {
+    policy: '',
+    refundType: '',
+    refundRules: [{ daysBefore: '', refundPercentage: '' }],
+  },
 };
 
 const STEP_LABELS = ['Basic Info', 'Booking', 'Final Details'];

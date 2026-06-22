@@ -3,7 +3,13 @@ import { useParams, Link } from 'react-router';
 import { FiMapPin, FiUsers } from 'react-icons/fi';
 import { MdOutlineMeetingRoom } from 'react-icons/md';
 import { GiTable } from 'react-icons/gi';
-import { TbBuildingEstate, TbBuildingOff, TbReceiptRefund, TbShieldCheck, TbShieldOff } from 'react-icons/tb';
+import {
+  TbBuildingEstate,
+  TbBuildingOff,
+  TbReceiptRefund,
+  TbShieldCheck,
+  TbShieldOff,
+} from 'react-icons/tb';
 import map from '../../assets/map.jpg';
 import { useApiQuery } from '../../hooks/useApi';
 import { API_ENDPOINTS } from '../../constants';
@@ -14,7 +20,12 @@ const VenueDetails = () => {
   const { id } = useParams<{ id: string }>();
   const [selectedPackage, setSelectedPackage] = useState<number[]>([]);
 
-  const { data: venue, isLoading, isError, refetch } = useApiQuery<VenueDetail>(
+  const {
+    data: venue,
+    isLoading,
+    isError,
+    refetch,
+  } = useApiQuery<VenueDetail>(
     ['venue', id || ''],
     {
       url: API_ENDPOINTS.VENUE_BY_ID(id as string),
@@ -78,8 +89,9 @@ const VenueDetails = () => {
 
   const images = venue.coverImage ? [venue.coverImage, ...(venue.galleryImages || [])] : [];
   const amenities = venue.amenities || [];
-  
-  const bookingTypeLabel = venue.bookingType === 'fixedBooking' ? 'Fixed Package' : 'Flexible Booking';
+
+  const bookingTypeLabel =
+    venue.bookingType === 'fixedBooking' ? 'Fixed Package' : 'Flexible Booking';
 
   return (
     <section className="max-w-8xl mx-auto mt-24 px-4 pb-12">
@@ -87,7 +99,6 @@ const VenueDetails = () => {
         {/* left content */}
         <div className="lg:col-span-8">
           <div className="w-full z-10 font-sans">
-            
             {/* Header / Venue Name & Location */}
             <div className="mb-6">
               <h1 className="text-4xl font-extrabold text-[var(--text-primary)] mb-2 capitalize">
@@ -289,7 +300,9 @@ const VenueDetails = () => {
                   <TbReceiptRefund className="text-[var(--bg-green)] text-2xl" />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold text-[var(--text-primary)]">Cancellation & Refund Policy</h2>
+                  <h2 className="text-2xl font-bold text-[var(--text-primary)]">
+                    Cancellation & Refund Policy
+                  </h2>
                   <p className="text-[var(--text-secondary)] mt-1">
                     Please review the refund terms for this venue
                   </p>
@@ -302,72 +315,92 @@ const VenueDetails = () => {
                     <TbShieldOff size={24} />
                   </div>
                   <div>
-                    <h3 className="font-bold text-red-800 dark:text-red-400 text-lg mb-1">Non-Refundable Policy</h3>
+                    <h3 className="font-bold text-red-800 dark:text-red-400 text-lg mb-1">
+                      Non-Refundable Policy
+                    </h3>
                     <p className="text-red-700 dark:text-red-300 leading-relaxed">
-                      This venue operates under a strict non-refundable policy. Cancelled bookings are not eligible for any refund.
+                      This venue operates under a strict non-refundable policy. Cancelled bookings
+                      are not eligible for any refund.
                     </p>
                   </div>
                 </div>
               )}
 
-              {venue.cancellation?.policy === 'refundable' && venue.cancellation?.refundType === 'fullRefund' && (
-                <div className="bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-900/30 rounded-2xl p-5 flex items-start gap-4">
-                  <div className="bg-green-100 dark:bg-green-900/50 p-2 rounded-xl text-green-600 dark:text-green-400 shrink-0">
-                    <TbShieldCheck size={24} />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-green-800 dark:text-green-400 text-lg mb-1">Full Refund Policy</h3>
-                    <p className="text-green-700 dark:text-green-300 leading-relaxed">
-                      Bookings cancelled prior to the event are eligible for a 100% full refund of the booking amount.
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {venue.cancellation?.policy === 'refundable' && venue.cancellation?.refundType === 'timeBasedRefund' && (
-                <div>
-                  <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900/30 rounded-2xl p-5 flex items-start gap-4 mb-6">
-                    <div className="bg-blue-100 dark:bg-blue-900/50 p-2 rounded-xl text-blue-600 dark:text-blue-400 shrink-0">
+              {venue.cancellation?.policy === 'refundable' &&
+                venue.cancellation?.refundType === 'fullRefund' && (
+                  <div className="bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-900/30 rounded-2xl p-5 flex items-start gap-4">
+                    <div className="bg-green-100 dark:bg-green-900/50 p-2 rounded-xl text-green-600 dark:text-green-400 shrink-0">
                       <TbShieldCheck size={24} />
                     </div>
                     <div>
-                      <h3 className="font-bold text-blue-800 dark:text-blue-400 text-lg mb-1">Time-based Refund Policy</h3>
-                      <p className="text-blue-700 dark:text-blue-300 leading-relaxed">
-                        Refunds are calculated dynamically based on the number of days remaining until the scheduled event start date.
+                      <h3 className="font-bold text-green-800 dark:text-green-400 text-lg mb-1">
+                        Full Refund Policy
+                      </h3>
+                      <p className="text-green-700 dark:text-green-300 leading-relaxed">
+                        Bookings cancelled prior to the event are eligible for a 100% full refund of
+                        the booking amount.
                       </p>
                     </div>
                   </div>
+                )}
 
-                  {venue.cancellation.refundRules && venue.cancellation.refundRules.length > 0 ? (
-                    <div className="overflow-hidden border border-[var(--bg-grey)] rounded-2xl">
-                      <table className="w-full text-left border-collapse">
-                        <thead>
-                          <tr className="bg-[var(--bg-grey)] text-[var(--text-primary)]">
-                            <th className="py-4 px-6 font-semibold border-b border-[var(--bg-grey)] text-base">Timeline</th>
-                            <th className="py-4 px-6 font-semibold border-b border-[var(--bg-grey)] text-base text-right">Refund Percentage</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {[...venue.cancellation.refundRules]
-                            .sort((a, b) => b.daysBefore - a.daysBefore)
-                            .map((rule, idx) => (
-                              <tr key={idx} className="hover:bg-[var(--bg-grey)]/20 transition-colors border-b border-[var(--bg-grey)] last:border-b-0">
-                                <td className="py-4 px-6 text-[var(--text-primary)] font-medium text-base">
-                                  {rule.daysBefore} or more days before event
-                                </td>
-                                <td className="py-4 px-6 text-right font-bold text-base text-[var(--bg-green)]">
-                                  {rule.refundPercentage}%
-                                </td>
-                              </tr>
-                            ))}
-                        </tbody>
-                      </table>
+              {venue.cancellation?.policy === 'refundable' &&
+                venue.cancellation?.refundType === 'timeBasedRefund' && (
+                  <div>
+                    <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900/30 rounded-2xl p-5 flex items-start gap-4 mb-6">
+                      <div className="bg-blue-100 dark:bg-blue-900/50 p-2 rounded-xl text-blue-600 dark:text-blue-400 shrink-0">
+                        <TbShieldCheck size={24} />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-blue-800 dark:text-blue-400 text-lg mb-1">
+                          Time-based Refund Policy
+                        </h3>
+                        <p className="text-blue-700 dark:text-blue-300 leading-relaxed">
+                          Refunds are calculated dynamically based on the number of days remaining
+                          until the scheduled event start date.
+                        </p>
+                      </div>
                     </div>
-                  ) : (
-                    <p className="text-[var(--text-secondary)] italic">No refund rules configured.</p>
-                  )}
-                </div>
-              )}
+
+                    {venue.cancellation.refundRules && venue.cancellation.refundRules.length > 0 ? (
+                      <div className="overflow-hidden border border-[var(--bg-grey)] rounded-2xl">
+                        <table className="w-full text-left border-collapse">
+                          <thead>
+                            <tr className="bg-[var(--bg-grey)] text-[var(--text-primary)]">
+                              <th className="py-4 px-6 font-semibold border-b border-[var(--bg-grey)] text-base">
+                                Timeline
+                              </th>
+                              <th className="py-4 px-6 font-semibold border-b border-[var(--bg-grey)] text-base text-right">
+                                Refund Percentage
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {[...venue.cancellation.refundRules]
+                              .sort((a, b) => b.daysBefore - a.daysBefore)
+                              .map((rule, idx) => (
+                                <tr
+                                  key={idx}
+                                  className="hover:bg-[var(--bg-grey)]/20 transition-colors border-b border-[var(--bg-grey)] last:border-b-0"
+                                >
+                                  <td className="py-4 px-6 text-[var(--text-primary)] font-medium text-base">
+                                    {rule.daysBefore} or more days before event
+                                  </td>
+                                  <td className="py-4 px-6 text-right font-bold text-base text-[var(--bg-green)]">
+                                    {rule.refundPercentage}%
+                                  </td>
+                                </tr>
+                              ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      <p className="text-[var(--text-secondary)] italic">
+                        No refund rules configured.
+                      </p>
+                    )}
+                  </div>
+                )}
             </div>
           </div>
         </div>
@@ -392,7 +425,9 @@ const VenueDetails = () => {
             {/* slot selection*/}
             <div className="mt-8">
               <div className="flex justify-between items-end mb-4">
-                <h3 className="font-semibold text-[var(--text-primary)] text-lg">Available Slots</h3>
+                <h3 className="font-semibold text-[var(--text-primary)] text-lg">
+                  Available Slots
+                </h3>
                 <span className="text-xs px-2.5 py-1 bg-[var(--bg-grey)] text-[var(--bg-green)] rounded-full font-medium">
                   {bookingTypeLabel}
                 </span>
@@ -400,7 +435,8 @@ const VenueDetails = () => {
 
               <div className="grid grid-cols-1 gap-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
                 {/* for fixed slots */}
-                {venue.bookingType === 'fixedBooking' && venue.fixedPackages?.length > 0 &&
+                {venue.bookingType === 'fixedBooking' &&
+                  venue.fixedPackages?.length > 0 &&
                   venue.fixedPackages.map((item, index) => (
                     <button
                       key={index}
@@ -440,24 +476,33 @@ const VenueDetails = () => {
                 {/* flexible slots placeholder */}
                 {venue.bookingType === 'flexibleBooking' && (
                   <div className="py-8 px-4 text-center border border-dashed border-[var(--bg-grey)] rounded-2xl bg-[var(--bg-primary)]/50">
-                    <p className="text-[var(--text-secondary)]">Select a date to see available time slots</p>
+                    <p className="text-[var(--text-secondary)]">
+                      Select a date to see available time slots
+                    </p>
                   </div>
                 )}
-                  
-                {venue.bookingType === 'fixedBooking' && (!venue.fixedPackages || venue.fixedPackages.length === 0) && (
-                  <div className="text-center py-8 text-[var(--text-secondary)]">
-                    No slots available for the selected date.
-                  </div>
-                )}
+
+                {venue.bookingType === 'fixedBooking' &&
+                  (!venue.fixedPackages || venue.fixedPackages.length === 0) && (
+                    <div className="text-center py-8 text-[var(--text-secondary)]">
+                      No slots available for the selected date.
+                    </div>
+                  )}
               </div>
             </div>
 
             {/* Total Section (if fixed and selected) */}
             {selectedPackage.length > 0 && venue.bookingType === 'fixedBooking' && (
               <div className="mt-6 pt-4 border-t border-[var(--bg-grey)] flex justify-between items-center">
-                <span className="text-[var(--text-secondary)] font-medium">Selected ({selectedPackage.length})</span>
+                <span className="text-[var(--text-secondary)] font-medium">
+                  Selected ({selectedPackage.length})
+                </span>
                 <span className="font-bold text-xl text-[var(--text-primary)]">
-                  ₹{selectedPackage.reduce((acc, idx) => acc + (venue.fixedPackages[idx]?.price || 0), 0)}
+                  ₹
+                  {selectedPackage.reduce(
+                    (acc, idx) => acc + (venue.fixedPackages[idx]?.price || 0),
+                    0
+                  )}
                 </span>
               </div>
             )}
@@ -467,7 +512,7 @@ const VenueDetails = () => {
               disabled={selectedPackage.length === 0 && venue.bookingType === 'fixedBooking'}
               className={`w-full mt-6 py-4 rounded-2xl font-bold text-lg transition-all shadow-md cursor-pointer
                 ${
-                  (selectedPackage.length !== 0 || venue.bookingType === 'flexibleBooking')
+                  selectedPackage.length !== 0 || venue.bookingType === 'flexibleBooking'
                     ? 'bg-[var(--bg-green)] text-white hover:bg-green-600 hover:shadow-lg transform hover:-translate-y-0.5'
                     : 'bg-[var(--bg-grey)] text-[var(--text-secondary)] cursor-not-allowed'
                 }

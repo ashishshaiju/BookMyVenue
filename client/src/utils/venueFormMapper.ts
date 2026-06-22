@@ -73,7 +73,8 @@ export function mapFormToDTO(values: AddVenueFormValues, imageUrls: string[]) {
     },
     flexibleBooking: {
       slotDuration:
-        values.flexibleBooking.slotDuration === '' || values.flexibleBooking.slotDuration === undefined
+        values.flexibleBooking.slotDuration === '' ||
+        values.flexibleBooking.slotDuration === undefined
           ? 60
           : Number(values.flexibleBooking.slotDuration),
       bufferTime:

@@ -301,9 +301,9 @@ const BookingStep = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                     <div>
                       <label className="block mb-2 font-bold">Base Price (₹)</label>
-                        <p className="text-sm text-[var(--text-secondary)] mt-2">
-                          This base price applies when time-based pricing is active.
-                        </p>
+                      <p className="text-sm text-[var(--text-secondary)] mt-2">
+                        This base price applies when time-based pricing is active.
+                      </p>
                       <Field
                         name="pricing.basePrice"
                         type="number"
