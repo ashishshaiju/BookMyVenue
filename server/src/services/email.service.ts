@@ -1,10 +1,10 @@
 import { Resend } from 'resend';
 import { z } from 'zod';
-import type { EmailIntentType } from '../constants/email.constants';
+import { EmailIntent, type EmailIntentType } from '../constants/email.constants';
 import { resendConfig } from '../constants/env';
 import { logError, logInfo } from '../utils/logger';
 
-// Call this during server startup to catch 
+// Validates required email configuration on startup.
 export function validateEmailConfig(): void {
   const missing: string[] = [];
 
@@ -168,7 +168,6 @@ async function sendEmail(
   }
 }
 
-// EmailService
 class EmailService {
   /**
    * Sends a password reset email.
@@ -239,12 +238,6 @@ class EmailService {
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // Future intent methods:
-  //   async sendVerificationEmail(email: string, verificationLink: string): Promise<SendEmailResult>
-  //   async sendWelcomeEmail(email: string, username: string): Promise<SendEmailResult>
-  // ---------------------------------------------------------------------------
-
   /**
    * Sends a security notification informing the user that their password was changed.
    * Contains no tokens, no links, and no sensitive data — purely informational.
@@ -285,6 +278,142 @@ class EmailService {
       `Your ${appName} password was changed`,
       buildEmailWrapper(bodyContent),
       'security_alert'
+    );
+  }
+  // Booking flow emails
+
+  /**
+   * Sends a booking confirmation email to the customer.
+   * @param email  - Customer email address
+   * @param details - Booking details for rendering the email body
+   */
+  async sendBookingConfirmation(
+    email: string,
+    details: {
+      venueName: string;
+      date: string;
+      startTime: string;
+      endTime: string;
+      amount: number;
+      paymentReference: string;
+    }
+  ): Promise<SendEmailResult> {
+    const validatedRecipientEmail = validateRecipient(email);
+
+    const bodyContent = `
+      <h1 style="margin:0 0 8px;font-size:22px;font-weight:700;color:#111827;">Booking Confirmed! 🎉</h1>
+      <p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#374151;">
+        Your booking at <strong>${details.venueName}</strong> is confirmed.
+        Here's a summary of your reservation.
+      </p>
+
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+             style="background-color:#f0fdf4;border-radius:8px;margin-bottom:24px;">
+        <tr>
+          <td style="padding:20px 24px;">
+            <p style="margin:0 0 8px;font-size:14px;color:#166534;"><strong>Venue</strong></p>
+            <p style="margin:0 0 16px;font-size:16px;color:#111827;font-weight:600;">${details.venueName}</p>
+
+            <p style="margin:0 0 8px;font-size:14px;color:#166534;"><strong>Date</strong></p>
+            <p style="margin:0 0 16px;font-size:16px;color:#111827;">${details.date}</p>
+
+            <p style="margin:0 0 8px;font-size:14px;color:#166534;"><strong>Time</strong></p>
+            <p style="margin:0 0 16px;font-size:16px;color:#111827;">${details.startTime} – ${details.endTime}</p>
+
+            <p style="margin:0 0 8px;font-size:14px;color:#166534;"><strong>Amount Paid</strong></p>
+            <p style="margin:0;font-size:20px;color:#111827;font-weight:700;">₹${details.amount.toLocaleString('en-IN')}</p>
+          </td>
+        </tr>
+      </table>
+
+      <p style="margin:0 0 8px;font-size:13px;color:#9ca3af;">
+        Payment Reference: <code style="font-size:12px;color:#6b7280;">${details.paymentReference}</code>
+      </p>
+
+      <p style="margin:16px 0 0;font-size:14px;color:#374151;">
+        We look forward to hosting your event. If you have any questions, please reply to this email.
+      </p>
+    `;
+
+    return sendEmail(
+      validatedRecipientEmail,
+      `Booking Confirmed – ${details.venueName} on ${details.date}`,
+      buildEmailWrapper(bodyContent),
+      EmailIntent.BOOKING_CONFIRMATION
+    );
+  }
+
+  /**
+   * Sends a refund notification to the customer when their booking fails
+   * due to a slot collision after the lock TTL expired.
+   */
+  async sendRefundNotification(
+    email: string,
+    details: {
+      venueName: string;
+      date: string;
+      startTime: string;
+      endTime: string;
+      amount: number;
+      refundReference: string;
+    }
+  ): Promise<SendEmailResult> {
+    const validatedRecipientEmail = validateRecipient(email);
+    const appName = resendConfig.appName;
+
+    const bodyContent = `
+      <h1 style="margin:0 0 8px;font-size:22px;font-weight:700;color:#111827;">Booking Unsuccessful – Refund Initiated</h1>
+      <p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#374151;">
+        We're sorry — by the time your payment was processed, the selected slot at
+        <strong>${details.venueName}</strong> had been booked by another customer.
+        We have initiated a full refund.
+      </p>
+
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+             style="background-color:#fef2f2;border-radius:8px;margin-bottom:24px;">
+        <tr>
+          <td style="padding:20px 24px;">
+            <p style="margin:0 0 8px;font-size:14px;color:#991b1b;"><strong>Venue</strong></p>
+            <p style="margin:0 0 16px;font-size:16px;color:#111827;font-weight:600;">${details.venueName}</p>
+
+            <p style="margin:0 0 8px;font-size:14px;color:#991b1b;"><strong>Requested Date</strong></p>
+            <p style="margin:0 0 16px;font-size:16px;color:#111827;">${details.date}</p>
+
+            <p style="margin:0 0 8px;font-size:14px;color:#991b1b;"><strong>Time Slot</strong></p>
+            <p style="margin:0 0 16px;font-size:16px;color:#111827;">${details.startTime} – ${details.endTime}</p>
+
+            <p style="margin:0 0 8px;font-size:14px;color:#991b1b;"><strong>Refund Amount</strong></p>
+            <p style="margin:0;font-size:20px;color:#111827;font-weight:700;">₹${details.amount.toLocaleString('en-IN')}</p>
+          </td>
+        </tr>
+      </table>
+
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+             style="background-color:#fef9c3;border-radius:6px;margin-bottom:16px;">
+        <tr>
+          <td style="padding:14px 16px;">
+            <p style="margin:0;font-size:13px;color:#92400e;line-height:1.5;">
+              <strong>Refund Timeline:</strong> Refunds typically reflect in your account within
+              5–7 business days depending on your bank.
+            </p>
+          </td>
+        </tr>
+      </table>
+
+      <p style="margin:0;font-size:13px;color:#9ca3af;">
+        Refund Reference: <code style="font-size:12px;color:#6b7280;">${details.refundReference}</code>
+      </p>
+
+      <p style="margin:16px 0 0;font-size:14px;color:#374151;">
+        We apologise for the inconvenience. Please try booking another available slot on ${appName}.
+      </p>
+    `;
+
+    return sendEmail(
+      validatedRecipientEmail,
+      `Booking Failed – Full Refund Initiated for ${details.venueName}`,
+      buildEmailWrapper(bodyContent),
+      EmailIntent.BOOKING_REFUND
     );
   }
 }

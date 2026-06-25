@@ -7,6 +7,8 @@ export const EmailIntent = {
   PASSWORD_RESET: 'password_reset',
   SECURITY_ALERT: 'security_alert',
   WELCOME: 'welcome',
+  BOOKING_CONFIRMATION: 'booking_confirmation',
+  BOOKING_REFUND: 'booking_refund',
 } as const;
 
 export const EmailTaskStatus = {

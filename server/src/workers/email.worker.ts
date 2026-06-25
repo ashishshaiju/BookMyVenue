@@ -29,6 +29,42 @@ async function dispatch(task: IEmailTask): Promise<void> {
       }
       break;
     }
+    case EmailIntent.BOOKING_CONFIRMATION: {
+      const { venueName, date, startTime, endTime, amount, paymentReference } = metadata;
+      if (!venueName || !date || !startTime || !endTime || !amount || !paymentReference) {
+        throw new Error(`Missing required metadata fields for ${EmailIntent.BOOKING_CONFIRMATION} intent`);
+      }
+      const result = await emailService.sendBookingConfirmation(recipient, {
+        venueName,
+        date,
+        startTime,
+        endTime,
+        amount: parseFloat(amount),
+        paymentReference,
+      });
+      if (!result.success) {
+        throw new Error('Failed to send booking confirmation email via Resend');
+      }
+      break;
+    }
+    case EmailIntent.BOOKING_REFUND: {
+      const { venueName, date, startTime, endTime, amount, refundReference } = metadata;
+      if (!venueName || !date || !startTime || !endTime || !amount || !refundReference) {
+        throw new Error(`Missing required metadata fields for ${EmailIntent.BOOKING_REFUND} intent`);
+      }
+      const result = await emailService.sendRefundNotification(recipient, {
+        venueName,
+        date,
+        startTime,
+        endTime,
+        amount: parseFloat(amount),
+        refundReference,
+      });
+      if (!result.success) {
+        throw new Error('Failed to send booking refund email via Resend');
+      }
+      break;
+    }
     default:
       throw new Error(`Unknown email intent: ${intent}`);
   }
