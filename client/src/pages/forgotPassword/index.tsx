@@ -3,9 +3,9 @@ import { FaBuilding } from 'react-icons/fa';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import { Link } from 'react-router';
 import { forgotPasswordSchema } from './validation';
-import { axiosInstance } from '../../config/axios';
-import { API_ENDPOINTS } from '../../constants';
-import { useToast } from '../../hooks/useToast';
+import { axiosInstance } from '@/config/axios';
+import { API_ENDPOINTS } from '@/constants';
+import { useToast } from '@/hooks/useToast';
 import type { FormikHelpers } from 'formik';
 
 const ForgotPasswordPage = () => {

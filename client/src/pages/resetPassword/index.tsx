@@ -3,10 +3,10 @@ import { FaBuilding } from 'react-icons/fa';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 import { resetPasswordSchema } from './validation';
-import { axiosInstance } from '../../config/axios';
-import { API_ENDPOINTS } from '../../constants';
-import { useToast } from '../../hooks/useToast';
-import { extractErrorMessage } from '../../utils/toast';
+import { axiosInstance } from '@/config/axios';
+import { API_ENDPOINTS } from '@/constants';
+import { useToast } from '@/hooks/useToast';
+import { extractErrorMessage } from '@/utils/toast';
 import type { FormikHelpers } from 'formik';
 
 interface ResetFormValues {

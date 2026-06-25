@@ -1,7 +1,7 @@
 import React from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router';
-import { getSafeRedirectUrl } from '../../utils/redirect';
-import { useAuth } from '../../hooks/useAuth';
+import { getSafeRedirectUrl } from '@/utils/redirect';
+import { useAuth } from '@/hooks/useAuth';
 
 const GuestGuard: React.FC = () => {
   const { isAuthenticated, loading } = useAuth();

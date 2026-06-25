@@ -1,12 +1,7 @@
 import { useEffect } from 'react';
-import { showError } from '../../utils/toast';
+import { showError } from '@/utils/toast';
 
-/**
- * Listens to global custom events dispatched by the axios interceptor
- * (e.g., auth:logout, auth:forbidden) and displays toast notifications.
- *
- * Renders nothing — purely a side-effect listener.
- */
+// Listens to global interceptor events and displays toast notifications.
 export function ToastListener() {
   useEffect(() => {
     const handleLogout = (event: CustomEvent<{ message: string }>) => {

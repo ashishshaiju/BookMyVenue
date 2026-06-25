@@ -2,10 +2,10 @@ import { FaBuilding } from 'react-icons/fa';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import { Link, useNavigate, useLocation } from 'react-router';
 import { signinSchema } from './validation';
-import { useAuth } from '../../hooks/useAuth';
-import { useToast } from '../../hooks/useToast';
-import { extractErrorMessage } from '../../utils/toast';
-import { getSafeRedirectUrl } from '../../utils/redirect';
+import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/useToast';
+import { extractErrorMessage } from '@/utils/toast';
+import { getSafeRedirectUrl } from '@/utils/redirect';
 
 const LoginPage = () => {
   const { login } = useAuth();

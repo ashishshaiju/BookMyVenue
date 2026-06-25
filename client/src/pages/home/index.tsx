@@ -4,7 +4,7 @@ import { Link } from 'react-router';
 import { featuredVenues } from './featuredVenues';
 import { IoLocationOutline, IoSearch } from 'react-icons/io5';
 import { TiStar } from 'react-icons/ti';
-import heroImage from '../../assets/hero.png';
+import heroImage from '@/assets/hero.png';
 
 const HomePage = () => {
   const [search, setSearch] = useState('');
