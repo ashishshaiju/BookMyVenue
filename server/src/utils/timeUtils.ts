@@ -39,3 +39,28 @@ export const parseDurationToMs = (duration: string | number): number => {
       return 0;
   }
 };
+
+// Converts "09:30" to 570
+export const timeStringToMinutes = (timeString: string): number => {
+  const [hours, minutes] = timeString.split(':').map(Number);
+  if (isNaN(hours) || isNaN(minutes)) throw new Error(`Invalid time string: ${timeString}`);
+  return hours * 60 + minutes;
+};
+
+// Converts 570 to "09:30"
+export const minutesToTimeString = (minutes: number): string => {
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+};
+
+// Collision formula
+export const checkOverlap = (
+  slotStart: number,
+  slotEnd: number,
+  conflicts: { start: number; end: number }[]
+): boolean => {
+  return conflicts.some(
+    (conflict) => slotStart < conflict.end && slotEnd > conflict.start
+  );
+};
