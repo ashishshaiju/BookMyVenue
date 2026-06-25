@@ -1,0 +1,274 @@
+import { Types } from 'mongoose';
+import { logError, logInfo, logWarn } from '../../utils/logger';
+import { issueRefund } from '../../services/razorpay.service';
+import {
+  markWebhookProcessed,
+  createBooking,
+  createFailedBooking,
+} from './booking.repository';
+import { LockModel } from './lock.model';
+import { minutesToTimeString } from '../../utils/timeUtils';
+import { EmailTaskModel } from '../../models/email-task.model';
+import { EmailIntent, EmailTaskStatus, type EmailIntentType } from '../../constants/email.constants';
+import { UserModel } from '../user/user.models';
+import { VenueModel } from '../venue/venue.model';
+import type { ILock } from './lock.types';
+
+export interface RazorpayWebhookNotes {
+  lockId?: string;
+  venueId?: string;
+  userId?: string;
+}
+
+// Enqueues an email sending task to the background email queue
+async function enqueueEmail(
+  intent: EmailIntentType,
+  recipient: string,
+  subject: string,
+  metadata: Record<string, string>
+): Promise<void> {
+  try {
+    await EmailTaskModel.create({
+      intent,
+      recipient,
+      subject,
+      metadata,
+      status: EmailTaskStatus.PENDING,
+      workerId: null,
+      lockedAt: null,
+      retries: 0,
+      lastError: null,
+    });
+  } catch (err) {
+    logError('Failed to enqueue email task', {
+      module: 'booking.service.ts/enqueueEmail',
+      intent,
+      recipient,
+      error: (err as Error).message,
+    });
+  }
+}
+
+// Resolves a user's email address by ID
+async function resolveCustomerEmail(userId: string): Promise<string | null> {
+  try {
+    const user = await UserModel.findById(userId).select('email').lean();
+    return (user as { email?: string } | null)?.email ?? null;
+  } catch {
+    return null;
+  }
+}
+
+// Resolves a venue's name and owner email address by ID
+async function resolveVenueInfo(
+  venueId: string
+): Promise<{ venueName: string; ownerEmail: string | null } | null> {
+  try {
+    const venue = await VenueModel.findById(venueId).select('name ownerUserId').lean() as
+      | { name: string; ownerUserId: Types.ObjectId }
+      | null;
+    if (!venue) return null;
+
+    const owner = await UserModel.findById(venue.ownerUserId).select('email').lean() as
+      | { email?: string }
+      | null;
+
+    return {
+      venueName: venue.name,
+      ownerEmail: owner?.email ?? null,
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Processes a captured payment webhook.
+ * Gated by idempotency check. Decides between confirming a booking or refunding.
+ */
+export async function processCapturedPayment(
+  paymentId: string,
+  amountPaise: number,
+  notes: RazorpayWebhookNotes
+): Promise<{ success: boolean; isDuplicate?: boolean; error?: string }> {
+  try {
+    await markWebhookProcessed(paymentId);
+  } catch (err) {
+    const error = err as { code?: number; message: string };
+    if (error.code === 11000) {
+      logInfo('Duplicate webhook received — skipping (already processed)', {
+        module: 'booking.service.ts/processCapturedPayment',
+        eventId: paymentId,
+      });
+      return { success: true, isDuplicate: true };
+    }
+    logError('CRITICAL: Failed to record webhook idempotency marker', {
+      module: 'booking.service.ts/processCapturedPayment',
+      eventId: paymentId,
+      error: error.message,
+    });
+  }
+
+  const { lockId, venueId, userId } = notes;
+  if (!lockId || !venueId || !userId) {
+    logError('Webhook payment captured notes are missing required fields', {
+      module: 'booking.service.ts/processCapturedPayment',
+      eventId: paymentId,
+      notes,
+    });
+    return { success: false, error: 'Missing notes metadata' };
+  }
+
+  const [venueInfo, customerEmail] = await Promise.all([
+    resolveVenueInfo(venueId),
+    resolveCustomerEmail(userId),
+  ]);
+
+  const venueName = venueInfo?.venueName ?? 'the venue';
+  const ownerEmail = venueInfo?.ownerEmail ?? null;
+
+  let lock: (ILock & { _id: Types.ObjectId }) | null;
+  try {
+    lock = await LockModel.findById(lockId).lean();
+  } catch (err) {
+    logError('Failed to query LockModel in webhook service', {
+      module: 'booking.service.ts/processCapturedPayment',
+      lockId,
+      error: (err as Error).message,
+    });
+    return { success: false, error: 'Lock query failed' };
+  }
+
+  // Scenario A: Slot lock is active. Confirm the booking and delete the lock.
+  if (lock) {
+    logInfo('Webhook Scenario A: Lock exists, creating booking', {
+      lockId,
+      venueId,
+      userId,
+      paymentId,
+    });
+
+    try {
+      await createBooking({
+        venueId,
+        userId,
+        date: lock.date,
+        startTime: lock.startTime,
+        endTime: lock.endTime,
+        price: amountPaise / 100,
+        paymentReference: paymentId,
+        status: 'Confirmed',
+      });
+    } catch (err) {
+      logError('CRITICAL: Failed to create booking in Scenario A', {
+        module: 'booking.service.ts/processCapturedPayment',
+        lockId,
+        paymentId,
+        error: (err as Error).message,
+      });
+      return { success: false, error: 'Booking creation failed' };
+    }
+
+    try {
+      await LockModel.deleteOne({ _id: new Types.ObjectId(lockId) });
+    } catch (err) {
+      logWarn('Failed to delete lock after booking creation', {
+        module: 'booking.service.ts/processCapturedPayment',
+        lockId,
+        error: (err as Error).message,
+      });
+    }
+
+    const emailMetadata = {
+      venueName,
+      date: lock.date,
+      startTime: minutesToTimeString(lock.startTime),
+      endTime: minutesToTimeString(lock.endTime),
+      amount: String(amountPaise / 100),
+      paymentReference: paymentId,
+    };
+
+    if (customerEmail) {
+      void enqueueEmail(
+        EmailIntent.BOOKING_CONFIRMATION,
+        customerEmail,
+        `Booking Confirmed – ${venueName} on ${lock.date}`,
+        emailMetadata
+      );
+    }
+
+    if (ownerEmail) {
+      void enqueueEmail(
+        EmailIntent.BOOKING_CONFIRMATION,
+        ownerEmail,
+        `New Booking Received – ${venueName} on ${lock.date}`,
+        emailMetadata
+      );
+    }
+
+    logInfo('Scenario A complete: booking confirmed', { lockId, paymentId });
+    return { success: true };
+  }
+
+  // Scenario B: Slot lock has expired. Issue safety refund and log failed booking.
+  logWarn('Webhook Scenario B: Lock TTL expired — issuing safety refund', {
+    lockId,
+    venueId,
+    userId,
+    paymentId,
+  });
+
+  let refundId: string;
+  try {
+    const refundResult = await issueRefund(paymentId, amountPaise);
+    refundId = refundResult.refundId;
+  } catch (err) {
+    logError('CRITICAL: Razorpay refund failed in Scenario B', {
+      module: 'booking.service.ts/processCapturedPayment',
+      paymentId,
+      amountPaise,
+      error: (err as Error).message,
+    });
+    return { success: false, error: 'Refund failed — manual review required' };
+  }
+
+  try {
+    await createFailedBooking({
+      venueId,
+      userId,
+      date: 'UNKNOWN',
+      startTime: 0,
+      endTime: 0,
+      amountPaid: amountPaise,
+      paymentReference: paymentId,
+      refundReference: refundId,
+      reason: 'TTL_EXPIRED_COLLISION',
+    });
+  } catch (err) {
+    logError('Failed to create FailedBooking audit record', {
+      module: 'booking.service.ts/processCapturedPayment',
+      paymentId,
+      refundId,
+      error: (err as Error).message,
+    });
+  }
+
+  if (customerEmail) {
+    void enqueueEmail(
+      EmailIntent.BOOKING_REFUND,
+      customerEmail,
+      `Booking Failed – Full Refund Initiated for ${venueName}`,
+      {
+        venueName,
+        date: 'your selected date',
+        startTime: 'your selected slot',
+        endTime: 'your selected slot',
+        amount: String(amountPaise / 100),
+        refundReference: refundId,
+      }
+    );
+  }
+
+  logInfo('Scenario B complete: refund issued', { paymentId, refundId });
+  return { success: true };
+}
