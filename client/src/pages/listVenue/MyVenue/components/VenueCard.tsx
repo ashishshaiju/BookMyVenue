@@ -1,7 +1,7 @@
 import { Link } from 'react-router';
-import { Button } from '../../../../components/ui/button';
-import { DASHBOARD_URL } from '../../../../constants';
-import type { MyVenue } from '../../../../types/venue.types';
+import { Button } from '@/components/ui/button';
+import { DASHBOARD_URL } from '@/constants';
+import type { MyVenue } from '@/types/venue.types';
 import { MdOutlineLocationOn } from 'react-icons/md';
 
 interface VenueCardProps {

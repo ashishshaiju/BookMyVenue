@@ -7,10 +7,10 @@ import { showError } from '@/utils/toast';
 import { axiosInstance } from '@/config/axios';
 import { FiClock, FiCalendar, FiMapPin } from 'react-icons/fi';
 import { MdOutlineMeetingRoom } from 'react-icons/md';
-import type { 
-  CheckoutResponse, 
-  RazorpaySuccessResponse, 
-  RazorpayErrorResponse 
+import type {
+  CheckoutResponse,
+  RazorpaySuccessResponse,
+  RazorpayErrorResponse,
 } from '@/types/booking.types';
 
 declare global {
@@ -93,14 +93,11 @@ const BookingSummary = () => {
           timeout: 540, // 9 minutes timeout strictly
           handler: async function (response: RazorpaySuccessResponse) {
             try {
-              await axiosInstance.post(
-                '/bookings/verify-payment',
-                {
-                  orderId: response.razorpay_order_id,
-                  paymentId: response.razorpay_payment_id,
-                  signature: response.razorpay_signature,
-                }
-              );
+              await axiosInstance.post('/bookings/verify-payment', {
+                orderId: response.razorpay_order_id,
+                paymentId: response.razorpay_payment_id,
+                signature: response.razorpay_signature,
+              });
 
               navigate('/booking/confirmation', {
                 state: {

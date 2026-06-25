@@ -1,11 +1,11 @@
 import { Link } from 'react-router';
 import { MdAddBusiness } from 'react-icons/md';
-import { useApiQuery } from '../../../hooks/useApi';
-import { API_ENDPOINTS } from '../../../constants';
-import type { MyVenue } from '../../../types/venue.types';
+import { useApiQuery } from '@/hooks/useApi';
+import { API_ENDPOINTS } from '@/constants';
+import type { MyVenue } from '@/types/venue.types';
 import VenueCard from './components/VenueCard';
-import { Button } from '../../../components/ui/button';
-import VenueCardSkeleton from '../../../components/common/VenueCardSkeleton';
+import { Button } from '@/components/ui/button';
+import VenueCardSkeleton from '@/components/common/VenueCardSkeleton';
 
 interface MyVenuesResponse {
   count: number;
