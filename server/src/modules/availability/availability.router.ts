@@ -8,22 +8,122 @@ import { venueIdParamSchema } from '../venue/venue.validator';
 import { blockSlotBodySchema } from '../booking/booking.validator';
 import { blockSlot } from '../booking/booking.controller';
 import * as availabilityController from './availability.controller';
+import { availabilityQuerySchema } from './availability.validator';
 
 const router: ExpressRouter = Router();
 
-import { availabilityQuerySchema } from './availability.validator';
-
+/**
+ * @openapi
+ * /availability/{id}:
+ *   get:
+ *     tags: [Availability]
+ *     summary: Get venue availability slots for a given date range
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: Venue MongoDB ObjectId
+ *         schema:
+ *           type: string
+ *           example: 64b1f2c3d4e5f6a7b8c9d0e1
+ *       - in: query
+ *         name: date
+ *         required: true
+ *         description: Target date in YYYY-MM-DD format
+ *         schema:
+ *           type: string
+ *           example: '2025-12-25'
+ *     responses:
+ *       200:
+ *         description: Availability grid — booked and blocked slots for the date
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessResponse'
+ *       400:
+ *         description: Invalid venue ID or date format
+ *       404:
+ *         description: Venue not found
+ */
 router
-.route('/:id')
-.get(
-  validateParams(venueIdParamSchema),
-  validateQuery(availabilityQuerySchema),
-  availabilityController.getVenueAvailability
-);
+  .route('/:id')
+  .get(
+    validateParams(venueIdParamSchema),
+    validateQuery(availabilityQuerySchema),
+    availabilityController.getVenueAvailability
+  );
 
-// POST /api/v1/availability/:id/block
-// Step 1 of the 3-step booking flow: acquires a DB lock on the slot.
-// Does NOT create a Razorpay order — that happens in Step 2 (checkout).
+/**
+ * @openapi
+ * /availability/{id}/block:
+ *   post:
+ *     tags: [Availability]
+ *     summary: Block a time slot for a venue (Step 1 of 3 in the booking flow)
+ *     description: |
+ *       Acquires a time-limited DB lock on the requested slot.
+ *       Does NOT create a Razorpay order — that happens in Step 2 (`/bookings/checkout`).
+ *       Lock expires automatically if checkout is not initiated within the window.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: Venue MongoDB ObjectId
+ *         schema:
+ *           type: string
+ *           example: 64b1f2c3d4e5f6a7b8c9d0e1
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [date, startTime, endTime, expectedPrice]
+ *             properties:
+ *               date:
+ *                 type: string
+ *                 description: Booking date in YYYY-MM-DD
+ *                 example: '2025-12-25'
+ *               startTime:
+ *                 type: integer
+ *                 description: Slot start in minutes from midnight (0–1439)
+ *                 example: 600
+ *               endTime:
+ *                 type: integer
+ *                 description: Slot end in minutes from midnight (1–1440)
+ *                 example: 720
+ *               expectedPrice:
+ *                 type: number
+ *                 description: Client-calculated price in rupees for server sanity check
+ *                 example: 5000
+ *     responses:
+ *       200:
+ *         description: Slot locked — returns lock ID for use in checkout
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         lockId:
+ *                           type: string
+ *                         expiresAt:
+ *                           type: string
+ *                           format: date-time
+ *       400:
+ *         description: Slot unavailable or validation error
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Insufficient permissions
+ *       409:
+ *         description: Slot already locked by another user
+ */
 router
   .route('/:id/block')
   .post(

@@ -27,3 +27,8 @@ export const authEnvs = {
   accessTokenSecret: process.env.JWT_ACCESS_SECRET,
   refreshTokenSecret: process.env.JWT_REFRESH_SECRET,
 } as const;
+
+export const swaggerConfig = {
+  user: process.env.SWAGGER_USER ?? 'admin',
+  pass: process.env.SWAGGER_PASS ?? 'swagger',
+} as const;
