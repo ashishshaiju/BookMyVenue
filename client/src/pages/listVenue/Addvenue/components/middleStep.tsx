@@ -298,6 +298,21 @@ const BookingStep = () => {
               {values.pricingType === 'timeBasedPricing' && (
                 <div>
                   <h3 className="font-semibold text-lg mb-2">Pricing Rules</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div>
+                      <label className="block mb-2 font-bold">Base Price (₹)</label>
+                      <p className="text-sm text-[var(--text-secondary)] mt-2">
+                        This base price applies when time-based pricing is active.
+                      </p>
+                      <Field
+                        name="pricing.basePrice"
+                        type="number"
+                        placeholder="1000"
+                        className={inputCls + ' mt-2'}
+                      />
+                      <ErrorMessage name="pricing.basePrice" component="p" className={err} />
+                    </div>
+                  </div>
                   {openTime && closeTime && (
                     <p className="text-[var(--text-secondary)] text-sm mb-4">
                       Times must be within working hours:{' '}

@@ -1,7 +1,6 @@
 import type { AddVenueFormValues } from '../types/venue.types';
 
 export function mapFormToDTO(values: AddVenueFormValues, imageUrls: string[]) {
-  // Common fields shared by both booking types
   const base = {
     name: values.VenueName,
     description: values.VenueDescription,
@@ -21,16 +20,24 @@ export function mapFormToDTO(values: AddVenueFormValues, imageUrls: string[]) {
     workingDays: values.workingDays,
     amenities: values.amenities,
 
-    contactName: values.contactName,
-    contactPhone: values.contactPhone,
-    cancellationPolicy: values.cancellationPolicy,
-    ...(values.refundType ? { refundType: values.refundType } : {}),
-    refundRules: (values.refundRules ?? [])
-      .filter((r) => r.daysBefore !== '' && r.refundPercentage !== '')
-      .map((r) => ({
-        daysBefore: Number(r.daysBefore),
-        refundPercentage: Number(r.refundPercentage),
-      })),
+    // Nested contact
+    contact: {
+      name: values.contact.name,
+      phone: values.contact.phone,
+      ...(values.contact.email ? { email: values.contact.email } : {}),
+    },
+
+    // Nested cancellation
+    cancellation: {
+      policy: values.cancellation.policy,
+      ...(values.cancellation.refundType ? { refundType: values.cancellation.refundType } : {}),
+      refundRules: (values.cancellation.refundRules ?? [])
+        .filter((r) => r.daysBefore !== '' && r.refundPercentage !== '')
+        .map((r) => ({
+          daysBefore: Number(r.daysBefore),
+          refundPercentage: Number(r.refundPercentage),
+        })),
+    },
 
     coverImage: imageUrls[0],
     galleryImages: imageUrls.slice(1),
@@ -50,34 +57,36 @@ export function mapFormToDTO(values: AddVenueFormValues, imageUrls: string[]) {
   }
 
   // Flexible booking
-  const flexBase = {
+  const pricingRules = (values.pricing.pricingRules ?? [])
+    .filter((r) => r.fromTime && r.toTime && r.price !== '' && r.price !== undefined)
+    .map((r) => ({
+      fromTime: r.fromTime,
+      toTime: r.toTime,
+      price: Number(r.price),
+    }));
+
+  return {
     ...base,
-    pricingType: values.pricingType,
     workingHours: {
       open: values.workingHours.open,
       close: values.workingHours.close,
     },
-    slotDuration: values.slotDuration,
-    bufferTime: values.bufferTime,
+    flexibleBooking: {
+      slotDuration:
+        values.flexibleBooking.slotDuration === '' ||
+        values.flexibleBooking.slotDuration === undefined
+          ? 60
+          : Number(values.flexibleBooking.slotDuration),
+      bufferTime:
+        values.flexibleBooking.bufferTime === '' || values.flexibleBooking.bufferTime === undefined
+          ? 0
+          : Number(values.flexibleBooking.bufferTime),
+    },
+    pricing: {
+      pricingType: values.pricing.pricingType,
+      basePrice: Number(values.pricing.basePrice ?? 0),
+      pricingRules,
+    },
     blockedTimes: (values.blockedTimes ?? []).filter((b) => b.fromTime && b.toTime),
-  };
-
-  if (values.pricingType === 'fixedPricing') {
-    return {
-      ...flexBase,
-      samePrice: Number(values.samePrice),
-    };
-  }
-
-  // timeBasedPricing
-  return {
-    ...flexBase,
-    pricingRules: (values.pricingRules ?? [])
-      .filter((r) => r.fromTime && r.toTime && r.price)
-      .map((r) => ({
-        fromTime: r.fromTime,
-        toTime: r.toTime,
-        price: Number(r.price),
-      })),
   };
 }

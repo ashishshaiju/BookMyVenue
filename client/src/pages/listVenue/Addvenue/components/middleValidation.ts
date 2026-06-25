@@ -79,6 +79,18 @@ export const middleSchema = Yup.object({
     then: (schema) => schema.required('Select pricing type'),
   }),
 
+  pricing: Yup.object().when('pricingType', {
+    is: 'timeBasedPricing',
+    then: () =>
+      Yup.object({
+        basePrice: Yup.number()
+          .typeError('Enter valid base price')
+          .required('Enter base price')
+          .positive('Must be positive'),
+      }).required('Base price is required'),
+    otherwise: () => Yup.object(),
+  }),
+
   /* Same Price */
   samePrice: Yup.string().when('pricingType', {
     is: 'fixedPricing',

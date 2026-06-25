@@ -1,14 +1,14 @@
 import { Field, FieldArray, ErrorMessage, useFormikContext } from 'formik';
 import { useState, useEffect } from 'react';
-import { useToast } from '../../../../hooks/useToast';
+import { useToast } from '@/hooks/useToast';
 
 type FinishStepValues = {
-  cancellationPolicy: string;
-  refundType: string;
-  refundRules: {
-    daysBefore: string;
-    refundPercentage: string;
-  }[];
+  contact: { name: string; phone: string; email?: string };
+  cancellation: {
+    policy: string;
+    refundType: string;
+    refundRules: { daysBefore: string; refundPercentage: string }[];
+  };
   venuePhotos: File[];
 };
 
@@ -132,22 +132,22 @@ const FinishStep = () => {
               <div>
                 <label className="block mb-2 font-bold">Contact Name</label>
                 <Field
-                  name="contactName"
+                  name="contact.name"
                   type="text"
                   placeholder="Contact Name"
                   className="w-full rounded-xl border border-[var(--bg-grey)] px-4 py-3 outline-none focus:border-[var(--bg-green)]"
                 />
-                <ErrorMessage name="contactName" component="p" className={err} />
+                <ErrorMessage name="contact.name" component="p" className={err} />
               </div>
               <div>
                 <label className="block mb-2 font-bold">Phone Number</label>
                 <Field
-                  name="contactPhone"
+                  name="contact.phone"
                   type="text"
                   placeholder="10-digit mobile number"
                   className="w-full rounded-xl border border-[var(--bg-grey)] px-4 py-3 outline-none focus:border-[var(--bg-green)]"
                 />
-                <ErrorMessage name="contactPhone" component="p" className={err} />
+                <ErrorMessage name="contact.phone" component="p" className={err} />
               </div>
             </div>
           </div>
@@ -157,19 +157,19 @@ const FinishStep = () => {
             <h3 className="font-semibold text-lg mb-4">Cancellation Policy</h3>
             <div className="flex flex-wrap gap-4">
               <label className="flex items-center gap-2 border border-[var(--bg-grey)] rounded-xl px-4 py-3 cursor-pointer">
-                <Field type="radio" name="cancellationPolicy" value="refundable" />
+                <Field type="radio" name="cancellation.policy" value="refundable" />
                 Refundable
               </label>
               <label className="flex items-center gap-2 border border-[var(--bg-grey)] rounded-xl px-4 py-3 cursor-pointer">
-                <Field type="radio" name="cancellationPolicy" value="nonRefundable" />
+                <Field type="radio" name="cancellation.policy" value="nonRefundable" />
                 Non Refundable
               </label>
             </div>
-            <ErrorMessage name="cancellationPolicy" component="p" className={err} />
+            <ErrorMessage name="cancellation.policy" component="p" className={err} />
           </div>
 
           {/* Refund Rules — only for refundable */}
-          {values.cancellationPolicy === 'refundable' && (
+          {values.cancellation.policy === 'refundable' && (
             <div>
               <h3 className="font-semibold text-lg mb-4">Refund Rules</h3>
               <p className="text-[var(--text-secondary)] mb-4">
@@ -181,35 +181,35 @@ const FinishStep = () => {
                 <label className="block mb-2 font-bold">Refund Type</label>
                 <div className="flex flex-wrap gap-4">
                   <label className="flex items-center gap-2 border border-[var(--bg-grey)] rounded-xl px-4 py-3 cursor-pointer">
-                    <Field type="radio" name="refundType" value="fullRefund" />
+                    <Field type="radio" name="cancellation.refundType" value="fullRefund" />
                     Full Refund
                   </label>
                   <label className="flex items-center gap-2 border border-[var(--bg-grey)] rounded-xl px-4 py-3 cursor-pointer">
-                    <Field type="radio" name="refundType" value="timeBasedRefund" />
+                    <Field type="radio" name="cancellation.refundType" value="timeBasedRefund" />
                     Time Based
                   </label>
                 </div>
-                <ErrorMessage name="refundType" component="p" className={err} />
+                <ErrorMessage name="cancellation.refundType" component="p" className={err} />
               </div>
 
               {/* Refund Rules — only for time based */}
-              {values.refundType === 'timeBasedRefund' && (
-                <FieldArray name="refundRules">
+              {values.cancellation.refundType === 'timeBasedRefund' && (
+                <FieldArray name="cancellation.refundRules">
                   {({ push, remove }) => (
                     <div className="space-y-5">
-                      {values.refundRules.map((_, index) => (
+                      {values.cancellation.refundRules.map((_, index) => (
                         <div key={index} className="border border-[var(--bg-grey)] rounded-2xl p-5">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                               <label className="block mb-2 font-bold">Days Before</label>
                               <Field
-                                name={`refundRules.${index}.daysBefore`}
+                                name={`cancellation.refundRules.${index}.daysBefore`}
                                 type="number"
                                 placeholder="7"
                                 className="w-full rounded-xl border border-[var(--bg-grey)] px-4 py-3"
                               />
                               <ErrorMessage
-                                name={`refundRules.${index}.daysBefore`}
+                                name={`cancellation.refundRules.${index}.daysBefore`}
                                 component="p"
                                 className={err}
                               />
@@ -217,13 +217,13 @@ const FinishStep = () => {
                             <div>
                               <label className="block mb-2 font-bold">Refund %</label>
                               <Field
-                                name={`refundRules.${index}.refundPercentage`}
+                                name={`cancellation.refundRules.${index}.refundPercentage`}
                                 type="number"
                                 placeholder="90"
                                 className="w-full rounded-xl border border-[var(--bg-grey)] px-4 py-3"
                               />
                               <ErrorMessage
-                                name={`refundRules.${index}.refundPercentage`}
+                                name={`cancellation.refundRules.${index}.refundPercentage`}
                                 component="p"
                                 className={err}
                               />

@@ -1,25 +1,25 @@
 import { Formik, Form } from 'formik';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
-import { useAuth } from '../../../hooks/useAuth';
-import { useToast } from '../../../hooks/useToast';
-import { useImageUpload } from '../../../hooks/useImageUpload';
-import { createVenue, upsertVenueDraft, getMyDraft } from '../../../services/venueService';
-import { mapFormToDTO } from '../../../utils/venueFormMapper';
+import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/useToast';
+import { useImageUpload } from '@/hooks/useImageUpload';
+import { createVenue, upsertVenueDraft, getMyDraft } from '@/services/venueService';
+import { mapFormToDTO } from '@/utils/venueFormMapper';
 import {
   saveDraftSession,
   loadDraftSession,
   clearDraftSession,
   clearDraft,
-} from '../../../utils/venueDraft';
-import type { AddVenueFormValues } from '../../../types/venue.types';
+} from '@/utils/venueDraft';
+import type { AddVenueFormValues } from '@/types/venue.types';
 
 import BasicInfoStep from './components/BasicInfoStep';
-import { basicInfoSchema } from '../Addvenue/components/BasicValidation';
-import BookingStep from './components/middleStep';
+import { basicInfoSchema } from './components/BasicValidation';
+import BookingStep from './components/MiddleStep';
 import FinishStep from './components/FinishStep';
 import { finishSchema } from './components/FinishValidation';
-import { middleSchema } from './components/middleValidation';
+import { middleSchema } from './components/MiddleValidation';
 
 const BLANK_FORM: AddVenueFormValues = {
   VenueName: '',
@@ -36,21 +36,23 @@ const BLANK_FORM: AddVenueFormValues = {
   maxCapacity: '',
   bookingType: '',
   workingDays: [],
-  fixedPackages: [{ slotName: '', startTime: '', endTime: '', price: '' }],
+  fixedPackages: [{ slotName: '', startTime: '', endTime: '', price: 0 }],
   workingHours: { open: '', close: '' },
-  slotDuration: '',
-  bufferTime: '',
-  pricingType: '',
-  samePrice: '',
-  pricingRules: [{ fromTime: '', toTime: '', price: '' }],
+  flexibleBooking: { slotDuration: '', bufferTime: '' },
+  pricing: {
+    pricingType: '',
+    basePrice: 0,
+    pricingRules: [{ fromTime: '', toTime: '', price: 0 }],
+  },
   blockedTimes: [{ fromTime: '', toTime: '', reason: '' }],
   amenities: [],
   venuePhotos: [],
-  contactName: '',
-  contactPhone: '',
-  cancellationPolicy: '',
-  refundType: '',
-  refundRules: [{ daysBefore: '', refundPercentage: '' }],
+  contact: { name: '', phone: '', email: '' },
+  cancellation: {
+    policy: '',
+    refundType: '',
+    refundRules: [{ daysBefore: '', refundPercentage: '' }],
+  },
 };
 
 const STEP_LABELS = ['Basic Info', 'Booking', 'Final Details'];
@@ -67,7 +69,7 @@ const AddVenue = () => {
 
   const stepSchemas = [basicInfoSchema, middleSchema, finishSchema];
 
-  // ─── Mount: Hydrate from sessionStorage → API → blank ──────────────────
+  // Load draft from session storage or API
   useEffect(() => {
     const init = async () => {
       if (authLoading) return;
@@ -76,7 +78,6 @@ const AddVenue = () => {
         return;
       }
 
-      // 1. sessionStorage is the fastest path — no API call
       const session = loadDraftSession(user.id);
       if (session && session.formValues) {
         console.log('Restoring draft from session:', session.formValues);
@@ -87,7 +88,6 @@ const AddVenue = () => {
         return;
       }
 
-      // 2. No session — check the server for a Draft
       try {
         const draft = await getMyDraft();
         console.log('Draft from API:', draft);
@@ -101,7 +101,6 @@ const AddVenue = () => {
           saveDraftSession(user.id, { venueId: 'draft', step: resumeStep, formValues: values });
           showSuccess('Draft retrieved, you can continue from here.');
         }
-        // else: no draft → show blank form at step 0 (default state)
       } catch (err) {
         console.error('Failed to get draft:', err);
       } finally {
@@ -136,19 +135,14 @@ const AddVenue = () => {
         try {
           setSubmitting(true);
 
-          // 1. Upload images to Cloudinary
           let imageUrls: string[] = [];
           if (values.venuePhotos?.length > 0) {
             imageUrls = await uploadFiles(values.venuePhotos);
           }
 
-          // 2. Map the entire form to DTO
           const dto = mapFormToDTO(values, imageUrls);
-
-          // 3. Submit full venue
           await createVenue(dto);
 
-          // 4. Cleanup
           clearDraftSession(user.id);
           clearDraft(user.id);
           showSuccess('Venue submitted for review successfully!');
@@ -163,11 +157,6 @@ const AddVenue = () => {
     >
       {({ validateForm, setTouched, values, errors, isSubmitting }) => {
         const hasErrors = Object.keys(errors).length > 0;
-
-        // Log errors for debugging
-        if (hasErrors) {
-          console.log('Formik Validation Errors:', errors);
-        }
 
         const handleNext = async () => {
           const errs = await validateForm();
@@ -210,7 +199,6 @@ const AddVenue = () => {
 
         return (
           <Form className="pb-28">
-            {/* Step indicators */}
             <div className="mb-6 flex gap-2 md:gap-3 items-center px-2 md:px-0 pt-2 overflow-x-auto whitespace-nowrap hide-scrollbar">
               {STEP_LABELS.map((label, i) => (
                 <div key={i} className="flex items-center gap-2">
@@ -239,14 +227,11 @@ const AddVenue = () => {
               ))}
             </div>
 
-            {/* Step content */}
             {step === 0 && <BasicInfoStep />}
             {step === 1 && <BookingStep />}
             {step === 2 && <FinishStep />}
 
-            {/* Fixed bottom navigation bar */}
             <div className="fixed bottom-[4.5rem] md:bottom-0 left-0 md:left-72 right-0 bg-[var(--bg-tertiary)] border-t border-[var(--bg-grey)] px-4 md:px-8 py-3 md:py-4 flex items-center justify-between z-40 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
-              {/* Previous */}
               {step > 0 ? (
                 <button
                   type="button"
@@ -259,7 +244,6 @@ const AddVenue = () => {
                 <div />
               )}
 
-              {/* Error hint */}
               {hasErrors && (
                 <div className="text-center">
                   <p className="text-red-500 text-sm font-semibold">
@@ -274,7 +258,6 @@ const AddVenue = () => {
                 </div>
               )}
 
-              {/* Next / Submit */}
               {step < 2 ? (
                 <button
                   type="button"

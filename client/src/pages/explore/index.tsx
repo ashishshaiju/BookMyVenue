@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { IoLocationOutline } from 'react-icons/io5';
 import { Slider } from '@/components/ui/slider';
 import {
@@ -15,21 +15,34 @@ import { Button } from '@/components/ui/button';
 import { Link } from 'react-router';
 import { useExploreVenues } from '@/hooks/useExploreVenues';
 import { useDebounce } from '@/hooks/useDebounce';
-import type { VenueFilters } from '@/types/venue.types';
+import type { PublicVenue, VenueFilters } from '@/types/venue.types';
 import { PRICE_STEPS, KERALA_DISTRICTS } from '@/constants';
+import { Skeleton } from '@/components/ui/skeleton';
+import { AlertCircle, Snowflake, X, Filter, Loader2 } from 'lucide-react';
 
 const ExplorePage = () => {
   const [filters, setFilters] = useState<VenueFilters>({});
   const [searchTerm, setSearchTerm] = useState('');
+  const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
   const [priceRangeIndex, setPriceRangeIndex] = useState<[number, number]>([
     0,
     PRICE_STEPS.length - 1,
   ]);
 
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 200);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   const debouncedSearchTerm = useDebounce(searchTerm, 400);
   const debouncedPriceRangeIndex = useDebounce(priceRangeIndex, 400);
 
-  const { data, isLoading, isError, hasNextPage, fetchNextPage, isFetchingNextPage } =
+  const { data, isLoading, isError, hasNextPage, fetchNextPage, isFetchingNextPage, isFetching } =
     useExploreVenues({
       ...filters,
       searchTerm: debouncedSearchTerm || undefined,
@@ -119,24 +132,64 @@ const ExplorePage = () => {
   const venues = data?.pages.flatMap((page) => page.venues) || [];
   const totalVenues = data?.pages[0]?.pagination?.total || 0;
 
+  const getStartingPrice = (venue: PublicVenue) => {
+    if (venue.pricing) {
+      const rules = venue.pricing.pricingRules || [];
+      if (rules.length > 0) {
+        return Math.min(venue.pricing.basePrice, ...rules.map((r) => r.price));
+      }
+      return venue.pricing.basePrice;
+    }
+    if (venue.fixedPackages?.length) {
+      return Math.min(...venue.fixedPackages.map((p) => p.price));
+    }
+    return null;
+  };
+
   return (
-    <section className="px-8 mb-20 mx-auto">
-      <div className="grid grid-cols-[300px_1fr] gap-6 items-start">
+    <section className="px-8 pt-24 mb-20 mx-auto">
+      <div className="flex flex-col lg:grid lg:grid-cols-[300px_1fr] gap-6 items-start">
+        {/* Mobile Sidebar Overlay */}
+        <div
+          className={`fixed inset-0 z-40 bg-black/50 transition-opacity lg:hidden ${isMobileFiltersOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+          onClick={() => setIsMobileFiltersOpen(false)}
+        />
+
         {/* Left Sidebar */}
-        <aside className="sticky pt-24">
-          <div className="max-h-[calc(100vh-7rem)] overflow-y-auto rounded-3xl border border-[var(--bg-grey)] bg-[var(--bg-tertiary)] p-6">
+        <aside
+          className={`
+          fixed inset-y-0 top-16 left-0 z-50 w-[300px] bg-[var(--bg-primary)] h-full overflow-y-auto transition-transform duration-300
+          lg:sticky lg:top-24 lg:w-auto lg:h-auto lg:bg-transparent lg:translate-x-0 lg:pt-0 lg:overflow-visible lg:self-start
+          ${isMobileFiltersOpen ? 'translate-x-0' : '-translate-x-full'}
+        `}
+        >
+          <div
+            className={`
+            p-6 lg:p-6 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto lg:rounded-3xl lg:border lg:border-[var(--bg-grey)] lg:bg-[var(--bg-tertiary)]
+            ${isFetching && !isLoading ? 'opacity-50 pointer-events-none' : ''}
+          `}
+          >
             {/* header */}
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between mb-4 lg:mb-0">
               <h2 className="text-2xl font-bold text-[var(--text-primary)]">Filters</h2>
-              <Button
-                onClick={handleClearFilters}
-                variant="ghost"
-                className="text-[var(--bg-green)] cursor-pointer"
-              >
-                Clear
-              </Button>
+              <div className="flex items-center gap-1">
+                <Button
+                  onClick={handleClearFilters}
+                  variant="ghost"
+                  className="text-[var(--bg-green)] cursor-pointer px-2"
+                >
+                  Clear
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="lg:hidden text-[var(--text-secondary)] px-2"
+                  onClick={() => setIsMobileFiltersOpen(false)}
+                >
+                  <X size={20} />
+                </Button>
+              </div>
             </div>
-            <Separator className="my-5" />
+            <Separator className="my-5 hidden lg:block" />
 
             {/* price */}
             <div>
@@ -308,21 +361,39 @@ const ExplorePage = () => {
 
         <main>
           {/* Header */}
-          <div className="mb-8 mt-20">
-            <div className="sticky top-16 z-20 bg-[var(--bg-primary)] pt-4 pb-5">
-              <h1 className="text-4xl font-bold text-[var(--text-primary)]">
+          <div className="mb-8 mt-0">
+            <div
+              className={`sticky top-18 z-20 bg-[var(--bg-primary)] transition-all duration-300 ${isScrolled ? 'pt-2 pb-3' : 'pt-4 pb-5'}`}
+            >
+              <h1
+                className={`font-bold text-[var(--text-primary)] transition-all duration-300 ${isScrolled ? 'text-2xl' : 'text-4xl'}`}
+              >
                 Find Your Perfect Venue
               </h1>
-              <p className="mt-2 mb-5 text-[var(--text-secondary)]">
-                Discover halls, resorts, auditoriums, turfs and more for every occasion.
-              </p>
+              <div
+                className={`transition-all duration-300 overflow-hidden ${isScrolled ? 'max-h-0 opacity-0' : 'max-h-20 opacity-100'}`}
+              >
+                <p className="mt-2 mb-5 text-[var(--text-secondary)]">
+                  Discover halls, resorts, auditoriums, turfs and more for every occasion.
+                </p>
+              </div>
 
               {/* Search */}
-              <div className="flex items-center gap-4">
+              <div
+                className={`flex items-center gap-3 transition-all duration-300 ${isScrolled ? 'mt-3' : ''}`}
+              >
+                <Button
+                  variant="outline"
+                  className={`lg:hidden rounded-2xl border border-[var(--bg-grey)] bg-[var(--bg-tertiary)] px-5 flex items-center justify-center gap-2 shrink-0 text-xs lg:text-sm text-[var(--text-primary)] transition-all duration-300 h-auto ${isScrolled ? 'py-3' : 'py-4'}`}
+                  onClick={() => setIsMobileFiltersOpen(true)}
+                >
+                  <Filter size={isScrolled ? 18 : 20} />
+                  Filters
+                </Button>
                 <input
                   type="text"
                   placeholder="Search venues, cities, or event types..."
-                  className="w-full rounded-2xl border border-[var(--bg-grey)] bg-[var(--bg-tertiary)] px-5 py-4 outline-none text-[var(--text-primary)] placeholder:text-[var(--text-secondary)]"
+                  className={`w-full rounded-2xl border border-[var(--bg-grey)] bg-[var(--bg-tertiary)] px-5 outline-none text-xs lg:text-sm text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] transition-all duration-300 ${isScrolled ? 'py-3' : 'py-4'}`}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -352,67 +423,179 @@ const ExplorePage = () => {
             </div>
 
             {/* Cards */}
-            {isError ? (
-              <div className="text-center py-10 text-red-500">Failed to load venues.</div>
-            ) : venues.length === 0 && !isLoading ? (
-              <div className="text-center py-10 text-[var(--text-secondary)]">
-                No venues found matching your criteria.
-              </div>
-            ) : (
-              <div className="grid grid-cols-4 gap-6">
-                {venues.map((venue, index) => {
-                  const isLastItem = index === venues.length - 1;
-                  return (
+            <div className="relative min-h-[300px]">
+              {isFetching && !isLoading && !isFetchingNextPage && (
+                <div className="absolute inset-0 z-10 bg-[var(--bg-primary)]/40 backdrop-blur-[2px] flex items-start justify-center pt-32 rounded-3xl">
+                  <Loader2 className="w-12 h-12 animate-spin text-[var(--bg-green)]" />
+                </div>
+              )}
+              {isError ? (
+                <div className="flex flex-col items-center justify-center py-20 text-red-500 bg-red-50 dark:bg-red-950/20 rounded-3xl border border-red-100 dark:border-red-900">
+                  <AlertCircle className="w-12 h-12 mb-4" />
+                  <p className="text-lg font-medium">Failed to load venues.</p>
+                  <p className="text-sm opacity-80">
+                    Please try adjusting your filters or try again later.
+                  </p>
+                </div>
+              ) : isLoading ? (
+                <div className="grid grid-cols-1 gap-6">
+                  {[1, 2, 3, 4, 5, 6].map((i) => (
                     <div
-                      key={venue._id}
-                      ref={isLastItem ? lastVenueElementRef : null}
-                      className="overflow-hidden rounded-3xl border border-[var(--bg-grey)] bg-[var(--bg-tertiary)] hover:shadow-lg transition duration-300 flex flex-col"
+                      key={i}
+                      className="flex flex-col sm:flex-row h-auto sm:min-h-[16rem] rounded-3xl border border-[var(--bg-grey)] bg-[var(--bg-tertiary)] overflow-hidden"
                     >
-                      <img
-                        src={venue.coverImage}
-                        alt={venue.name}
-                        className="w-full h-56 object-cover"
-                      />
-                      <div className="p-5 flex-1 flex flex-col">
-                        <div className="mb-auto">
-                          <span className="inline-block px-2 py-1 bg-gray-100 dark:bg-gray-800 text-xs rounded-md mb-2">
-                            {venue.venueType}
-                          </span>
-                          <h3
-                            className="text-lg font-semibold text-[var(--text-primary)] line-clamp-1"
-                            title={venue.name}
-                          >
-                            {venue.name}
-                          </h3>
-                          <div className="flex justify-between items-center mt-2">
-                            <p
-                              className="text-sm text-[var(--text-secondary)] flex items-center gap-1 line-clamp-1"
-                              title={`${venue.city}, ${venue.district}`}
-                            >
-                              <IoLocationOutline className="shrink-0" /> {venue.city},{' '}
-                              {venue.district}
-                            </p>
+                      <Skeleton className="w-full sm:w-[40%] h-52 sm:h-auto shrink-0" />
+                      <div className="flex-1 p-5 flex flex-col justify-between">
+                        <div>
+                          <div className="flex justify-between items-start mb-2">
+                            <Skeleton className="h-6 w-1/2" />
+                            <Skeleton className="h-6 w-16 rounded-full" />
                           </div>
-                          <p className="text-sm text-[var(--text-secondary)] mt-2">
-                            Upto {venue.maxCapacity} Guests
-                          </p>
+                          <Skeleton className="h-4 w-3/4 mb-4" />
+                          <div className="flex gap-2">
+                            <Skeleton className="h-6 w-16 border rounded-md" />
+                            <Skeleton className="h-6 w-16 border rounded-md" />
+                          </div>
                         </div>
-                        <Link
-                          to={`/venue/${venue._id}`}
-                          className="mt-5 inline-block w-full text-center bg-[var(--bg-green)] text-white py-3 rounded-xl font-medium hover:opacity-90 transition"
-                        >
-                          View Details
-                        </Link>
+                        <div className="flex justify-between items-end mt-4">
+                          <Skeleton className="h-10 w-32" />
+                          <Skeleton className="h-10 w-28 rounded-xl" />
+                        </div>
                       </div>
                     </div>
-                  );
-                })}
+                  ))}
+                </div>
+              ) : venues.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-20 text-[var(--text-secondary)] bg-[var(--bg-tertiary)] rounded-3xl border border-[var(--bg-grey)]">
+                  <p className="text-lg font-medium">No venues found matching your criteria.</p>
+                  <Button
+                    variant="link"
+                    onClick={handleClearFilters}
+                    className="mt-2 text-[var(--bg-green)]"
+                  >
+                    Clear all filters
+                  </Button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 gap-6">
+                  {venues.map((venue, index) => {
+                    const isLastItem = index === venues.length - 1;
+                    const price = getStartingPrice(venue);
+
+                    return (
+                      <div
+                        key={venue._id}
+                        ref={isLastItem ? lastVenueElementRef : null}
+                        className="group overflow-hidden rounded-3xl border border-[var(--bg-grey)] bg-[var(--bg-tertiary)] hover:shadow-lg transition duration-300 flex flex-col sm:flex-row sm:min-h-[16rem]"
+                      >
+                        {/* Left Image */}
+                        <div className="w-full sm:w-[40%] h-52 sm:h-64 shrink-0 overflow-hidden flex">
+                          <img
+                            src={venue.coverImage}
+                            alt={venue.name}
+                            className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
+                          />
+                        </div>
+
+                        {/* Right Content */}
+                        <div className="p-5 flex-1 flex flex-col justify-between overflow-hidden">
+                          <div>
+                            <div className="flex justify-between items-start gap-2 mb-1">
+                              <h3
+                                className="text-xl font-bold text-[var(--text-primary)] line-clamp-1 uppercase"
+                                title={venue.name}
+                              >
+                                {venue.name}
+                              </h3>
+                              <span className="shrink-0 inline-block px-3 py-1 bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 text-[10px] font-bold tracking-wider rounded-full border border-orange-200 dark:border-orange-800">
+                                {venue.venueType}
+                              </span>
+                            </div>
+
+                            <p
+                              className="text-sm text-[var(--text-secondary)] flex items-center gap-1 line-clamp-1 mb-4"
+                              title={`${venue.city}, ${venue.district}`}
+                            >
+                              <IoLocationOutline className="shrink-0 text-gray-400" size={16} />{' '}
+                              {venue.city}, {venue.district}
+                            </p>
+
+                            {/* Amenities Tags */}
+                            {venue.amenities && venue.amenities.length > 0 && (
+                              <div className="flex flex-wrap gap-2 mb-1">
+                                {venue.amenities.slice(0, 3).map((amenity, i) => (
+                                  <span
+                                    key={i}
+                                    className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium border border-[var(--bg-grey)] rounded-md text-[var(--text-secondary)]"
+                                  >
+                                    {amenity === 'AC' && <Snowflake size={12} />}
+                                    {amenity}
+                                  </span>
+                                ))}
+                                {venue.amenities.length > 3 && (
+                                  <span className="inline-flex items-center px-2.5 py-1 text-xs font-medium border border-[var(--bg-grey)] rounded-md text-[var(--text-secondary)]">
+                                    + {venue.amenities.length - 3} more
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="flex flex-wrap sm:flex-nowrap justify-between items-end gap-4 mt-2 pt-2 border-t border-[var(--bg-grey)]/50">
+                            <div className="flex flex-col">
+                              {price !== null ? (
+                                <>
+                                  <span className="text-[10px] font-bold text-gray-400 tracking-wider uppercase mb-0.5">
+                                    Starts From
+                                  </span>
+                                  <div className="flex items-baseline gap-1">
+                                    <span className="text-xl font-bold text-[var(--text-primary)]">
+                                      ₹ {price.toLocaleString()}
+                                    </span>
+                                    {venue.flexibleBooking?.slotDuration ? (
+                                      <span className="text-xs text-[var(--text-secondary)]">
+                                        / {venue.flexibleBooking.slotDuration} mins
+                                      </span>
+                                    ) : (
+                                      <span className="text-xs text-[var(--text-secondary)]">
+                                        / slot
+                                      </span>
+                                    )}
+                                  </div>
+                                  <span className="text-xs text-[var(--bg-green)] font-medium mt-1">
+                                    {venue.bookingType === 'fixedBooking'
+                                      ? 'Fixed Packages Available'
+                                      : 'Flexible Booking'}
+                                  </span>
+                                </>
+                              ) : (
+                                <span className="text-sm text-[var(--text-secondary)]">
+                                  Price on request
+                                </span>
+                              )}
+                            </div>
+
+                            <Link
+                              to={`/venue/${venue._id}`}
+                              className="shrink-0 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl font-semibold transition shadow-md hover:shadow-lg"
+                            >
+                              Book Now
+                            </Link>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Infinite Scroll Loader */}
+            {isFetchingNextPage && (
+              <div className="mt-8 flex justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
               </div>
             )}
-
-            {/* Loading indicators */}
-            {isLoading && <div className="text-center py-5">Loading initial venues...</div>}
-            {isFetchingNextPage && <div className="text-center py-5">Loading more...</div>}
           </div>
         </main>
       </div>

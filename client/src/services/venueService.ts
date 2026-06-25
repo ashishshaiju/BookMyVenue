@@ -46,3 +46,9 @@ export async function getPublicVenues(filters: VenueFilters, page: number, limit
   });
   return res.data?.data ?? res.data;
 }
+
+// GET /venues/:id
+export async function getVenueById(id: string) {
+  const res = await axiosInstance.get(API_ENDPOINTS.VENUE_BY_ID(id));
+  return res.data?.data ?? res.data;
+}

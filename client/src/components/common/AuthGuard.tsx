@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router';
-import { useAuth } from '../../hooks/useAuth';
-import { showError } from '../../utils/toast';
+import { useAuth } from '@/hooks/useAuth';
+import { showError } from '@/utils/toast';
 
 const AuthGuard: React.FC = () => {
   const { isAuthenticated, loading, verifySession } = useAuth();

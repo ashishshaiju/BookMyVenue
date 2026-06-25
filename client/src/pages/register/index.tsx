@@ -2,9 +2,9 @@ import { FaBuilding } from 'react-icons/fa';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import { Link, useNavigate, useLocation } from 'react-router';
 import { signupSchema } from './validation';
-import { useAuth } from '../../hooks/useAuth';
-import { useToast } from '../../hooks/useToast';
-import { extractErrorMessage } from '../../utils/toast';
+import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/useToast';
+import { extractErrorMessage } from '@/utils/toast';
 
 const RegisterPage = () => {
   const { register } = useAuth();
