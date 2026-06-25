@@ -15,6 +15,12 @@ export const jwtConfig = {
   algorithm: (process.env.JWT_ALGORITHM ?? 'HS256') as jwt.Algorithm,
 } as const;
 
+export const razorpayConfig = {
+  keyId: process.env.RAZORPAY_KEY_ID,
+  keySecret: process.env.RAZORPAY_KEY_SECRET,
+  webhookSecret: process.env.RAZORPAY_WEBHOOK_SECRET,
+} as const;
+
 export const authEnvs = {
   accessTokenExpiry: process.env.ACCESS_TOKEN_EXPIRY ?? '60s',
   refreshTokenExpiry: process.env.REFRESH_TOKEN_EXPIRY ?? '30m',

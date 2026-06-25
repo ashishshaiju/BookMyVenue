@@ -20,6 +20,7 @@ export const corsOptions: CorsOptions = {
     process.env.NODE_ENV === 'production'
       ? parseOrigins(process.env.CLIENT_URL, ['https://bookmyvenue.com'])
       : parseOrigins(process.env.CLIENT_URL, [
+        'https://49l0t1lfqmc0.shares.zrok.io',
           'http://localhost:5173',
           'http://localhost:3000',
           'http://localhost:5174',

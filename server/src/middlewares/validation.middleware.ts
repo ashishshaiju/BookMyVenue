@@ -31,7 +31,7 @@ const validate = (
 ): ((req: Request, res: Response, next: NextFunction) => void) => {
   return (req: Request, res: Response, next: NextFunction): void => {
     try {
-      req.validated = {};
+      req.validated = req.validated ?? {};
 
       if (schema.body) {
         const bodyResult = schema.body.safeParse(req.body);
