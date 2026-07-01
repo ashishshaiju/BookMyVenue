@@ -37,6 +37,7 @@ SERVER_FILES=""
 
 while IFS= read -r file; do
 	[ -z "$file" ] && continue
+	[ ! -f "$file" ] && continue
 	case "$file" in
 	client/*) CLIENT_FILES="$CLIENT_FILES $file" ;;
 	admin/*) ADMIN_FILES="$ADMIN_FILES $file" ;;
