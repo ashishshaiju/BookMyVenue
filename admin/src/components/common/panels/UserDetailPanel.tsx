@@ -3,7 +3,7 @@ import { Card } from '../../ui/card';
 import { User, Calendar, Shield, Activity, Phone, Mail } from 'lucide-react';
 
 interface UserData {
-  name?: string; email?: string; phone?: string; createdAt?: string; status?: string;
+  name?: string; username?: string; email?: string; phone?: string; createdAt?: string | Date; updatedAt?: string | Date; status?: string; active?: boolean; _id?: string; role?: string; venues?: Record<string, unknown>[];
   [key: string]: unknown;
 }
 export function UserDetailPanel({ data: rawData }: { data: Record<string, unknown> }) {

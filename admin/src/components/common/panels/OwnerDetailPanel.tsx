@@ -2,7 +2,13 @@ import { Badge } from '../../ui/badge';
 import { Card } from '../../ui/card';
 import { User, Mail, Phone, Calendar, Store, ShieldCheck } from 'lucide-react';
 
-export function OwnerDetailPanel({ data }: { data }) {
+interface OwnerData {
+  username?: string; name?: string; email?: string; phone?: string; active?: boolean; _id?: string; role?: string; createdAt?: string; updatedAt?: string;
+  venues?: Record<string, unknown>[];
+  [key: string]: unknown;
+}
+export function OwnerDetailPanel({ data: rawData }: { data: Record<string, unknown> }) {
+  const data = rawData as unknown as OwnerData;
   if (!data) return null;
 
   return (

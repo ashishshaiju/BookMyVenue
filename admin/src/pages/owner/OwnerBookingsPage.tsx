@@ -103,7 +103,10 @@ export default function OwnerBookingsPage() {
         setOfflineOpen(false);
         setForm(EMPTY_FORM);
       },
-      onError: (e: import("axios").AxiosError<{message: string}> | null) => toast.error(e?.response?.data?.message ?? 'Failed to create booking'),
+      onError: (e: Error) => {
+        const err = e as import("axios").AxiosError<{message: string}>;
+        toast.error(err.response?.data?.message ?? 'Failed to create booking');
+      },
     }
   );
 

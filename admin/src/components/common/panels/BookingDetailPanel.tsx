@@ -2,7 +2,14 @@ import { Badge } from '../../ui/badge';
 import { Card } from '../../ui/card';
 import { Clock, Calendar as CalendarIcon, MapPin, IndianRupee, User, FileText } from 'lucide-react';
 
-export function BookingDetailPanel({ data }: { data }) {
+interface BookingData {
+  status: string; duration?: number; venueId?: string; date?: string; startTime?: number; endTime?: number; amountPaid?: number; platformFee?: number; taxAmount?: number; contactNumber?: string; customerName?: string; guests?: number; paymentReference?: string; createdAt?: string; _id?: string; cancellationReason?: string;
+  user?: Record<string, unknown>;
+  venue?: Record<string, unknown>;
+  [key: string]: unknown;
+}
+export function BookingDetailPanel({ data: rawData }: { data: Record<string, unknown> }) {
+  const data = rawData as unknown as BookingData;
   if (!data) return null;
 
   const STATUS_COLORS: Record<string, string> = {

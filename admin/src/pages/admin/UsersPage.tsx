@@ -56,8 +56,9 @@ export default function UsersPage() {
         queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ADMIN_OWNERS });
         closeModal();
       },
-      onError: (err: import("axios").AxiosError<{message: string}> | null) => {
-        toast.error(err.response?.data?.message || 'Failed to update user status');
+      onError: (err: Error) => {
+        const axiosErr = err as import("axios").AxiosError<{message: string}>;
+        toast.error(axiosErr.response?.data?.message || 'Failed to update user status');
       }
     }
   );
@@ -69,8 +70,9 @@ export default function UsersPage() {
         toast.success('Password changed successfully. Please use your new password next time.');
         closeModal();
       },
-      onError: (err: import("axios").AxiosError<{message: string}> | null) => {
-        toast.error(err.response?.data?.message || 'Failed to change password');
+      onError: (err: Error) => {
+        const axiosErr = err as import("axios").AxiosError<{message: string}>;
+        toast.error(axiosErr.response?.data?.message || 'Failed to change password');
       },
     }
   );
@@ -82,8 +84,9 @@ export default function UsersPage() {
         toast.success('Password reset successfully. Email dispatched.');
         closeModal();
       },
-      onError: (err: import("axios").AxiosError<{message: string}> | null) => {
-        toast.error(err.response?.data?.message || 'Failed to reset password');
+      onError: (err: Error) => {
+        const axiosErr = err as import("axios").AxiosError<{message: string}>;
+        toast.error(axiosErr.response?.data?.message || 'Failed to reset password');
         closeModal();
       },
     }

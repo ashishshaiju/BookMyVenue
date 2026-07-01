@@ -2,9 +2,9 @@ import { Badge } from '../../ui/badge';
 import { Card } from '../../ui/card';
 
 interface VenueData {
-  status?: string; suspensionReason?: string; name?: string; venueType?: string; bookingType?: string;
+  status?: string; suspensionReason?: string; rejectionReason?: string; active?: boolean; name?: string; venueType?: string; bookingType?: string; coverImage?: string;
   capacity?: number; maxCapacity?: number; city?: string; district?: string; address?: string; pincode?: string;
-  pricing?: { pricePerHour?: number; pricePerDay?: number; customRules?: { fromTime: string; toTime: string; price: number }[] };
+  pricing?: { pricingType?: string; basePrice?: number; pricePerHour?: number; pricePerDay?: number; pricingRules?: { fromTime: string; toTime: string; price: number }[] };
   fixedPackages?: { name: string; startTime: string; endTime: string; price: number }[];
   amenities?: string[]; description?: string; contact?: { name: string; phone: string; email: string };
   createdAt?: string; [key: string]: unknown;

@@ -109,7 +109,10 @@ export default function VenuesPage() {
     (vars) => ({ method: 'POST', url: `${API_ENDPOINTS.VENUES}/${vars.id}/approve` }),
     {
       onSuccess: () => { toast.success('Venue approved'); invalidate(); },
-      onError: (e: import("axios").AxiosError<{message: string}> | null) => toast.error(e?.response?.data?.message ?? 'Failed to approve'),
+      onError: (e: Error) => {
+        const err = e as import("axios").AxiosError<{message: string}>;
+        toast.error(err.response?.data?.message ?? 'Failed to approve');
+      },
     },
   );
 
@@ -126,7 +129,10 @@ export default function VenuesPage() {
         setRejectDialog({ open: false, venueId: '' });
         setRejectReason('');
       },
-      onError: (e: import("axios").AxiosError<{message: string}> | null) => toast.error(e?.response?.data?.message ?? 'Failed to reject'),
+      onError: (e: Error) => {
+        const err = e as import("axios").AxiosError<{message: string}>;
+        toast.error(err.response?.data?.message ?? 'Failed to reject');
+      },
     },
   );
 
@@ -142,7 +148,10 @@ export default function VenuesPage() {
         invalidate();
         setFeatureDialog({ open: false, venueId: '' });
       },
-      onError: (e: import("axios").AxiosError<{message: string}> | null) => toast.error(e?.response?.data?.message ?? 'Failed to feature venue'),
+      onError: (e: Error) => {
+        const err = e as import("axios").AxiosError<{message: string}>;
+        toast.error(err.response?.data?.message ?? 'Failed to feature venue');
+      },
     },
   );
 
@@ -160,7 +169,10 @@ export default function VenuesPage() {
         setSuspensionReason('');
         closeModal();
       },
-      onError: (e: import("axios").AxiosError<{message: string}> | null) => toast.error(e?.response?.data?.message ?? 'Failed to suspend venue'),
+      onError: (e: Error) => {
+        const err = e as import("axios").AxiosError<{message: string}>;
+        toast.error(err.response?.data?.message ?? 'Failed to suspend venue');
+      },
     },
   );
 
@@ -175,7 +187,10 @@ export default function VenuesPage() {
         invalidate();
         closeModal();
       },
-      onError: (e: import("axios").AxiosError<{message: string}> | null) => toast.error(e?.response?.data?.message ?? 'Failed to unsuspend venue'),
+      onError: (e: Error) => {
+        const err = e as import("axios").AxiosError<{message: string}>;
+        toast.error(err.response?.data?.message ?? 'Failed to unsuspend venue');
+      },
     },
   );
 

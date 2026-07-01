@@ -63,8 +63,10 @@ export default function TeamPage() {
         setPromoteOpen(false);
         setPromoteEmail('');
       },
-      onError: (e: import("axios").AxiosError<{message: string}> | null) =>
-        toast.error(e?.response?.data?.message ?? 'Failed to promote user'),
+      onError: (e: Error) => {
+        const err = e as import("axios").AxiosError<{message: string}>;
+        toast.error(err.response?.data?.message ?? 'Failed to promote user');
+      },
     },
   );
 
@@ -79,8 +81,10 @@ export default function TeamPage() {
         toast.success('Admin access revoked');
         invalidate();
       },
-      onError: (e: import("axios").AxiosError<{message: string}> | null) =>
-        toast.error(e?.response?.data?.message ?? 'Failed to revoke access'),
+      onError: (e: Error) => {
+        const err = e as import("axios").AxiosError<{message: string}>;
+        toast.error(err.response?.data?.message ?? 'Failed to revoke access');
+      },
     },
   );
 
