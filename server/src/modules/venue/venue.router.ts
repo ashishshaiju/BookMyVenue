@@ -60,7 +60,6 @@ router
   .route('/upload-signature')
   .get(
     verifyAccessToken,
-    requirePermission(P.venues.create),
     uploadSignatureLimiter,
     controller.getUploadSignature
   );
@@ -140,7 +139,6 @@ router
   .route('/')
   .post(
     verifyAccessToken,
-    requirePermission(P.venues.create),
     validateBody(validator.createVenueSchema),
     controller.createVenue
   )
@@ -219,7 +217,6 @@ router
   .route('/draft')
   .put(
     verifyAccessToken,
-    requirePermission(P.venues.create),
     controller.upsertDraft
   )
   .get(
@@ -300,6 +297,7 @@ router
     requireRole('admin'),
     requirePermission(P.venues.activate),
     validateQuery(validator.adminVenueFiltersSchema),
+    paginationMiddleware(),
     controller.getAllVenues
   );
 
@@ -511,7 +509,7 @@ router
 
 /**
  * @openapi
- * /venues/{id}/activate:
+ * /venues/{id}/unsuspend:
  *   post:
  *     tags: [Venues]
  *     summary: Activate a venue (admin only)
@@ -534,13 +532,13 @@ router
  *         description: Venue not found
  */
 router
-  .route('/:id/activate')
+  .route('/:id/unsuspend')
   .post(
     verifyAccessToken,
     requireRole('admin'),
     requirePermission(P.venues.activate),
     validateParams(validator.venueIdParamSchema),
-    controller.activateVenue
+    controller.unsuspendVenue
   );
 
 /**
@@ -574,7 +572,57 @@ router
     requireRole('admin'),
     requirePermission(P.venues.deactivate),
     validateParams(validator.venueIdParamSchema),
-    controller.deactivateVenue
+    validateBody(validator.suspendVenueSchema),
+    controller.suspendVenue
+  );
+
+/**
+ * @openapi
+ * /venues/{id}/feature:
+ *   post:
+ *     tags: [Venues]
+ *     summary: Feature a venue (admin only)
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [duration]
+ *             properties:
+ *               duration:
+ *                 type: integer
+ *                 nullable: true
+ *                 description: Duration in days to feature, or null for indefinite
+ *     responses:
+ *       200:
+ *         description: Venue featured status updated
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Admin role required
+ *       404:
+ *         description: Venue not found
+ *       409:
+ *         description: Only approved venues can be featured
+ */
+router
+  .route('/:id/feature')
+  .post(
+    verifyAccessToken,
+    requireRole('admin'),
+    requirePermission(P.venues.activate),
+    validateParams(validator.venueIdParamSchema),
+    validateBody(validator.featureVenueSchema),
+    controller.featureVenue
   );
 
 export { router as venueRouter };

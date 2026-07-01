@@ -7,5 +7,15 @@ export interface ILock extends Document {
   startTime: number;
   endTime: number;
   price: number;
+  sessionTokenHash?: string;
+  guestCount?: number;
+  eventType?: string;
+  bookerInfo?: {
+    name?: string;
+    email?: string;
+    phone?: string;
+    place?: string;
+    note?: string;
+  };
   createdAt: Date;
 }

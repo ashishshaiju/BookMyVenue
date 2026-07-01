@@ -73,9 +73,9 @@ const definition: OAS3Definition = {
 const options: swaggerJsdoc.Options = {
   definition,
   apis: [
-    path.join(process.cwd(), 'src/modules/**/*.routes.ts'),
-    path.join(process.cwd(), 'src/modules/**/*.router.ts'),
-    path.join(process.cwd(), 'src/router.ts'),
+    path.join(process.cwd(), 'src/modules/**/*.routes.ts').replace(/\\/g, '/'),
+    path.join(process.cwd(), 'src/modules/**/*.router.ts').replace(/\\/g, '/'),
+    path.join(process.cwd(), 'src/router.ts').replace(/\\/g, '/'),
   ],
 };
 

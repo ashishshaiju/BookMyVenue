@@ -3,6 +3,7 @@ import * as controller from './auth.controller';
 import * as authValidator from './auth.validator';
 import { validateBody } from '../../middlewares/validation.middleware';
 import { verifyAccessToken, verifyRefreshToken } from '../../middlewares/auth.middleware';
+import { requireRole } from '../../middlewares/rbac.middleware';
 import rateLimit from 'express-rate-limit';
 
 const router: Router = Router();
@@ -51,10 +52,6 @@ const secondaryRateLimiter = rateLimit({
  *               $ref: '#/components/schemas/SuccessResponse'
  *       400:
  *         description: Validation error
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
  *       409:
  *         description: Username or email already taken
  */
@@ -86,19 +83,7 @@ router.route('/register').post(validateBody(authValidator.registerSchema), contr
  *                 example: SecurePass@1
  *     responses:
  *       200:
- *         description: Login successful — access token in body, refresh token in cookie
- *         content:
- *           application/json:
- *             schema:
- *               allOf:
- *                 - $ref: '#/components/schemas/SuccessResponse'
- *                 - type: object
- *                   properties:
- *                     data:
- *                       type: object
- *                       properties:
- *                         accessToken:
- *                           type: string
+ *         description: Login successful
  *       400:
  *         description: Validation error or missing credentials
  *       401:
@@ -117,18 +102,6 @@ router.route('/login').post(validateBody(authValidator.loginSchema), controller.
  *     responses:
  *       200:
  *         description: New access token issued
- *         content:
- *           application/json:
- *             schema:
- *               allOf:
- *                 - $ref: '#/components/schemas/SuccessResponse'
- *                 - type: object
- *                   properties:
- *                     data:
- *                       type: object
- *                       properties:
- *                         accessToken:
- *                           type: string
  *       401:
  *         description: Missing, invalid, or expired refresh token
  */
@@ -217,5 +190,42 @@ router
 router
   .route('/reset-password')
   .post(validateBody(authValidator.resetPasswordSchema), controller.resetPassword);
+
+/**
+ * @openapi
+ * /auth/change-password:
+ *   patch:
+ *     tags: [Auth]
+ *     summary: Change user password
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [oldPassword, newPassword]
+ *             properties:
+ *               oldPassword:
+ *                 type: string
+ *               newPassword:
+ *                 type: string
+ *                 format: password
+ *     responses:
+ *       200:
+ *         description: Password changed successfully
+ *       400:
+ *         description: Invalid input or incorrect old password
+ *       401:
+ *         description: Unauthorized
+ */
+router
+  .route('/change-password')
+  .patch(
+    verifyAccessToken,
+    requireRole('superAdmin'),
+    controller.changePassword
+  );
 
 export { router as authRouter };

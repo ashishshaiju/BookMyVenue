@@ -10,6 +10,7 @@ import type {
 } from './venue.types';
 import { VenueModel } from './venue.model';
 import { VenueDraftModel, type IVenueDraft } from './venueDraft.model';
+import { FeaturedVenueModel } from '../../models/featured-venue.model';
 import mongoose from 'mongoose';
 
 // Helpers
@@ -94,20 +95,20 @@ export async function findPaginatedActiveVenues(
 
   const query = { $and: conditions };
 
-  let sortOption: Record<string, 1 | -1> = { createdAt: -1 };
+  let sortOption: Record<string, 1 | -1> = { createdAt: -1, _id: -1 };
   if (filters?.sortBy) {
     switch (filters.sortBy) {
       case 'price-low':
-        sortOption = { 'pricing.basePrice': 1 };
+        sortOption = { 'pricing.basePrice': 1, _id: 1 };
         break;
       case 'price-high':
-        sortOption = { 'pricing.basePrice': -1 };
+        sortOption = { 'pricing.basePrice': -1, _id: -1 };
         break;
       case 'rating':
-        sortOption = { createdAt: -1 }; // Replace with actual rating sort if exists
+        sortOption = { createdAt: -1, _id: -1 };
         break;
       default:
-        sortOption = { createdAt: -1 };
+        sortOption = { createdAt: -1, _id: -1 };
         break;
     }
   }
@@ -180,6 +181,7 @@ export async function findMyVenuesProjected(
       coverImage: 1,
       status: 1,
       rejectionReason: 1,
+      suspensionReason: 1,
       createdAt: 1,
     }
   )
@@ -199,12 +201,9 @@ export async function findPendingVenues(): Promise<IVenue[]> {
 }
 
 // Admin
-export async function findAllVenues(filters: AdminVenueFilters): Promise<{
-  venues: IVenue[];
-  total: number;
-  page: number;
-  limit: number;
-}> {
+export async function findAllVenues(filters: AdminVenueFilters): Promise<
+  PaginatedResponse<IVenue, 'venues'>
+> {
   const { status, city, page, limit } = filters;
   const skip = (page - 1) * limit;
 
@@ -212,12 +211,15 @@ export async function findAllVenues(filters: AdminVenueFilters): Promise<{
   if (status) query.status = status;
   if (city) query.city = { $regex: new RegExp(`^${escapeRegex(city)}$`, 'i') };
 
-  const [venues, total] = await Promise.all([
-    VenueModel.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit).exec(),
+  const [venues, totalCount] = await Promise.all([
+    VenueModel.find(query).sort({ createdAt: -1, _id: -1 }).skip(skip).limit(limit).exec(),
     VenueModel.countDocuments(query).exec(),
   ]);
 
-  return { venues, total, page, limit };
+  return {
+    venues,
+    pagination: buildPaginationMeta(totalCount, { page, limit, skip, sort: '-createdAt' })
+  };
 }
 
 // Write Operations
@@ -286,11 +288,25 @@ export async function updateVenueStatus(
   };
 
   if (newStatus !== 'Rejected') {
-    patch.$unset = { rejectionReason: '' };
+    patch.$unset = { ...patch.$unset, rejectionReason: '' };
+  }
+
+  if (newStatus !== 'Suspended') {
+    patch.$unset = { ...patch.$unset, suspensionReason: '' };
   }
 
   return VenueModel.findOneAndUpdate({ _id: toObjectId(venueId), deleted: false }, patch, {
     new: true,
     runValidators: true,
   }).exec();
+}
+
+export async function upsertFeaturedVenue(venueId: string, durationDays: number | null): Promise<void> {
+  const expiresAt = durationDays ? new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000) : null;
+  
+  await FeaturedVenueModel.findOneAndUpdate(
+    { venueId: toObjectId(venueId) },
+    { $set: { expiresAt } },
+    { upsert: true, new: true }
+  ).exec();
 }

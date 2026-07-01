@@ -42,7 +42,7 @@ app.use(
 // bytes are gone and every signature check will fail.
 // The webhookRouter applies express.raw({ type: 'application/json' }) at the
 // ROUTE level, so all other application routes are unaffected.
-app.use('/api/v1/webhooks', webhookRouter);
+app.use('/api/v1/webhook', webhookRouter);
 
 // Body parsing middleware
 app.use(express.json({ limit: '10kb' }));

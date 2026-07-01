@@ -1,8 +1,6 @@
 import { z } from 'zod';
-
-// ---------------------------------------------------------------------------
-// Shared param schema (reuse the venueId pattern from venue.validator.ts)
-// ---------------------------------------------------------------------------
+import type { IVenue } from '../venue/venue.types';
+import { timeStringToMinutes, isBookableDate } from '../../utils/timeUtils';
 
 export const venueIdParamSchema = z.object({
   id: z
@@ -13,50 +11,178 @@ export const venueIdParamSchema = z.object({
 
 export type VenueIdParamDTO = z.infer<typeof venueIdParamSchema>;
 
-// ---------------------------------------------------------------------------
-// Step 1: Block Slot
-// ---------------------------------------------------------------------------
-
-export const blockSlotBodySchema = z
+const selectedSlotSchema = z
   .object({
-    /** Booking date in YYYY-MM-DD format */
-    date: z
-      .string()
-      .trim()
-      .regex(/^\d{4}-\d{2}-\d{2}$/, 'date must be in YYYY-MM-DD format'),
-
-    /** Slot start time in minutes from midnight (0–1439) */
-    startTime: z
-      .number()
-      .int('startTime must be an integer')
-      .min(0, 'startTime cannot be negative')
-      .max(1439, 'startTime cannot exceed 23:59 (1439 minutes)'),
-
-    /** Slot end time in minutes from midnight (1–1440) */
-    endTime: z
-      .number()
-      .int('endTime must be an integer')
-      .min(1, 'endTime must be at least 1 minute')
-      .max(1440, 'endTime cannot exceed 24:00 (1440 minutes)'),
-
-    /**
-     * The price the client calculated for this slot (in rupees, not paise).
-     * Used as a sanity check — the server re-validates price server-side in future.
-     */
-    expectedPrice: z
-      .number()
-      .positive('expectedPrice must be greater than 0'),
+    startTime: z.number().int().min(0).max(1439),
+    endTime: z.number().int().min(1).max(1440),
   })
   .refine((data) => data.startTime < data.endTime, {
     message: 'endTime must be strictly greater than startTime',
     path: ['endTime'],
   });
 
+export const blockSlotBodySchema = z.object({
+  date: z
+    .string()
+    .trim()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'date must be in YYYY-MM-DD format')
+    .refine(isBookableDate, {
+      message: 'Date must be between tomorrow and 90 days from today',
+    }),
+  selectedSlots: z
+    .array(selectedSlotSchema)
+    .min(1, 'At least one slot must be selected')
+    .max(24, 'Cannot select more than 24 slots at once'),
+  expectedPrice: z.number().positive('expectedPrice must be greater than 0'),
+});
+
 export type BlockSlotBodyDTO = z.infer<typeof blockSlotBodySchema>;
 
-// ---------------------------------------------------------------------------
-// Step 2: Checkout Init
-// ---------------------------------------------------------------------------
+export function validateDateForVenue(
+  venue: IVenue,
+  date: string
+): { valid: boolean; reason?: string } {
+  const dayOfWeek = new Date(date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long' });
+
+  if (!venue.workingDays.includes(dayOfWeek)) {
+    return { valid: false, reason: `Venue is not open on ${dayOfWeek}s.` };
+  }
+
+  const isBlocked = venue.blockedDates.some(
+    (blockedDate) => blockedDate.toISOString().split('T')[0] === date
+  );
+  if (isBlocked) {
+    return { valid: false, reason: 'This date is blocked by the venue.' };
+  }
+
+  return { valid: true };
+}
+
+export function validateSelectedSlotsForVenue(
+  venue: IVenue,
+  selectedSlots: { startTime: number; endTime: number }[]
+): { valid: boolean; reason?: string } {
+  // Guard against overlapping selected slots
+  const sortedSlots = [...selectedSlots].sort((a, b) => a.startTime - b.startTime);
+  for (let i = 0; i < sortedSlots.length - 1; i++) {
+    if (sortedSlots[i].endTime > sortedSlots[i + 1].startTime) {
+      return { valid: false, reason: 'Selected slots cannot overlap each other.' };
+    }
+  }
+
+  if (venue.bookingType === 'fixedBooking') {
+    for (const slot of selectedSlots) {
+      const match = (venue.fixedPackages ?? []).find(
+        (pkg) =>
+          timeStringToMinutes(pkg.startTime) === slot.startTime &&
+          timeStringToMinutes(pkg.endTime) === slot.endTime
+      );
+      if (!match) {
+        return {
+          valid: false,
+          reason: 'One or more selected slots do not match any fixed package.',
+        };
+      }
+    }
+  } else {
+    // flexibleBooking
+    if (!venue.workingHours) {
+      return { valid: false, reason: 'Venue working hours are not configured.' };
+    }
+    const openMin = timeStringToMinutes(venue.workingHours.open);
+    const closeMin = timeStringToMinutes(venue.workingHours.close);
+    const duration = venue.flexibleBooking?.slotDuration ?? 60;
+    const buffer = venue.flexibleBooking?.bufferTime ?? 0;
+    const cycle = duration + buffer;
+
+    for (const slot of selectedSlots) {
+      if (slot.startTime < openMin || slot.endTime > closeMin) {
+        return { valid: false, reason: 'One or more slots are outside venue working hours.' };
+      }
+      if (slot.endTime - slot.startTime !== duration) {
+        return {
+          valid: false,
+          reason: `All slots must be exactly ${String(duration)} minutes long.`,
+        };
+      }
+      if ((slot.startTime - openMin) % cycle !== 0) {
+        return {
+          valid: false,
+          reason: "Slot times do not align with the venue's scheduling grid.",
+        };
+      }
+    }
+
+    // Must be contiguous
+    for (let i = 0; i < sortedSlots.length - 1; i++) {
+      if (sortedSlots[i].endTime + buffer !== sortedSlots[i + 1].startTime) {
+        return { valid: false, reason: 'Multiple flexible slots must be contiguous.' };
+      }
+    }
+  }
+
+  return { valid: true };
+}
+
+export function computeServerTotalPrice(
+  venue: IVenue,
+  selectedSlots: { startTime: number; endTime: number }[]
+): number {
+  let totalPrice = 0;
+
+  if (venue.bookingType === 'fixedBooking') {
+    for (const slot of selectedSlots) {
+      const match = (venue.fixedPackages ?? []).find(
+        (pkg) =>
+          timeStringToMinutes(pkg.startTime) === slot.startTime &&
+          timeStringToMinutes(pkg.endTime) === slot.endTime
+      );
+      if (match) totalPrice += match.price;
+    }
+  } else {
+    // flexibleBooking
+    if (!venue.pricing) {
+      throw new Error('Pricing configuration is missing for flexible booking venue');
+    }
+    for (const slot of selectedSlots) {
+      let appliedPrice = venue.pricing.basePrice;
+      if (venue.pricing.pricingType === 'timeBasedPricing') {
+        for (const rule of venue.pricing.pricingRules) {
+          const ruleStart = timeStringToMinutes(rule.fromTime);
+          const ruleEnd = timeStringToMinutes(rule.toTime);
+          if (slot.startTime >= ruleStart && slot.startTime < ruleEnd) {
+            appliedPrice = rule.price;
+            break;
+          }
+        }
+      }
+      totalPrice += appliedPrice;
+    }
+  }
+
+  return totalPrice;
+}
+
+export function assertPriceWithinTolerance(
+  serverPrice: number,
+  clientPrice: number,
+  tolerancePct = 2
+): { valid: boolean; reason?: string } {
+  if (serverPrice <= 0) {
+    return {
+      valid: false,
+      reason: 'Server could not compute a valid price for this slot. Please contact support.',
+    };
+  }
+  const drift = Math.abs(serverPrice - clientPrice) / serverPrice;
+  if (drift > tolerancePct / 100) {
+    return {
+      valid: false,
+      reason: `Price mismatch. Expected ₹${String(serverPrice)} but received ₹${String(clientPrice)}. Please refresh and try again.`,
+    };
+  }
+  return { valid: true };
+}
 
 export const checkoutBodySchema = z.object({
   lockId: z
@@ -67,6 +193,26 @@ export const checkoutBodySchema = z.object({
 
 export type CheckoutBodyDTO = z.infer<typeof checkoutBodySchema>;
 
+const bookerInfoSchema = z.object({
+  name: z.string().trim().min(1, 'Name is required'),
+  email: z.string().trim().regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, 'Valid email is required'),
+  phone: z.string().trim().min(10, 'Valid phone number is required'),
+  place: z.string().trim().min(1, 'Place is required'),
+  note: z.string().trim().optional(),
+});
+
+export const saveBookerDetailsBodySchema = z.object({
+  lockId: z
+    .string()
+    .trim()
+    .regex(/^[a-f\d]{24}$/i, 'Invalid lockId format'),
+  guestCount: z.number().int().positive('Guest count must be positive'),
+  eventType: z.string().trim().min(1, 'Event type is required').max(100, 'Event type is too long'),
+  bookerInfo: bookerInfoSchema,
+});
+
+export type SaveBookerDetailsBodyDTO = z.infer<typeof saveBookerDetailsBodySchema>;
+
 export const verifyPaymentBodySchema = z.object({
   orderId: z.string().trim().min(1, 'orderId is required'),
   paymentId: z.string().trim().min(1, 'paymentId is required'),
@@ -74,3 +220,18 @@ export const verifyPaymentBodySchema = z.object({
 });
 
 export type VerifyPaymentBodyDTO = z.infer<typeof verifyPaymentBodySchema>;
+
+export const fetchMyBookingsQuerySchema = z.object({});
+export type FetchMyBookingsQueryDTO = z.infer<typeof fetchMyBookingsQuerySchema>;
+
+export const bookingRefIdParamSchema = z.object({
+  bookingRefId: z.string().trim().refine((val) => {
+    const isObjectId = /^[a-f\d]{24}$/i.test(val);
+    const isBookingRef = val.toUpperCase().startsWith('BMV-') && val.length === 10;
+    return isObjectId || isBookingRef;
+  }, {
+    message: 'Invalid booking ID or reference format',
+  }),
+});
+export type BookingRefIdParamDTO = z.infer<typeof bookingRefIdParamSchema>;
+

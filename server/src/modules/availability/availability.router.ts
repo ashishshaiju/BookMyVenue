@@ -1,12 +1,12 @@
 import { Router } from 'express';
 import type { Router as ExpressRouter } from 'express';
 import { validateBody, validateParams, validateQuery } from '../../middlewares/validation.middleware';
-import { verifyAccessToken } from '../../middlewares/auth.middleware';
+import { verifyAccessToken, verifyAccessTokenOptional } from '../../middlewares/auth.middleware';
 import { requirePermission } from '../../middlewares/rbac.middleware';
 import { PERMISSIONS as P } from '../../constants/permissions';
 import { venueIdParamSchema } from '../venue/venue.validator';
 import { blockSlotBodySchema } from '../booking/booking.validator';
-import { blockSlot } from '../booking/booking.controller';
+import * as bookingController from '../booking/booking.controller';
 import * as availabilityController from './availability.controller';
 import { availabilityQuerySchema } from './availability.validator';
 
@@ -28,14 +28,14 @@ const router: ExpressRouter = Router();
  *           example: 64b1f2c3d4e5f6a7b8c9d0e1
  *       - in: query
  *         name: date
- *         required: true
- *         description: Target date in YYYY-MM-DD format
+ *         required: false
+ *         description: Target date in YYYY-MM-DD format. If omitted, returns bookable dates for the venue.
  *         schema:
  *           type: string
  *           example: '2025-12-25'
  *     responses:
  *       200:
- *         description: Availability grid — booked and blocked slots for the date
+ *         description: Availability grid or bookable dates metadata
  *         content:
  *           application/json:
  *             schema:
@@ -48,6 +48,7 @@ const router: ExpressRouter = Router();
 router
   .route('/:id')
   .get(
+    verifyAccessTokenOptional,
     validateParams(venueIdParamSchema),
     validateQuery(availabilityQuerySchema),
     availabilityController.getVenueAvailability
@@ -131,7 +132,29 @@ router
     requirePermission(P.bookings.create),
     validateParams(venueIdParamSchema),
     validateBody(blockSlotBodySchema),
-    blockSlot
+    bookingController.blockSlot
+  );
+
+/**
+ * @openapi
+ * /availability/lock:
+ *   delete:
+ *     tags: [Availability]
+ *     summary: Release a slot lock
+ *     description: Manually release a lock before it expires
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Lock released successfully
+ *       401:
+ *         description: Not authenticated
+ */
+router
+  .route('/lock')
+  .delete(
+    verifyAccessTokenOptional,
+    bookingController.releaseLock
   );
 
 export { router as availabilityRouter };

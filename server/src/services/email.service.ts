@@ -8,6 +8,12 @@ import {
   getPasswordChangedTemplate,
   getBookingConfirmationTemplate,
   getRefundNotificationTemplate,
+  getBookingCancellationTemplate,
+  getVenueApprovedTemplate,
+  getVenueRejectedTemplate,
+  getVenueSuspendedTemplate,
+  getVenueUnsuspendedTemplate,
+  getAdminPasswordResetTemplate,
 } from './emailTemplateFactory';
 
 // Validates required email configuration on startup.
@@ -118,6 +124,20 @@ class EmailService {
     );
   }
 
+  // Sends an admin password reset email
+  async sendAdminPasswordResetEmail(email: string, newPassword: string, username: string): Promise<SendEmailResult> {
+    const validatedRecipientEmail = validateRecipient(email);
+    const appName = resendConfig.appName;
+    const html = getAdminPasswordResetTemplate(newPassword, username);
+
+    return sendEmail(
+      validatedRecipientEmail,
+      `Your ${appName} password has been reset`,
+      html,
+      'admin_password_reset'
+    );
+  }
+
   // Sends a security notification informing the user that their password was changed.
   // @param email - Recipient email address
   async sendPasswordChangedEmail(email: string): Promise<SendEmailResult> {
@@ -180,6 +200,77 @@ class EmailService {
       `Booking Failed – Full Refund Initiated for ${details.venueName}`,
       html,
       EmailIntent.BOOKING_REFUND
+    );
+  }
+
+  // Sends a cancellation notification with refund details.
+  async sendBookingCancellationEmail(
+    email: string,
+    details: {
+      venueName: string;
+      date: string;
+      timeRange: string;
+      refundAmount: number;
+      bookingRef: string;
+    }
+  ): Promise<SendEmailResult> {
+    const validatedRecipientEmail = validateRecipient(email);
+    const html = getBookingCancellationTemplate(details);
+
+    return sendEmail(
+      validatedRecipientEmail,
+      `Booking Cancelled – ${details.venueName}`,
+      html,
+      EmailIntent.BOOKING_CANCELLATION
+    );
+  }
+
+  // Venue status emails
+  async sendVenueApprovedEmail(email: string, venueName: string): Promise<SendEmailResult> {
+    const validatedRecipientEmail = validateRecipient(email);
+    const html = getVenueApprovedTemplate(venueName);
+
+    return sendEmail(
+      validatedRecipientEmail,
+      `Your Venue "${venueName}" has been Approved!`,
+      html,
+      EmailIntent.VENUE_APPROVED
+    );
+  }
+
+  async sendVenueRejectedEmail(email: string, venueName: string, reason: string): Promise<SendEmailResult> {
+    const validatedRecipientEmail = validateRecipient(email);
+    const html = getVenueRejectedTemplate(venueName, reason);
+
+    return sendEmail(
+      validatedRecipientEmail,
+      `Application Update: Venue "${venueName}"`,
+      html,
+      EmailIntent.VENUE_REJECTED
+    );
+  }
+
+  async sendVenueSuspendedEmail(email: string, venueName: string, reason: string): Promise<SendEmailResult> {
+    const validatedRecipientEmail = validateRecipient(email);
+    const html = getVenueSuspendedTemplate(venueName, reason);
+
+    return sendEmail(
+      validatedRecipientEmail,
+      `Important: Your Venue "${venueName}" has been Suspended`,
+      html,
+      EmailIntent.VENUE_SUSPENDED
+    );
+  }
+
+  async sendVenueUnsuspendedEmail(email: string, venueName: string): Promise<SendEmailResult> {
+    const validatedRecipientEmail = validateRecipient(email);
+    const html = getVenueUnsuspendedTemplate(venueName);
+
+    return sendEmail(
+      validatedRecipientEmail,
+      `Your Venue "${venueName}" has been Reactivated`,
+      html,
+      EmailIntent.VENUE_UNSUSPENDED
     );
   }
 }

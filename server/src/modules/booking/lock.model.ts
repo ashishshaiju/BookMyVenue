@@ -9,6 +9,16 @@ const LockSchema = new Schema<ILock>(
     startTime: { type: Number, required: true },
     endTime: { type: Number, required: true },
     price: { type: Number, required: true },
+    sessionTokenHash: { type: String },
+    guestCount: { type: Number, required: false },
+    eventType: { type: String, required: false, trim: true },
+    bookerInfo: {
+      name: { type: String, required: false, trim: true },
+      email: { type: String, required: false, trim: true },
+      phone: { type: String, required: false, trim: true },
+      place: { type: String, required: false, trim: true },
+      note: { type: String, required: false, trim: true },
+    },
     createdAt: { type: Date, default: Date.now, expires: 600 }, // 600s = 10 minutes
   }
 );

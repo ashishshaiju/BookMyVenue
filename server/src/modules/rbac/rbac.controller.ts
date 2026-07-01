@@ -21,4 +21,5 @@ export const rbacController = {
     service.invalidateRoleCache(String(req.params.roleId));
     ResponseUtil.success(res, `Cache invalidated for role ${String(req.params.roleId)}`);
   },
+
 };

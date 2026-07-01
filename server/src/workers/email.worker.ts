@@ -4,7 +4,7 @@ import { EmailIntent, EmailTaskStatus, EmailConstants } from '../constants/email
 import { logError, logWarn, logInfo } from '../utils/logger';
 
 let isShuttingDown = false;
-let pollingInterval: NodeJS.Timeout | null = null;
+let pollingInterval: ReturnType<typeof setInterval> | null = null;
 let activeTasks = 0;
 
 async function dispatch(task: IEmailTask): Promise<void> {
@@ -19,6 +19,17 @@ async function dispatch(task: IEmailTask): Promise<void> {
       const result = await emailService.sendPasswordResetEmail(recipient, resetLink);
       if (!result.success) {
         throw new Error('Failed to send password reset email via Resend');
+      }
+      break;
+    }
+    case EmailIntent.ADMIN_PASSWORD_RESET: {
+      const { newPassword, username } = metadata;
+      if (!newPassword || !username) {
+        throw new Error(`Missing required metadata for ${EmailIntent.ADMIN_PASSWORD_RESET} intent`);
+      }
+      const result = await emailService.sendAdminPasswordResetEmail(recipient, newPassword, username);
+      if (!result.success) {
+        throw new Error('Failed to send admin password reset email via Resend');
       }
       break;
     }
@@ -62,6 +73,23 @@ async function dispatch(task: IEmailTask): Promise<void> {
       });
       if (!result.success) {
         throw new Error('Failed to send booking refund email via Resend');
+      }
+      break;
+    }
+    case EmailIntent.BOOKING_CANCELLATION: {
+      const { venueName, date, timeRange, refundAmount, bookingRef } = metadata;
+      if (!venueName || !date || !timeRange || !refundAmount || !bookingRef) {
+        throw new Error(`Missing required metadata fields for ${EmailIntent.BOOKING_CANCELLATION} intent`);
+      }
+      const result = await emailService.sendBookingCancellationEmail(recipient, {
+        venueName,
+        date,
+        timeRange,
+        refundAmount: parseFloat(refundAmount),
+        bookingRef,
+      });
+      if (!result.success) {
+        throw new Error('Failed to send booking cancellation email via Resend');
       }
       break;
     }

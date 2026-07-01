@@ -73,7 +73,7 @@ export const createVenueSchema = z
     bookingType: z.enum(['fixedBooking', 'flexibleBooking']),
 
     // Fixed booking fields
-    fixedPackages: z.array(fixedPackageSchema).default([]),
+    fixedPackages: z.array(fixedPackageSchema).optional(),
 
     // Both booking types
     workingDays: z.array(z.enum(DAYS_OF_WEEK)).min(1, 'At least one working day is required'),
@@ -90,12 +90,12 @@ export const createVenueSchema = z
         slotDuration: z.coerce.number().int().positive().default(60),
         bufferTime: z.coerce.number().int().min(0).default(0),
       })
-      .default({ slotDuration: 60, bufferTime: 0 }),
+      .optional(),
     pricing: z.object({
       pricingType: z.enum(['fixedPricing', 'timeBasedPricing']),
       basePrice: z.coerce.number().min(0, 'Base price must be 0 or higher'),
       pricingRules: z.array(pricingRuleSchema).default([]),
-    }),
+    }).optional(),
     blockedTimes: z.array(blockedTimeSchema).default([]),
     blockedDates: z.array(z.coerce.date()).default([]),
 
@@ -132,7 +132,7 @@ export const createVenueSchema = z
 
     // Fixed booking: must have at least one package
     if (data.bookingType === 'fixedBooking') {
-      if (data.fixedPackages.length === 0) {
+      if (!data.fixedPackages || data.fixedPackages.length === 0) {
         ctx.addIssue({
           code: 'custom',
           message: 'At least one fixed package is required for fixed booking',
@@ -143,6 +143,14 @@ export const createVenueSchema = z
 
     // Flexible booking: requires workingHours, flexibleBooking, and pricing
     if (data.bookingType === 'flexibleBooking') {
+      if (!data.pricing) {
+        ctx.addIssue({
+          code: 'custom',
+          message: 'Pricing is required for flexible booking',
+          path: ['pricing'],
+        });
+        return;
+      }
       if (!data.workingHours) {
         ctx.addIssue({
           code: 'custom',
@@ -176,7 +184,7 @@ export const createVenueSchema = z
         }
       }
 
-      if (!data.flexibleBooking.slotDuration) {
+      if (!data.flexibleBooking?.slotDuration) {
         ctx.addIssue({
           code: 'custom',
           message: 'Slot duration is required for flexible booking',
@@ -276,7 +284,6 @@ export const createVenueSchema = z
 export type CreateVenueDTO = z.infer<typeof createVenueSchema>;
 
 // Update
-
 // PUT /venues/:id
 export const updateVenueSchema = z
   .object({
@@ -307,7 +314,7 @@ export const updateVenueSchema = z
       pricingType: z.enum(['fixedPricing', 'timeBasedPricing']),
       basePrice: z.coerce.number().min(0),
       pricingRules: z.array(pricingRuleSchema).default([]),
-    }),
+    }).optional(),
     blockedTimes: z.array(blockedTimeSchema),
     blockedDates: z.array(z.coerce.date()),
     amenities: z.array(z.string()),
@@ -335,7 +342,6 @@ export const updateVenueSchema = z
 export type UpdateVenueDTO = z.infer<typeof updateVenueSchema>;
 
 // Admin review
-
 export const rejectVenueSchema = z.object({
   rejectionReason: z
     .string()
@@ -345,6 +351,22 @@ export const rejectVenueSchema = z.object({
 });
 
 export type RejectVenueDTO = z.infer<typeof rejectVenueSchema>;
+
+export const suspendVenueSchema = z.object({
+  suspensionReason: z
+    .string()
+    .trim()
+    .min(10, 'Suspension reason must be at least 10 characters')
+    .max(500, 'Suspension reason must be under 500 characters'),
+});
+
+export type SuspendVenueDTO = z.infer<typeof suspendVenueSchema>;
+
+export const featureVenueSchema = z.object({
+  durationDays: z.enum(['7', '30', 'indefinite']),
+});
+
+export type FeatureVenueDTO = z.infer<typeof featureVenueSchema>;
 
 // Admin list filters
 

@@ -1,30 +1,41 @@
 import mongoose, { Schema } from 'mongoose';
 import type { IBooking } from './booking.types';
+import { BookingStatus } from '../../constants/booking.constants';
 
 const BookingSchema = new Schema<IBooking>(
   {
     venueId: { type: Schema.Types.ObjectId, ref: 'Venues', required: true },
     userId: { type: Schema.Types.ObjectId, ref: 'Users', required: true },
-    date: { type: String, required: true }, // YYYY-MM-DD
+    date: { type: String, required: true },
     startTime: { type: Number, required: true }, // minutes from midnight
     endTime: { type: Number, required: true }, // minutes from midnight
     price: { type: Number, required: true },
     paymentReference: { type: String, required: true, trim: true }, // Razorpay payment_id
     status: {
       type: String,
-      enum: ['Confirmed', 'Cancelled'] as const,
+      enum: Object.values(BookingStatus),
       required: true,
-      default: 'Confirmed',
+      default: BookingStatus.CONFIRMED,
     },
+    guestCount: { type: Number, required: false },
+    eventType: { type: String, required: false, trim: true },
+    bookerInfo: {
+      name: { type: String, required: false, trim: true },
+      email: { type: String, required: false, trim: true },
+      phone: { type: String, required: false, trim: true },
+      place: { type: String, required: false, trim: true },
+      note: { type: String, required: false, trim: true },
+    },
+    paymentMethod: { type: String, required: false, trim: true },
+    advancePaid: { type: Number, required: false },
+    remainingAmount: { type: Number, required: false },
+    cancellationReason: { type: String, required: false, trim: true },
   },
   { timestamps: true }
 );
 
-// Primary query pattern: "all bookings for venue X on date Y"
 BookingSchema.index({ venueId: 1, date: 1 });
 
-// Prevent double-booking at the document level as a safety net
-// (the real gate is the overlap check + Lock, but this is defence-in-depth)
 BookingSchema.index({ venueId: 1, date: 1, startTime: 1, endTime: 1, status: 1 });
 
 export const BookingModel = mongoose.model<IBooking>('Bookings', BookingSchema, 'Bookings');

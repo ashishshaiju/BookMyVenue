@@ -1,11 +1,15 @@
 import { Types } from 'mongoose';
+import { BookingStatus, type BookingStatusType } from '../../constants/booking.constants';
 import { logError, logInfo, logWarn } from '../../utils/logger';
 import { issueRefund } from '../../services/razorpay.service';
 import {
   markWebhookProcessed,
   createBooking,
   createFailedBooking,
+  findAllBookings,
+  type AggregatedBooking,
 } from './booking.repository';
+import type { PaginationParams, PaginatedResponse } from '../../types/pagination.types';
 import { LockModel } from './lock.model';
 import { minutesToTimeString } from '../../utils/timeUtils';
 import { EmailTaskModel } from '../../models/email-task.model';
@@ -20,7 +24,6 @@ export interface RazorpayWebhookNotes {
   userId?: string;
 }
 
-// Enqueues an email sending task to the background email queue
 async function enqueueEmail(
   intent: EmailIntentType,
   recipient: string,
@@ -49,7 +52,6 @@ async function enqueueEmail(
   }
 }
 
-// Resolves a user's email address by ID
 async function resolveCustomerEmail(userId: string): Promise<string | null> {
   try {
     const user = await UserModel.findById(userId).select('email').lean();
@@ -59,7 +61,6 @@ async function resolveCustomerEmail(userId: string): Promise<string | null> {
   }
 }
 
-// Resolves a venue's name and owner email address by ID
 async function resolveVenueInfo(
   venueId: string
 ): Promise<{ venueName: string; ownerEmail: string | null } | null> {
@@ -82,14 +83,12 @@ async function resolveVenueInfo(
   }
 }
 
-/**
- * Processes a captured payment webhook.
- * Gated by idempotency check. Decides between confirming a booking or refunding.
- */
+// Processes a captured payment webhook.
 export async function processCapturedPayment(
   paymentId: string,
   amountPaise: number,
-  notes: RazorpayWebhookNotes
+  notes: RazorpayWebhookNotes,
+  paymentMethod?: string
 ): Promise<{ success: boolean; isDuplicate?: boolean; error?: string }> {
   try {
     await markWebhookProcessed(paymentId);
@@ -107,6 +106,10 @@ export async function processCapturedPayment(
       eventId: paymentId,
       error: error.message,
     });
+    return {
+      success: false,
+      error: 'Idempotency gate error — refusing to process to prevent duplicate booking',
+    };
   }
 
   const { lockId, venueId, userId } = notes;
@@ -157,7 +160,11 @@ export async function processCapturedPayment(
         endTime: lock.endTime,
         price: amountPaise / 100,
         paymentReference: paymentId,
-        status: 'Confirmed',
+        status: BookingStatus.CONFIRMED,
+        guestCount: lock.guestCount,
+        eventType: lock.eventType,
+        bookerInfo: lock.bookerInfo,
+        paymentMethod: paymentMethod,
       });
     } catch (err) {
       logError('CRITICAL: Failed to create booking in Scenario A', {
@@ -271,4 +278,11 @@ export async function processCapturedPayment(
 
   logInfo('Scenario B complete: refund issued', { paymentId, refundId });
   return { success: true };
+}
+
+export async function getAllBookings(
+  paginationParams: PaginationParams,
+  filters?: { status?: BookingStatusType; venueId?: string }
+): Promise<PaginatedResponse<AggregatedBooking, 'bookings'>> {
+  return findAllBookings(paginationParams, filters);
 }

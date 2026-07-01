@@ -1,5 +1,7 @@
 import type jwt from 'jsonwebtoken';
 
+export const nodeEnv = process.env.NODE_ENV ?? 'development';
+
 export const resendConfig = {
   apiKey: process.env.RESEND_API_KEY,
   fromName: process.env.EMAIL_FROM_NAME,

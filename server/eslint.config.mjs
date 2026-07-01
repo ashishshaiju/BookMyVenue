@@ -1,16 +1,18 @@
 import js from '@eslint/js';
+import globals from 'globals';
 import tseslint from 'typescript-eslint';
+import eslintComments from '@eslint-community/eslint-plugin-eslint-comments';
 
 export default tseslint.config(
-  // Global ignores — must be a standalone object with only 'ignores' to act globally
   {
     ignores: ['dist/**', 'scripts/**', 'eslint.config.mjs'],
   },
   js.configs.recommended,
-  ...tseslint.configs.strictTypeChecked, // stricter than recommended
+  ...tseslint.configs.strictTypeChecked,
   ...tseslint.configs.stylisticTypeChecked,
   {
     languageOptions: {
+      globals: globals.node,
       parserOptions: {
         projectService: true,
         tsconfigRootDir: import.meta.dirname,
@@ -18,8 +20,18 @@ export default tseslint.config(
     },
   },
   {
+    plugins: {
+      'eslint-comments': eslintComments,
+    },
     rules: {
-      // ── TypeScript strictness ──────────────────────────
+      'eslint-comments/no-unlimited-disable': 'error',
+      'eslint-comments/no-use': 'error',
+      'eslint-comments/require-description': 'error',
+    },
+  },
+  {
+    rules: {
+      // TypeScript strictness
       '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/no-unsafe-assignment': 'error',
       '@typescript-eslint/no-unsafe-member-access': 'error',
@@ -41,14 +53,14 @@ export default tseslint.config(
       '@typescript-eslint/prefer-optional-chain': 'error',
       '@typescript-eslint/no-non-null-assertion': 'error',
 
-      // ── Error handling ─────────────────────────────────
+      // Error handling
       '@typescript-eslint/only-throw-error': 'error',
 
-      // ── General quality ────────────────────────────────
-      'no-undef': 'off', // TS handles this
+      // General quality
+      'no-undef': 'warn',
       'no-console': 'error',
       'no-debugger': 'error',
-      'no-return-await': 'off', // use TS rule below
+      'no-return-await': 'off',
       '@typescript-eslint/return-await': ['error', 'in-try-catch'],
       eqeqeq: ['error', 'always'],
       'no-shadow': 'off',
@@ -56,7 +68,7 @@ export default tseslint.config(
     },
   },
 
-  // ── Per-file overrides (keep minimal, document why) ───
+  // Per-file overrides (keep minimal, document why)
   {
     files: ['src/types/express.ts'],
     rules: {

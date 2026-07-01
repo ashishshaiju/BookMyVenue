@@ -9,6 +9,7 @@ interface RazorpayPaymentEntity {
   order_id: string;
   amount: number;
   currency: string;
+  method?: string;
   notes: RazorpayWebhookNotes;
 }
 
@@ -30,7 +31,7 @@ export const handleRazorpayWebhook = async (req: Request, res: Response): Promis
     logWarn('Razorpay webhook received without signature header', {
       module: 'webhook.controller.ts/handleRazorpayWebhook',
     });
-    res.status(400).json({ error: 'Missing x-razorpay-signature header' });
+    res.status(200).json({ received: false, error: 'Missing x-razorpay-signature header' });
     return;
   }
 
@@ -40,7 +41,7 @@ export const handleRazorpayWebhook = async (req: Request, res: Response): Promis
     logWarn('Razorpay webhook signature verification failed — rejecting', {
       module: 'webhook.controller.ts/handleRazorpayWebhook',
     });
-    res.status(400).json({ error: 'Invalid webhook signature' });
+    res.status(200).json({ received: false, error: 'Invalid webhook signature' });
     return;
   }
 
@@ -77,7 +78,8 @@ export const handleRazorpayWebhook = async (req: Request, res: Response): Promis
   const result = await processCapturedPayment(
     payment.id,
     payment.amount,
-    payment.notes
+    payment.notes,
+    payment.method
   );
 
   if (!result.success) {

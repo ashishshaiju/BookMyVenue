@@ -1,11 +1,20 @@
 import { Router } from 'express';
-import { ResponseUtil } from '../../utils/responseUtils';
 import { verifyAccessToken } from '../../middlewares/auth.middleware';
-import { requirePermission } from '../../middlewares/rbac.middleware';
-import { validateBody } from '../../middlewares/validation.middleware';
+import { requireRole, requirePermission } from '../../middlewares/rbac.middleware';
+import {
+  validateBody,
+  validateParams,
+  validateQuery,
+} from '../../middlewares/validation.middleware';
 import { PERMISSIONS as P } from '../../constants/permissions';
-import { checkoutBodySchema, verifyPaymentBodySchema } from './booking.validator';
-import { initCheckout, verifyPayment } from './booking.controller';
+import {
+  checkoutBodySchema,
+  verifyPaymentBodySchema,
+  fetchMyBookingsQuerySchema,
+  saveBookerDetailsBodySchema,
+  bookingRefIdParamSchema,
+} from './booking.validator';
+import * as controller from './booking.controller';
 
 const router: Router = Router();
 
@@ -68,8 +77,37 @@ router
     verifyAccessToken,
     requirePermission(P.bookings.create),
     validateBody(checkoutBodySchema),
-    initCheckout
+    controller.initCheckout
   );
+
+/**
+ * @openapi
+ * /bookings/booker-details:
+ *   patch:
+ *     tags: [Bookings]
+ *     summary: Save booker details before checkout
+ *     description: Save booker info into the lock
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       200:
+ *         description: Successfully saved
+ */
+router
+  .route('/booker-details')
+  .patch(
+    verifyAccessToken,
+    validateBody(saveBookerDetailsBodySchema),
+    controller.saveBookerDetails
+  );
+
+
 
 /**
  * @openapi
@@ -114,44 +152,80 @@ router
     verifyAccessToken,
     requirePermission(P.bookings.create),
     validateBody(verifyPaymentBodySchema),
-    verifyPayment
+    controller.verifyPayment
   );
 
 /**
  * @openapi
- * /bookings:
+ * /bookings/my-bookings:
  *   get:
  *     tags: [Bookings]
- *     summary: List the authenticated user's bookings
+ *     summary: Get all bookings for the authenticated user
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
  *     responses:
  *       200:
- *         description: Array of bookings
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/SuccessResponse'
+ *         description: List of user's bookings
  *       401:
  *         description: Not authenticated
  */
 router
-  .route('/')
-  .get(verifyAccessToken, requirePermission(P.bookings.read), (_req, res) => {
-    ResponseUtil.success(res, 'read bookings — controller not yet implemented');
-  });
+  .route('/my-bookings')
+  .get(verifyAccessToken, validateQuery(fetchMyBookingsQuerySchema), controller.getMyBookings);
 
 /**
  * @openapi
- * /bookings/{bookingId}:
+ * /bookings/all:
  *   get:
  *     tags: [Bookings]
- *     summary: Get a booking by ID
+ *     summary: Get all bookings across all venues (Admin only)
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Paginated list of all bookings
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Admin role required
+ */
+router
+  .route('/all')
+  .get(verifyAccessToken, requireRole('admin'), requirePermission(P.bookings.read), controller.getAllBookings);
+
+/**
+ * @openapi
+ * /bookings/{bookingRefId}:
+ *   get:
+ *     tags: [Bookings]
+ *     summary: Get a booking by its reference ID
  *     security:
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
- *         name: bookingId
+ *         name: bookingRefId
  *         required: true
  *         schema:
  *           type: string
@@ -162,59 +236,29 @@ router
  *         description: Not authenticated
  *       404:
  *         description: Booking not found
- *   put:
- *     tags: [Bookings]
- *     summary: Update a booking
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: bookingId
- *         required: true
- *         schema:
- *           type: string
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *     responses:
- *       200:
- *         description: Booking updated
- *       401:
- *         description: Not authenticated
- *       404:
- *         description: Booking not found
  *   delete:
  *     tags: [Bookings]
- *     summary: Cancel a booking
+ *     summary: Cancel a booking by its reference ID
  *     security:
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
- *         name: bookingId
+ *         name: bookingRefId
  *         required: true
  *         schema:
  *           type: string
  *     responses:
  *       200:
- *         description: Booking cancelled
+ *         description: Booking cancelled successfully
  *       401:
  *         description: Not authenticated
  *       404:
  *         description: Booking not found
  */
 router
-  .route('/:bookingId')
-  .get(verifyAccessToken, requirePermission(P.bookings.read), (_req, res) => {
-    ResponseUtil.success(res, 'read booking by ID — controller not yet implemented');
-  })
-  .put(verifyAccessToken, requirePermission(P.bookings.update), (_req, res) => {
-    ResponseUtil.success(res, 'update booking by ID — controller not yet implemented');
-  })
-  .delete(verifyAccessToken, requirePermission(P.bookings.delete), (_req, res) => {
-    ResponseUtil.success(res, 'delete booking by ID — controller not yet implemented');
-  });
+  .route('/:bookingRefId')
+  .all(verifyAccessToken, validateParams(bookingRefIdParamSchema))
+  .get(requirePermission(P.bookings.read), controller.getBookingById)
+  .delete(requirePermission(P.bookings.delete), controller.cancelBooking);
 
 export { router as bookingRouter };

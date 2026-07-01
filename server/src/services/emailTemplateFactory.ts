@@ -107,6 +107,26 @@ export function getPasswordResetTemplate(resetLink: string, email: string): stri
   return buildEmailWrapper(bodyContent);
 }
 
+// Admin Password Reset Template
+export function getAdminPasswordResetTemplate(newPassword: string, username: string): string {
+  const appName = resendConfig.appName;
+  const bodyContent = `
+    <h1 style="margin:0 0 8px;font-size:22px;font-weight:700;color:#111827;">Your Password Has Been Reset</h1>
+    <p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#374151;">
+      Hi ${username}, an administrator has reset your password for your <strong>${appName}</strong> account.
+    </p>
+    <div style="background-color:#f3f4f6;padding:16px;border-radius:6px;margin-bottom:24px;">
+      <p style="margin:0;font-size:15px;color:#374151;">Your new temporary password is:</p>
+      <p style="margin:8px 0 0;font-size:20px;font-weight:700;color:#111827;">${newPassword}</p>
+    </div>
+    <p style="margin:0;font-size:15px;line-height:1.6;color:#374151;">
+      Please log in with this new password and change it immediately from your profile settings.
+    </p>
+  `;
+  
+  return buildEmailWrapper(bodyContent);
+}
+
 export function getPasswordChangedTemplate(): string {
   const appName = resendConfig.appName;
 
@@ -227,5 +247,139 @@ export function getRefundNotificationTemplate(details: {
     </p>
   `;
 
+  return buildEmailWrapper(bodyContent);
+}
+
+export function getBookingCancellationTemplate(details: {
+  venueName: string;
+  date: string;
+  timeRange: string;
+  refundAmount: number;
+  bookingRef: string;
+}): string {
+  const appName = resendConfig.appName;
+
+  const bodyContent = `
+    <h1 style="margin:0 0 8px;font-size:22px;font-weight:700;color:#111827;">Booking Cancelled</h1>
+    <p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#374151;">
+      Your booking at <strong>${details.venueName}</strong> has been successfully cancelled.
+    </p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+           style="background-color:#fef2f2;border-radius:8px;margin-bottom:24px;">
+      <tr>
+        <td style="padding:20px 24px;">
+          <p style="margin:0 0 8px;font-size:14px;color:#991b1b;"><strong>Venue</strong></p>
+          <p style="margin:0 0 16px;font-size:16px;color:#111827;font-weight:600;">${details.venueName}</p>
+          <p style="margin:0 0 8px;font-size:14px;color:#991b1b;"><strong>Date</strong></p>
+          <p style="margin:0 0 16px;font-size:16px;color:#111827;">${details.date}</p>
+          <p style="margin:0 0 8px;font-size:14px;color:#991b1b;"><strong>Time Slot</strong></p>
+          <p style="margin:0 0 16px;font-size:16px;color:#111827;">${details.timeRange}</p>
+          <p style="margin:0 0 8px;font-size:14px;color:#991b1b;"><strong>Refund Amount</strong></p>
+          <p style="margin:0;font-size:20px;color:#111827;font-weight:700;">₹${details.refundAmount.toLocaleString('en-IN')}</p>
+        </td>
+      </tr>
+    </table>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+           style="background-color:#fef9c3;border-radius:6px;margin-bottom:16px;">
+      <tr>
+        <td style="padding:14px 16px;">
+          <p style="margin:0;font-size:13px;color:#92400e;line-height:1.5;">
+            <strong>Important notice:</strong> If this cancellation was a mistake or was not done by you,
+            please contact our support team immediately.
+          </p>
+        </td>
+      </tr>
+    </table>
+    <p style="margin:0;font-size:13px;color:#9ca3af;">
+      Booking Reference: <code style="font-size:12px;color:#6b7280;">${details.bookingRef}</code>
+    </p>
+    <p style="margin:16px 0 0;font-size:14px;color:#374151;">
+      We hope to host you another time on ${appName}.
+    </p>
+  `;
+  return buildEmailWrapper(bodyContent);
+}
+
+export function getVenueApprovedTemplate(venueName: string): string {
+  const bodyContent = `
+    <h1 style="margin:0 0 8px;font-size:22px;font-weight:700;color:#111827;">Venue Approved! 🎉</h1>
+    <p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#374151;">
+      Great news! Your venue <strong>${venueName}</strong> has been approved by our admin team and is now live on the platform.
+    </p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+           style="background-color:#f0fdf4;border-radius:8px;margin-bottom:24px;">
+      <tr>
+        <td style="padding:20px 24px;">
+          <p style="margin:0;font-size:15px;color:#166534;line-height:1.6;">
+            Users can now view and book your venue. Make sure your availability and pricing are up to date!
+          </p>
+        </td>
+      </tr>
+    </table>
+  `;
+  return buildEmailWrapper(bodyContent);
+}
+
+export function getVenueRejectedTemplate(venueName: string, reason: string): string {
+  const bodyContent = `
+    <h1 style="margin:0 0 8px;font-size:22px;font-weight:700;color:#111827;">Venue Application Update</h1>
+    <p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#374151;">
+      We reviewed your application for <strong>${venueName}</strong>, but unfortunately, we cannot approve it at this time.
+    </p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+           style="background-color:#fef2f2;border-radius:8px;margin-bottom:24px;">
+      <tr>
+        <td style="padding:20px 24px;">
+          <p style="margin:0 0 8px;font-size:14px;color:#991b1b;"><strong>Reason for Rejection:</strong></p>
+          <p style="margin:0;font-size:15px;color:#7f1d1d;line-height:1.5;">${reason}</p>
+        </td>
+      </tr>
+    </table>
+    <p style="margin:0;font-size:15px;line-height:1.6;color:#374151;">
+      You can update your venue details in the owner dashboard and submit it again for review once the issues have been addressed.
+    </p>
+  `;
+  return buildEmailWrapper(bodyContent);
+}
+
+export function getVenueSuspendedTemplate(venueName: string, reason: string): string {
+  const bodyContent = `
+    <h1 style="margin:0 0 8px;font-size:22px;font-weight:700;color:#111827;">Venue Suspended</h1>
+    <p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#374151;">
+      Your venue <strong>${venueName}</strong> has been temporarily suspended by our admin team and is currently not visible to users.
+    </p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+           style="background-color:#fef9c3;border-radius:8px;margin-bottom:24px;">
+      <tr>
+        <td style="padding:20px 24px;">
+          <p style="margin:0 0 8px;font-size:14px;color:#854d0e;"><strong>Reason for Suspension:</strong></p>
+          <p style="margin:0;font-size:15px;color:#713f12;line-height:1.5;">${reason}</p>
+        </td>
+      </tr>
+    </table>
+    <p style="margin:0;font-size:15px;line-height:1.6;color:#374151;">
+      Please contact our support team to resolve this issue and have your venue unsuspended.
+    </p>
+  `;
+  return buildEmailWrapper(bodyContent);
+}
+
+export function getVenueUnsuspendedTemplate(venueName: string): string {
+  const bodyContent = `
+    <h1 style="margin:0 0 8px;font-size:22px;font-weight:700;color:#111827;">Venue Reactivated</h1>
+    <p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#374151;">
+      The suspension on your venue <strong>${venueName}</strong> has been lifted.
+    </p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+           style="background-color:#f0fdf4;border-radius:8px;margin-bottom:24px;">
+      <tr>
+        <td style="padding:20px 24px;">
+          <p style="margin:0;font-size:15px;color:#166534;line-height:1.6;">
+            Your venue is now active again and visible to all users on the platform. Welcome back!
+          </p>
+        </td>
+      </tr>
+    </table>
+  `;
   return buildEmailWrapper(bodyContent);
 }
