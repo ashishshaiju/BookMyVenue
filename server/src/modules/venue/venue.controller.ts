@@ -6,9 +6,11 @@ import type {
   createVenueSchema,
   updateVenueSchema,
   rejectVenueSchema,
+  suspendVenueSchema,
   adminVenueFiltersSchema,
   venueIdParamSchema,
   publicVenueFiltersSchema,
+  featureVenueSchema,
 } from './venue.validator';
 import { handleError } from '../../utils/errors';
 import { v2 as cloudinary } from 'cloudinary';
@@ -247,7 +249,7 @@ export const rejectVenue = async (req: Request, res: Response): Promise<void> =>
   }
 };
 
-export const activateVenue = async (req: Request, res: Response): Promise<void> => {
+export const unsuspendVenue = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.validated?.params as z.infer<typeof venueIdParamSchema>;
     const adminId = req.user?.userId;
@@ -255,14 +257,30 @@ export const activateVenue = async (req: Request, res: Response): Promise<void> 
       ResponseUtil.unauthorized(res, 'Unauthorized');
       return;
     }
-    const venue = await service.activateVenue(id, adminId);
-    ResponseUtil.success(res, 'Venue activated successfully', venue);
+    const venue = await service.unsuspendVenue(id, adminId);
+    ResponseUtil.success(res, 'Venue reactivated successfully', venue);
   } catch (e) {
-    handleError(res, e, 'activateVenue');
+    handleError(res, e, 'unsuspendVenue');
   }
 };
 
-export const deactivateVenue = async (req: Request, res: Response): Promise<void> => {
+export const suspendVenue = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.validated?.params as z.infer<typeof venueIdParamSchema>;
+    const dto = req.validated?.body as z.infer<typeof suspendVenueSchema>;
+    const adminId = req.user?.userId;
+    if (!adminId) {
+      ResponseUtil.unauthorized(res, 'Unauthorized');
+      return;
+    }
+    const venue = await service.suspendVenue(id, adminId, dto);
+    ResponseUtil.success(res, 'Venue suspended successfully', venue);
+  } catch (e) {
+    handleError(res, e, 'suspendVenue');
+  }
+};
+
+export const featureVenue = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.validated?.params as z.infer<typeof venueIdParamSchema>;
     const adminId = req.user?.userId;
@@ -270,9 +288,10 @@ export const deactivateVenue = async (req: Request, res: Response): Promise<void
       ResponseUtil.unauthorized(res, 'Unauthorized');
       return;
     }
-    const venue = await service.deactivateVenue(id, adminId);
-    ResponseUtil.success(res, 'Venue suspended successfully', venue);
+    const dto = req.validated?.body as z.infer<typeof featureVenueSchema>;
+    await service.featureVenue(id, dto.durationDays === 'indefinite' ? null : parseInt(dto.durationDays, 10));
+    ResponseUtil.success(res, 'Venue featured status updated successfully');
   } catch (e) {
-    handleError(res, e, 'deactivateVenue');
+    handleError(res, e, 'featureVenue');
   }
 };

@@ -16,14 +16,36 @@ import type {
   CreateVenueDTO,
   UpdateVenueDTO,
   RejectVenueDTO,
+  SuspendVenueDTO,
   AdminVenueFiltersDTO,
 } from './venue.validator';
 import { VenueFields } from '../../constants/venue.constants';
 import { RoleModel } from '../../models/role.model';
+import { UserModel } from '../user/user.models';
 import * as authRepo from '../auth/auth.repository';
 import { getUserRole } from '../../services/roles.service';
+import { emailService } from '../../services/email.service';
 import mongoose from 'mongoose';
 import { logError } from '../../utils/logger';
+
+export function sanitizeVenueDto<T extends CreateVenueDTO | UpdateVenueDTO>(dto: T, currentBookingType?: 'fixedBooking' | 'flexibleBooking'): T {
+  const bookingType = dto.bookingType ?? currentBookingType;
+  if (!bookingType) return dto;
+
+  if (bookingType === 'fixedBooking') {
+    const { 
+      flexibleBooking: _fb, 
+      workingHours: _wh, 
+      pricing: _pr, 
+      blockedTimes: _bt, 
+      ...rest 
+    } = dto as Record<string, unknown>;
+    return rest as T;
+  }
+  
+  const { fixedPackages: _fp, ...rest } = dto as Record<string, unknown>;
+  return rest as T;
+}
 
 async function assignOwnerRoleIfNeeded(userId: string): Promise<void> {
   const current = await getUserRole(userId);
@@ -57,11 +79,13 @@ export async function createVenue(userId: string, dto: CreateVenueDTO): Promise<
     throw new ConflictError(`You already have a venue named "${dto.name}"`);
   }
 
+  const sanitizedDto = sanitizeVenueDto(dto);
+
   const data = {
-    ...dto,
-    galleryImages: dto.galleryImages ?? [],
-    ...(dto.coordinates && {
-      location: { type: 'Point' as const, coordinates: dto.coordinates },
+    ...sanitizedDto,
+    galleryImages: sanitizedDto.galleryImages ?? [],
+    ...(sanitizedDto.coordinates && {
+      location: { type: 'Point' as const, coordinates: sanitizedDto.coordinates },
     }),
     ownerUserId: userId,
     createdBy: userId,
@@ -136,13 +160,15 @@ export async function updateVenue(
     }
   }
 
+  const sanitizedDto = sanitizeVenueDto(dto, venue.bookingType);
+
   const patch: UpdateVenueData = {
     updatedBy: userId,
     ...(Object.fromEntries(
-      VenueFields.filter((key) => dto[key] !== undefined).map((key) => [key, dto[key]])
+      VenueFields.filter((key) => sanitizedDto[key] !== undefined).map((key) => [key, sanitizedDto[key]])
     ) as Pick<UpdateVenueData, VenueKey>),
-    ...(dto.coordinates !== undefined && {
-      location: { type: 'Point', coordinates: dto.coordinates },
+    ...(sanitizedDto.coordinates !== undefined && {
+      location: { type: 'Point', coordinates: sanitizedDto.coordinates },
     }),
   };
 
@@ -172,12 +198,9 @@ export async function getPendingVenues(): Promise<IVenue[]> {
   return repo.findPendingVenues();
 }
 
-export async function getAllVenues(filters: AdminVenueFiltersDTO): Promise<{
-  venues: IVenue[];
-  total: number;
-  page: number;
-  limit: number;
-}> {
+export async function getAllVenues(filters: AdminVenueFiltersDTO): Promise<
+  PaginatedResponse<IVenue, 'venues'>
+> {
   const repoFilters: AdminVenueFilters = {
     status: filters.status,
     city: filters.city,
@@ -195,6 +218,12 @@ export async function approveVenue(venueId: string, adminId: string): Promise<IV
 
   const updated = await repo.updateVenueStatus(venueId, 'Approved', adminId);
   if (!updated) throw new NotFoundError('Venue not found');
+
+  const owner = await UserModel.findById(venue.ownerUserId).lean();
+  if (owner?.email) {
+    void emailService.sendVenueApprovedEmail(owner.email, venue.name);
+  }
+
   return updated;
 }
 
@@ -211,21 +240,34 @@ export async function rejectVenue(
   const extra = dto.rejectionReason ? { rejectionReason: dto.rejectionReason } : undefined;
   const updated = await repo.updateVenueStatus(venueId, 'Rejected', adminId, extra);
   if (!updated) throw new NotFoundError('Venue not found');
+
+  const owner = await UserModel.findById(venue.ownerUserId).lean();
+  if (owner?.email && dto.rejectionReason) {
+    void emailService.sendVenueRejectedEmail(owner.email, venue.name, dto.rejectionReason);
+  }
+
   return updated;
 }
 
-export async function deactivateVenue(venueId: string, adminId: string): Promise<IVenue> {
+export async function suspendVenue(venueId: string, adminId: string, dto: SuspendVenueDTO): Promise<IVenue> {
   const venue = await repo.findVenueById(venueId);
   if (!venue) throw new NotFoundError('Venue not found');
 
   workflow.canDeactivate(venue);
 
-  const updated = await repo.updateVenueStatus(venueId, 'Suspended', adminId);
+  const extra = { suspensionReason: dto.suspensionReason };
+  const updated = await repo.updateVenueStatus(venueId, 'Suspended', adminId, extra);
   if (!updated) throw new NotFoundError('Venue not found');
+
+  const owner = await UserModel.findById(venue.ownerUserId).lean();
+  if (owner?.email) {
+    void emailService.sendVenueSuspendedEmail(owner.email, venue.name, dto.suspensionReason);
+  }
+
   return updated;
 }
 
-export async function activateVenue(venueId: string, adminId: string): Promise<IVenue> {
+export async function unsuspendVenue(venueId: string, adminId: string): Promise<IVenue> {
   const venue = await repo.findVenueById(venueId);
   if (!venue) throw new NotFoundError('Venue not found');
 
@@ -233,5 +275,22 @@ export async function activateVenue(venueId: string, adminId: string): Promise<I
 
   const updated = await repo.updateVenueStatus(venueId, 'Approved', adminId);
   if (!updated) throw new NotFoundError('Venue not found');
+
+  const owner = await UserModel.findById(venue.ownerUserId).lean();
+  if (owner?.email) {
+    void emailService.sendVenueUnsuspendedEmail(owner.email, venue.name);
+  }
+
   return updated;
+}
+
+export async function featureVenue(venueId: string, durationDays: number | null): Promise<void> {
+  const venue = await repo.findVenueById(venueId);
+  if (!venue) throw new NotFoundError('Venue not found');
+  
+  if (venue.status !== 'Approved') {
+    throw new ConflictError('Only approved venues can be featured');
+  }
+
+  await repo.upsertFeaturedVenue(venueId, durationDays);
 }

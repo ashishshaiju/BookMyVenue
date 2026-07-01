@@ -2,6 +2,7 @@ import { handleError } from '../../utils/errors';
 import { ResponseUtil } from '../../utils/responseUtils';
 import { setTokenCookies, clearTokenCookies } from '../../utils/tokenUtils';
 import * as service from './auth.service';
+import * as validator from './auth.validator';
 import type * as authScheme from './auth.validator';
 import type { Request, Response } from 'express';
 import type { z } from 'zod';
@@ -103,5 +104,27 @@ export const resetPassword = async (req: Request, res: Response): Promise<void> 
     ResponseUtil.success(res, 'Password reset successful. Please log in with your new password.');
   } catch (e) {
     handleError(res, e, 'resetPassword');
+  }
+};
+
+export const changePassword = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const validatedData = validator.changePasswordSchema.parse(req.body);
+    
+    if (!req.user?.userId) {
+      ResponseUtil.unauthorized(res, 'User not authenticated');
+      return;
+    }
+
+    await service.changePassword(
+      req.user.userId,
+      validatedData,
+      req.ip ?? req.socket.remoteAddress ?? 'unknown',
+      req.headers['user-agent'] ?? 'unknown'
+    );
+
+    ResponseUtil.success(res, 'Password changed successfully.');
+  } catch (e) {
+    handleError(res, e, 'changePassword');
   }
 };

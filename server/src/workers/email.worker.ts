@@ -4,7 +4,7 @@ import { EmailIntent, EmailTaskStatus, EmailConstants } from '../constants/email
 import { logError, logWarn, logInfo } from '../utils/logger';
 
 let isShuttingDown = false;
-let pollingInterval: NodeJS.Timeout | null = null;
+let pollingInterval: ReturnType<typeof setInterval> | null = null;
 let activeTasks = 0;
 
 async function dispatch(task: IEmailTask): Promise<void> {
@@ -22,10 +22,74 @@ async function dispatch(task: IEmailTask): Promise<void> {
       }
       break;
     }
+    case EmailIntent.ADMIN_PASSWORD_RESET: {
+      const { newPassword, username } = metadata;
+      if (!newPassword || !username) {
+        throw new Error(`Missing required metadata for ${EmailIntent.ADMIN_PASSWORD_RESET} intent`);
+      }
+      const result = await emailService.sendAdminPasswordResetEmail(recipient, newPassword, username);
+      if (!result.success) {
+        throw new Error('Failed to send admin password reset email via Resend');
+      }
+      break;
+    }
     case EmailIntent.SECURITY_ALERT: {
       const result = await emailService.sendPasswordChangedEmail(recipient);
       if (!result.success) {
         throw new Error('Failed to send security alert email via Resend');
+      }
+      break;
+    }
+    case EmailIntent.BOOKING_CONFIRMATION: {
+      const { venueName, date, startTime, endTime, amount, paymentReference } = metadata;
+      if (!venueName || !date || !startTime || !endTime || !amount || !paymentReference) {
+        throw new Error(`Missing required metadata fields for ${EmailIntent.BOOKING_CONFIRMATION} intent`);
+      }
+      const result = await emailService.sendBookingConfirmation(recipient, {
+        venueName,
+        date,
+        startTime,
+        endTime,
+        amount: parseFloat(amount),
+        paymentReference,
+      });
+      if (!result.success) {
+        throw new Error('Failed to send booking confirmation email via Resend');
+      }
+      break;
+    }
+    case EmailIntent.BOOKING_REFUND: {
+      const { venueName, date, startTime, endTime, amount, refundReference } = metadata;
+      if (!venueName || !date || !startTime || !endTime || !amount || !refundReference) {
+        throw new Error(`Missing required metadata fields for ${EmailIntent.BOOKING_REFUND} intent`);
+      }
+      const result = await emailService.sendRefundNotification(recipient, {
+        venueName,
+        date,
+        startTime,
+        endTime,
+        amount: parseFloat(amount),
+        refundReference,
+      });
+      if (!result.success) {
+        throw new Error('Failed to send booking refund email via Resend');
+      }
+      break;
+    }
+    case EmailIntent.BOOKING_CANCELLATION: {
+      const { venueName, date, timeRange, refundAmount, bookingRef } = metadata;
+      if (!venueName || !date || !timeRange || !refundAmount || !bookingRef) {
+        throw new Error(`Missing required metadata fields for ${EmailIntent.BOOKING_CANCELLATION} intent`);
+      }
+      const result = await emailService.sendBookingCancellationEmail(recipient, {
+        venueName,
+        date,
+        timeRange,
+        refundAmount: parseFloat(refundAmount),
+        bookingRef,
+      });
+      if (!result.success) {
+        throw new Error('Failed to send booking cancellation email via Resend');
       }
       break;
     }

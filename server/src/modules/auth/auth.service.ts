@@ -6,9 +6,11 @@ import { AuthConstants, TokenRevocationReason } from '../../constants/auth.const
 import * as authRepo from './auth.repository';
 import * as userRepo from '../user/user.repository';
 import type * as authScheme from './auth.validator';
-import { AppError } from '../../utils/errors';
+import { AppError, NotFoundError } from '../../utils/errors';
 import { logError, logWarn, logInfo } from '../../utils/logger';
 import { runInTransaction } from '../../utils/dbUtils';
+import mongoose from 'mongoose';
+import type * as validator from './auth.validator';
 import {
   generateAccessToken,
   generateRefreshToken,
@@ -402,4 +404,59 @@ export async function processResetPassword(
       userAgent,
     });
   });
+}
+
+export async function changePassword(
+  userId: string,
+  dto: z.infer<typeof validator.changePasswordSchema>,
+  ipAddress: string,
+  userAgent: string
+): Promise<void> {
+  const session = await mongoose.startSession();
+  
+  await session.withTransaction(async () => {
+    const user = await userRepo.findActiveUserByIdWithPassword(userId, session);
+    if (!user) {
+      throw new NotFoundError('User not found');
+    }
+
+    const isOldPasswordValid = await bcrypt.compare(dto.oldPassword, user.password);
+    if (!isOldPasswordValid) {
+      throw new BadRequestError('Incorrect old password');
+    }
+
+    const isSamePassword = await bcrypt.compare(dto.newPassword, user.password);
+    if (isSamePassword) {
+      throw new BadRequestError('New password cannot be the same as your old password');
+    }
+
+    const hashedPassword = await bcrypt.hash(dto.newPassword, 12);
+    await userRepo.updateUserPassword(userId, hashedPassword, session);
+
+    await authRepo.revokeAllRefreshTokensForUser(
+      new mongoose.Types.ObjectId(userId),
+      TokenRevocationReason.PASSWORD_CHANGED,
+      session
+    );
+
+    await authRepo.deactivateAllSessionsForUser(new mongoose.Types.ObjectId(userId), session);
+
+    const appName = process.env.APP_NAME ?? 'BookMyVenue';
+    await authRepo.createEmailTask(
+      {
+        intent: 'security_alert',
+        recipient: user.email,
+        subject: `Your ${appName} password was changed`,
+        metadata: {},
+      },
+      session
+    );
+
+    logInfo('change-password: password changed successfully', {
+      userId,
+      ip: ipAddress,
+      userAgent,
+    });
+  });
+  await session.endSession();
 }

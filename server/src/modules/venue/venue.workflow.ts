@@ -56,7 +56,7 @@ export function canSubmit(venue: IVenue): void {
 
   // Fixed booking checks
   if (venue.bookingType === 'fixedBooking') {
-    if (venue.fixedPackages.length === 0) {
+    if (!venue.fixedPackages || venue.fixedPackages.length === 0) {
       throw new ValidationError(
         'Cannot submit: at least one fixed package is required for fixed booking type'
       );
@@ -65,18 +65,21 @@ export function canSubmit(venue: IVenue): void {
 
   // Flexible booking checks
   if (venue.bookingType === 'flexibleBooking') {
-    if (!venue.workingHours.open || !venue.workingHours.close) {
+    if (!venue.workingHours?.open || !venue.workingHours.close) {
       throw new ValidationError(
         'Cannot submit: working hours (open & close) are required for flexible booking type'
       );
     }
-    if (!venue.flexibleBooking.slotDuration) {
+    if (!venue.flexibleBooking?.slotDuration) {
       throw new ValidationError(
         'Cannot submit: slot duration is required for flexible booking type'
       );
     }
 
     // Pricing checks inside flexible booking
+    if (!venue.pricing) {
+      throw new ValidationError('Cannot submit: pricing is required for flexible booking type');
+    }
     if (venue.pricing.pricingType === 'timeBasedPricing' && venue.pricing.pricingRules.length === 0) {
       throw new ValidationError(
         'Cannot submit: at least one pricing rule is required for time-based pricing'

@@ -58,6 +58,42 @@ export const verifyAccessToken = (req: Request, res: Response, next: NextFunctio
   }
 };
 
+export const verifyAccessTokenOptional = (req: Request, _res: Response, next: NextFunction): void => {
+  try {
+    const accessToken = req.cookies.accessToken as string | undefined;
+
+    if (!accessToken) {
+      next(); return;
+    }
+
+    const accessSecret = process.env.JWT_ACCESS_SECRET;
+    if (!accessSecret) {
+      logError('JWT_ACCESS_SECRET not configured', { module: "auth.middleware.ts/verifyAccessTokenOptional", path: req.path });
+      next(); return;
+    }
+
+    const decoded = jwt.verify(accessToken, accessSecret, tokenVerifyOptions) as TokenPayload;
+
+    if (decoded.id && decoded.username && decoded.email) {
+      req.user = {
+        userId: decoded.id,
+        username: decoded.username,
+        email: decoded.email,
+        role: {},
+      };
+    }
+
+    next();
+  } catch (error) {
+    const authError = error as Error;
+    logWarn('Optional access token verification failed', {
+      error: authError.message,
+      path: req.path,
+    });
+    next();
+  }
+};
+
 export const verifyRefreshToken = async (
   req: Request,
   res: Response,
