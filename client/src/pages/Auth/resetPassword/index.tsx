@@ -26,7 +26,7 @@ const ResetPasswordPage = () => {
     if (!token) {
       toast.error('Reset token is missing from the URL. Please request a new link.');
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, [token]);
 
   const handleSubmit = async (

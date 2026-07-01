@@ -1,77 +1,127 @@
-import { useEffect } from 'react';
-import { useLocation, useNavigate, Link } from 'react-router';
-import { TbShieldCheck } from 'react-icons/tb';
+import { useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router';
+import { FiCheckCircle, FiCalendar, FiMapPin, FiCreditCard } from 'react-icons/fi';
+import { MdOutlineMeetingRoom } from 'react-icons/md';
+
 
 const BookingConfirmation = () => {
   const location = useLocation();
   const navigate = useNavigate();
-
+  const [countdown, setCountdown] = useState(5);
+  
   const state = location.state as {
     paymentId?: string;
     venueName?: string;
     date?: string;
     slotTime?: string;
+    amountToPay?: number;
+    bookingId?: string;
+    bookingRef?: string;
   } | null;
 
   useEffect(() => {
-    // If user accesses this page directly without state, redirect
     if (!state?.paymentId) {
-      navigate('/explore');
+      navigate('/', { replace: true });
+      return;
     }
+
+    const timer = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+           if (state.bookingRef) {
+             navigate(`/booking/${state.bookingRef}`, { replace: true });
+           } else {
+             navigate('/my-bookings', { replace: true });
+           }
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
   }, [state, navigate]);
 
   if (!state?.paymentId) return null;
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[70vh] px-4 mt-20">
-      <div className="bg-[var(--bg-tertiary)] border border-[var(--bg-grey)] rounded-3xl p-10 max-w-lg w-full text-center shadow-lg">
-        <div className="w-24 h-24 bg-green-100 dark:bg-green-900/50 text-green-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
-          <TbShieldCheck size={50} />
+    <div className="min-h-screen bg-[var(--bg-primary)] flex items-center justify-center p-4">
+      <div className="max-w-xl w-full bg-[var(--bg-tertiary)] border border-[var(--bg-grey)] rounded-3xl p-8 shadow-2xl text-center relative overflow-hidden">
+        
+        {/* Background Decorative Elements */}
+        <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-[var(--bg-green)]/10 to-transparent pointer-events-none"></div>
+
+        {/* Success Icon */}
+        <div className="mx-auto w-24 h-24 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mb-6 relative z-10 animate-bounce">
+          <FiCheckCircle className="text-[var(--bg-green)] text-5xl" />
         </div>
-        <h2 className="text-3xl font-extrabold text-[var(--text-primary)] mb-3">
-          Booking Confirmed! 🎉
-        </h2>
-        <p className="text-[var(--text-secondary)] mb-8 text-lg">
-          Your payment was successful and the slot has been securely booked.
+
+        <h1 className="text-3xl font-extrabold text-[var(--text-primary)] mb-2 relative z-10">
+          Booking Confirmed!
+        </h1>
+        <p className="text-[var(--text-secondary)] mb-8 relative z-10">
+          Thank you for choosing BookMyVenue. Your payment was successful.
         </p>
 
-        <div className="bg-[var(--bg-grey)] rounded-2xl p-6 text-left mb-8 border border-[var(--bg-grey)]">
-          <div className="mb-4">
-            <p className="text-sm text-[var(--text-secondary)]">Payment ID</p>
-            <p className="font-mono text-[var(--text-primary)] font-medium break-all">
+        {/* Details Card */}
+        <div className="bg-[var(--bg-primary)] rounded-2xl p-6 mb-8 text-left border border-[var(--bg-grey)] relative z-10">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+             
+             <div className="flex items-start gap-3">
+               <div className="mt-1 text-[var(--text-secondary)]"><FiMapPin /></div>
+               <div>
+                 <p className="text-xs text-[var(--text-secondary)] uppercase tracking-wider font-semibold">Venue</p>
+                 <p className="font-bold text-[var(--text-primary)]">{state.venueName}</p>
+               </div>
+             </div>
+
+             <div className="flex items-start gap-3">
+               <div className="mt-1 text-[var(--text-secondary)]"><FiCalendar /></div>
+               <div>
+                 <p className="text-xs text-[var(--text-secondary)] uppercase tracking-wider font-semibold">Date</p>
+                 <p className="font-bold text-[var(--text-primary)]">{state.date}</p>
+               </div>
+             </div>
+
+             <div className="flex items-start gap-3">
+               <div className="mt-1 text-[var(--text-secondary)]"><MdOutlineMeetingRoom /></div>
+               <div>
+                 <p className="text-xs text-[var(--text-secondary)] uppercase tracking-wider font-semibold">Time Slot</p>
+                 <p className="font-bold text-[var(--text-primary)]">{state.slotTime}</p>
+               </div>
+             </div>
+
+             <div className="flex items-start gap-3">
+               <div className="mt-1 text-[var(--text-secondary)]"><FiCreditCard /></div>
+               <div>
+                 <p className="text-xs text-[var(--text-secondary)] uppercase tracking-wider font-semibold">Amount Paid</p>
+                 <p className="font-bold text-[var(--bg-green)]">₹{state.amountToPay}</p>
+               </div>
+             </div>
+
+          </div>
+          <div className="mt-6 pt-6 border-t border-[var(--bg-grey)] flex items-center justify-between">
+            <span className="text-sm text-[var(--text-secondary)]">Payment ID</span>
+            <span className="font-mono text-sm text-[var(--text-primary)] bg-[var(--bg-grey)] px-3 py-1 rounded-lg">
               {state.paymentId}
-            </p>
-          </div>
-          <div className="mb-4">
-            <p className="text-sm text-[var(--text-secondary)]">Venue</p>
-            <p className="text-[var(--text-primary)] font-semibold">{state.venueName}</p>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <p className="text-sm text-[var(--text-secondary)]">Date</p>
-              <p className="text-[var(--text-primary)] font-semibold">{state.date}</p>
-            </div>
-            <div>
-              <p className="text-sm text-[var(--text-secondary)]">Time Slot</p>
-              <p className="text-[var(--text-primary)] font-semibold">{state.slotTime}</p>
-            </div>
+            </span>
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Link
-            to="/my-bookings"
-            className="px-6 py-4 rounded-xl border border-[var(--bg-grey)] font-bold text-[var(--text-primary)] hover:bg-[var(--bg-grey)] transition"
-          >
-            View Bookings
-          </Link>
-          <Link
-            to="/explore"
-            className="px-6 py-4 rounded-xl bg-[var(--bg-green)] font-bold text-white hover:bg-green-600 transition shadow-md"
-          >
-            Explore More Venues
-          </Link>
+        {/* Redirect Message */}
+        <div className="text-[var(--text-secondary)]">
+          <p>Redirecting to your booking details in <span className="font-bold text-[var(--text-primary)]">{countdown}s</span>...</p>
         </div>
+
+        {/* Manual Redirect Button */}
+        <button
+          onClick={() => state.bookingRef ? navigate(`/booking/${state.bookingRef}`, { replace: true }) : navigate('/my-bookings', { replace: true })}
+          className="mt-6 font-bold text-[var(--bg-green)] hover:underline"
+        >
+          View Booking Now
+        </button>
+
       </div>
     </div>
   );
