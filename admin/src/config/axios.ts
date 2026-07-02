@@ -17,7 +17,8 @@ interface QueuedRequest {
 // Error message extractor
 const extractErrorMessage = (error: unknown): string => {
   if (axios.isAxiosError(error)) {
-    const data = error.response?.data as Record<string, unknown>;
+    const err = error as import("axios").AxiosError<{message: string, error: string}>;
+    const data = err.response?.data;
     return (
       (data?.message as string) ||
       (data?.error as string) ||
@@ -86,12 +87,17 @@ export const createAxiosInstance = (): AxiosInstance => {
       }
 
       if (error.response.status === 401 && !originalRequest._retry) {
-        if (originalRequest.url?.includes(API_ENDPOINTS.REFRESH)) {
-          window.dispatchEvent(
-            new CustomEvent("auth:logout", {
-              detail: { message: "Session expired. Please login again." },
-            }),
-          );
+        if (
+          originalRequest.url?.includes(API_ENDPOINTS.REFRESH) ||
+          originalRequest.url?.includes(API_ENDPOINTS.LOGIN)
+        ) {
+          if (originalRequest.url?.includes(API_ENDPOINTS.REFRESH)) {
+            window.dispatchEvent(
+              new CustomEvent("auth:logout", {
+                detail: { message: "Session expired. Please login again." },
+              }),
+            );
+          }
           return Promise.reject(error);
         }
 

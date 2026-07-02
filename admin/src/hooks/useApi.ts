@@ -3,6 +3,7 @@ import {
   useMutation,
   type UseQueryOptions,
   type UseMutationOptions,
+  type QueryKey,
 } from "@tanstack/react-query";
 import { axiosInstance } from "../config/axios";
 import { AxiosError } from "axios";
@@ -10,7 +11,7 @@ import type { AxiosRequestConfig } from "axios";
 
 // Generic query hook
 export function useApiQuery<T = unknown>(
-  key: string | string[],
+  key: QueryKey,
   config: AxiosRequestConfig,
   options?: Omit<UseQueryOptions<T>, "queryKey" | "queryFn">,
 ) {
@@ -31,15 +32,18 @@ export function useApiQuery<T = unknown>(
 
 // Generic mutation hook
 export function useApiMutation<T = unknown, TVariables = unknown>(
-  config: AxiosRequestConfig,
-  options?: UseMutationOptions<T, Error, TVariables>,
+  configOrBuilder: AxiosRequestConfig | ((variables: TVariables) => AxiosRequestConfig),
+  options?: Omit<UseMutationOptions<T, Error, TVariables>, 'mutationFn'>,
 ) {
   return useMutation<T, Error, TVariables>({
     mutationFn: async (variables: TVariables) => {
-      const response = await axiosInstance({
-        ...config,
-        data: variables,
-      });
+      // If a function is passed, use it to build the config (URL, method, data). 
+      // Otherwise, fall back to the old behavior of merging the variables into the data property.
+      const config = typeof configOrBuilder === 'function' 
+        ? configOrBuilder(variables) 
+        : { ...configOrBuilder, data: variables };
+
+      const response = await axiosInstance(config);
       return response.data?.data ?? response.data;
     },
     ...options,

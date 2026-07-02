@@ -1,0 +1,64 @@
+import { axiosInstance } from '../config/axios';
+import { API_ENDPOINTS } from '../constants';
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  pagination: {
+    totalItems: number;
+    totalPages: number;
+    currentPage: number;
+    limit: number;
+  };
+}
+
+export const adminService = {
+  getVenues: async (page: number, limit: number = 10, status?: string) => {
+    const params = new URLSearchParams({ page: page.toString(), limit: limit.toString() });
+    if (status) params.append('status', status);
+    const response = await axiosInstance.get(`${API_ENDPOINTS.ADMIN_VENUES}?${params.toString()}`);
+    return response.data.data; // { venues, pagination }
+  },
+  approveVenue: async (id: string) => {
+    const response = await axiosInstance.post(`${API_ENDPOINTS.VENUES}/${id}/approve`);
+    return response.data;
+  },
+  rejectVenue: async (id: string, reason: string) => {
+    const response = await axiosInstance.post(`${API_ENDPOINTS.VENUES}/${id}/reject`, { reason });
+    return response.data;
+  },
+  featureVenue: async (id: string, duration: number | null) => {
+    const response = await axiosInstance.post(`${API_ENDPOINTS.VENUES}/${id}/feature`, { duration });
+    return response.data;
+  },
+  activateVenue: async (id: string) => {
+    const response = await axiosInstance.post(`${API_ENDPOINTS.VENUES}/${id}/activate`);
+    return response.data;
+  },
+  deactivateVenue: async (id: string) => {
+    const response = await axiosInstance.post(`${API_ENDPOINTS.VENUES}/${id}/deactivate`);
+    return response.data;
+  },
+  getBookings: async (page: number, limit: number = 10) => {
+    const params = new URLSearchParams({ page: page.toString(), limit: limit.toString() });
+    const response = await axiosInstance.get(`${API_ENDPOINTS.ADMIN_BOOKINGS}?${params.toString()}`);
+    return response.data.data; // { bookings, pagination }
+  },
+  getOwners: async (page: number, limit: number = 10) => {
+    const params = new URLSearchParams({ page: page.toString(), limit: limit.toString(), role: 'owner' });
+    const response = await axiosInstance.get(`${API_ENDPOINTS.ADMIN_USERS}?${params.toString()}`);
+    return response.data.data; // { users, pagination }
+  },
+  getAdmins: async (page: number, limit: number = 10) => {
+    const params = new URLSearchParams({ page: page.toString(), limit: limit.toString() });
+    const response = await axiosInstance.get(`${API_ENDPOINTS.RBAC_ADMINS}?${params.toString()}`);
+    return response.data.data; // { admins, pagination }
+  },
+  promoteToAdmin: async (email: string) => {
+    const response = await axiosInstance.post(API_ENDPOINTS.RBAC_PROMOTE, { email });
+    return response.data;
+  },
+  demoteAdmin: async (userId: string) => {
+    const response = await axiosInstance.post(API_ENDPOINTS.RBAC_DEMOTE, { userId });
+    return response.data;
+  },
+};
