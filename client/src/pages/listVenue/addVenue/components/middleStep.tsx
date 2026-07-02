@@ -1,4 +1,5 @@
 import { Field, FieldArray, ErrorMessage, useFormikContext } from 'formik';
+import SlotPreviewPanel from './SlotPreviewPanel';
 
 const amenitiesList = [
   'Parking',
@@ -44,6 +45,9 @@ type BookingStepValues = {
     toTime: string;
   }[];
   amenities: string[];
+  pricing?: {
+    basePrice?: string;
+  };
 };
 
 const err = 'text-red-500 text-sm mt-1';
@@ -59,15 +63,18 @@ const BookingStep = () => {
 
   return (
     <section className="font-sans">
-      <div className="max-w-5xl mx-auto">
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold text-[var(--bg-green)]">Booking Configuration</h2>
-          <p className="text-[var(--text-secondary)] mt-2">
-            Configure booking, pricing and venue setup.
-          </p>
-        </div>
+      <div className="max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2">
+            <div className="max-w-5xl">
+              <div className="mb-8">
+                <h2 className="text-3xl font-bold text-[var(--bg-green)]">Booking Configuration</h2>
+                <p className="text-[var(--text-secondary)] mt-2">
+                  Configure booking, pricing and venue setup.
+                </p>
+              </div>
 
-        <div className="bg-[var(--bg-tertiary)] rounded-3xl p-8 border border-[var(--bg-grey)] shadow-sm space-y-10">
+              <div className="bg-[var(--bg-tertiary)] rounded-3xl p-8 border border-[var(--bg-grey)] shadow-sm space-y-10">
           {/* Booking Type */}
           <div>
             <label className="block mb-4 font-bold text-[var(--text-primary)]">Booking Type</label>
@@ -108,7 +115,7 @@ const BookingStep = () => {
               <FieldArray name="fixedPackages">
                 {({ push, remove }) => (
                   <div className="space-y-5">
-                    {values.fixedPackages.map((_, index) => (
+                    {(values.fixedPackages || []).map((_, index) => (
                       <div key={index} className="border border-[var(--bg-grey)] rounded-2xl p-5">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           <div className="md:col-span-2">
@@ -324,7 +331,7 @@ const BookingStep = () => {
                   <FieldArray name="pricingRules">
                     {({ push, remove }) => (
                       <div className="space-y-5">
-                        {values.pricingRules.map((_, index) => (
+                        {(values.pricingRules || []).map((_, index) => (
                           <div
                             key={index}
                             className="border border-[var(--bg-grey)] rounded-2xl p-5"
@@ -418,7 +425,7 @@ const BookingStep = () => {
                 <FieldArray name="blockedTimes">
                   {({ push, remove }) => (
                     <div className="space-y-5">
-                      {values.blockedTimes.map((_, index) => (
+                      {(values.blockedTimes || []).map((_, index) => (
                         <div key={index} className="border border-[var(--bg-grey)] rounded-2xl p-5">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
@@ -492,6 +499,33 @@ const BookingStep = () => {
               ))}
             </div>
             <ErrorMessage name="amenities" component="p" className={err} />
+          </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="lg:col-span-1 lg:relative">
+            <div className="lg:absolute lg:inset-0 w-full flex flex-col">
+              <SlotPreviewPanel
+                bookingType={values.bookingType as 'fixedBooking' | 'flexibleBooking'}
+                workingDays={values.workingDays}
+                workingHours={values.workingHours}
+                fixedPackages={(values.fixedPackages || []).map((pkg) => ({
+                  ...pkg,
+                  price: parseFloat(pkg.price) || 0,
+                }))}
+                slotDuration={values.slotDuration}
+                bufferTime={values.bufferTime}
+                pricingType={values.pricingType}
+                pricingRules={(values.pricingRules || []).map((rule) => ({
+                  ...rule,
+                  price: parseFloat(rule.price) || 0,
+                }))}
+                blockedTimes={values.blockedTimes || []}
+                samePrice={values.samePrice}
+                basePrice={values.pricing?.basePrice}
+              />
+            </div>
           </div>
         </div>
       </div>
