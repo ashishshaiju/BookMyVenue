@@ -17,6 +17,7 @@ import { validateEmailConfig } from './services/email.service';
 import { startEmailWorker } from './workers/email.worker';
 import { setupGracefulShutdown } from './utils/shutdownUtils';
 import { requestLogger, logInfo, logError } from './utils/logger';
+import { webhookRouter } from './modules/webhook/webhook.router';
 
 const PORT = parseInt(process.env.PORT ?? '3000', 10);
 
@@ -34,6 +35,14 @@ app.use(
     message: 'Too many requests from this IP, please try again after 15 minutes',
   })
 );
+
+// ─── WEBHOOK: Mount BEFORE express.json() ──────────────────────────────────
+// Razorpay HMAC-SHA256 verification requires the raw request body as a Buffer.
+// If express.json() runs first it parses (and discards) the stream; the raw
+// bytes are gone and every signature check will fail.
+// The webhookRouter applies express.raw({ type: 'application/json' }) at the
+// ROUTE level, so all other application routes are unaffected.
+app.use('/api/v1/webhook', webhookRouter);
 
 // Body parsing middleware
 app.use(express.json({ limit: '10kb' }));

@@ -31,6 +31,9 @@ const API_ENDPOINTS = {
   UPLOAD_SIGNATURE: '/venues/upload-signature',
   FORGOT_PASSWORD: '/auth/forgot-password',
   RESET_PASSWORD: '/auth/reset-password',
+  BLOCK_SLOT: (id: string) => `/availability/${id}/block`,
+  GET_AVAILABILITY: (id: string) => `/availability/${id}`,
+  CHECKOUT: '/bookings/checkout',
 } as const;
 
 export { INDIA_STATES, API_ENDPOINTS, STORAGE_KEYS, API_BASE_URL, DASHBOARD_URL };

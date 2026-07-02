@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useParams, Link } from 'react-router';
+import { useParams, Link, useNavigate } from 'react-router';
 import { FiMapPin, FiUsers } from 'react-icons/fi';
 import { MdOutlineMeetingRoom } from 'react-icons/md';
 import { GiTable } from 'react-icons/gi';
@@ -10,15 +10,23 @@ import {
   TbShieldCheck,
   TbShieldOff,
 } from 'react-icons/tb';
-import map from '../../assets/map.jpg';
-import { useApiQuery } from '../../hooks/useApi';
-import { API_ENDPOINTS } from '../../constants';
-import type { VenueDetail } from '../../types/venue.types';
-import { Skeleton } from '../../components/ui/skeleton';
+import map from '@/assets/map.jpg';
+import { useApiQuery, useApiMutation } from '@/hooks/useApi';
+import { API_ENDPOINTS } from '@/constants';
+import type { VenueDetail } from '@/types/venue.types';
+import type { Slot } from '@/types/booking.types';
+import { Skeleton } from '@/components/ui/skeleton';
+import { parseTimeToMinutes } from '@/utils/timeUtils';
+import { showError, showInfo } from '@/utils/toast';
+import type { AxiosError } from 'axios';
 
 const VenueDetails = () => {
   const { id } = useParams<{ id: string }>();
-  const [selectedPackage, setSelectedPackage] = useState<number[]>([]);
+  const navigate = useNavigate();
+
+  // 1. Unified array state for both Fixed (single) and Flexible (multi) selections
+  const [selectedSlots, setSelectedSlots] = useState<Slot[]>([]);
+  const [selectedDate, setSelectedDate] = useState<string>('');
 
   const {
     data: venue,
@@ -35,6 +43,156 @@ const VenueDetails = () => {
       enabled: !!id,
     }
   );
+
+  const { data: availabilityResponse, isLoading: isSlotsLoading } = useApiQuery<{
+    venueId: string;
+    date: string;
+    bookingType: string;
+    slots: {
+      slotId: string;
+      startTime: string;
+      endTime: string;
+      price: number;
+      isAvailable: boolean;
+      reason: string | null;
+    }[];
+  }>(
+    ['availability', id || '', selectedDate],
+    {
+      url: API_ENDPOINTS.GET_AVAILABILITY(id as string),
+      method: 'GET',
+      params: { date: selectedDate },
+    },
+    {
+      enabled: !!id && !!selectedDate,
+    }
+  );
+
+  const allSlots = availabilityResponse?.slots || [];
+
+  // 2. Computed values for multi-selection
+  const totalPrice = selectedSlots.reduce((sum, slot) => sum + slot.price, 0);
+  const sortedSelection = [...selectedSlots].sort(
+    (a, b) =>
+      allSlots.findIndex((s) => s.slotId === a.slotId) -
+      allSlots.findIndex((s) => s.slotId === b.slotId)
+  );
+
+  const finalStartTime = sortedSelection.length > 0 ? sortedSelection[0].startTime : null;
+  const finalEndTime =
+    sortedSelection.length > 0 ? sortedSelection[sortedSelection.length - 1].endTime : null;
+
+  // 3. Array-Index Based Slot Selection
+  const handleSlotSelect = (slot: Slot) => {
+    if (venue?.bookingType === 'fixedBooking') {
+      setSelectedSlots((prev) => (prev[0]?.slotId === slot.slotId ? [] : [slot]));
+      return;
+    }
+
+    const clickedIdx = allSlots.findIndex((s) => s.slotId === slot.slotId);
+
+    setSelectedSlots((prev) => {
+      const isSelected = prev.some((s) => s.slotId === slot.slotId);
+
+      const sortedPrev = [...prev].sort(
+        (a, b) =>
+          allSlots.findIndex((s) => s.slotId === a.slotId) -
+          allSlots.findIndex((s) => s.slotId === b.slotId)
+      );
+
+      if (isSelected) {
+        if (sortedPrev.length === 1) return [];
+
+        const selIdx = sortedPrev.findIndex((s) => s.slotId === slot.slotId);
+
+        // Smart deselect: shrink from the ends, or truncate if middle clicked
+        if (selIdx === 0) {
+          return sortedPrev.slice(1);
+        } else if (selIdx === sortedPrev.length - 1) {
+          return sortedPrev.slice(0, -1);
+        } else {
+          return sortedPrev.slice(0, selIdx);
+        }
+      }
+
+      if (sortedPrev.length === 0) return [slot];
+
+      const firstIdx = allSlots.findIndex((s) => s.slotId === sortedPrev[0].slotId);
+      const lastIdx = allSlots.findIndex(
+        (s) => s.slotId === sortedPrev[sortedPrev.length - 1].slotId
+      );
+
+      // Determine the proposed range spanning the existing selection and the newly clicked slot
+      const startRange = Math.min(firstIdx, clickedIdx);
+      const endRange = Math.max(lastIdx, clickedIdx);
+
+      // Extract the slots within this range
+      const rangeSlots = allSlots.slice(startRange, endRange + 1);
+
+      // Verify that EVERY slot in the proposed range is available
+      const isRangeAvailable = rangeSlots.every((s) => s.isAvailable);
+
+      if (isRangeAvailable) {
+        return rangeSlots;
+      } else {
+        // Range spans over an unavailable slot, so we reset the selection to just the clicked slot
+        setTimeout(
+          () =>
+            showInfo(
+              'Cannot select a range containing unavailable slots. Started a new selection.'
+            ),
+          0
+        );
+        return [slot];
+      }
+    });
+  };
+
+  const { mutate: blockSlot, isPending: isBlocking } = useApiMutation(
+    {
+      url: API_ENDPOINTS.BLOCK_SLOT(id as string),
+      method: 'POST',
+    },
+    {
+      onSuccess: (data) => {
+        navigate('/booking/summary', {
+          state: {
+            lockData: data,
+            venueName: venue?.name,
+            date: selectedDate,
+            slotTime: finalStartTime ? `${finalStartTime} - ${finalEndTime}` : '',
+            slotPrice: totalPrice,
+          },
+        });
+      },
+      onError: (error: AxiosError<{ message: string }> | Error) => {
+        const errorMessage =
+          (error as AxiosError<{ message: string }>).response?.data?.message ||
+          'Failed to secure slots. Someone may have just booked one.';
+        showError(errorMessage);
+        setSelectedSlots([]);
+        refetch(); // Refresh to immediately show the newly blocked slot
+      },
+    }
+  );
+
+  const handleProceedToBook = () => {
+    if (!selectedDate) {
+      showError('Please select a date first');
+      return;
+    }
+    if (selectedSlots.length === 0 || !finalStartTime || !finalEndTime) {
+      showError('Please select at least one time slot');
+      return;
+    }
+
+    blockSlot({
+      date: selectedDate,
+      startTime: parseTimeToMinutes(finalStartTime),
+      endTime: parseTimeToMinutes(finalEndTime),
+      expectedPrice: totalPrice,
+    });
+  };
 
   if (isLoading) {
     return (
@@ -96,10 +254,8 @@ const VenueDetails = () => {
   return (
     <section className="max-w-8xl mx-auto mt-24 px-4 pb-12">
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 relative">
-        {/* left content */}
         <div className="lg:col-span-8">
           <div className="w-full z-10 font-sans">
-            {/* Header / Venue Name & Location */}
             <div className="mb-6">
               <h1 className="text-4xl font-extrabold text-[var(--text-primary)] mb-2 capitalize">
                 {venue.name}
@@ -110,10 +266,8 @@ const VenueDetails = () => {
               </p>
             </div>
 
-            {/* image Grid */}
             {images.length > 0 && (
               <div className="grid grid-cols-4 grid-rows-3 gap-3 h-[400px] mb-10">
-                {/* Big Image */}
                 <div className="col-span-4 sm:col-span-3 row-span-3">
                   <img
                     src={images[0]}
@@ -121,7 +275,6 @@ const VenueDetails = () => {
                     className="w-full h-full object-cover rounded-3xl shadow-sm"
                   />
                 </div>
-                {/* image 2 */}
                 {images.length > 1 && (
                   <div className="hidden sm:block">
                     <img
@@ -131,7 +284,6 @@ const VenueDetails = () => {
                     />
                   </div>
                 )}
-                {/* image 3 */}
                 {images.length > 2 && (
                   <div className="hidden sm:block">
                     <img
@@ -141,7 +293,6 @@ const VenueDetails = () => {
                     />
                   </div>
                 )}
-                {/* more images + icon */}
                 {images.length > 3 && (
                   <button className="hidden sm:block relative cursor-pointer group overflow-hidden rounded-2xl shadow-sm">
                     <img
@@ -157,7 +308,6 @@ const VenueDetails = () => {
               </div>
             )}
 
-            {/* about venue */}
             <div className="bg-[var(--bg-tertiary)] border border-[var(--bg-grey)] rounded-3xl p-8 mb-8 shadow-sm">
               <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-4">About Venue</h2>
               <p className="text-[var(--text-secondary)] leading-8 text-lg whitespace-pre-wrap">
@@ -165,7 +315,6 @@ const VenueDetails = () => {
               </p>
             </div>
 
-            {/* Amenities */}
             {amenities.length > 0 && (
               <div className="mb-8">
                 <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-4">Amenities</h2>
@@ -187,11 +336,9 @@ const VenueDetails = () => {
               </div>
             )}
 
-            {/* Venue Details */}
             <div className="mb-8">
               <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-5">Venue Details</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* Venue Type */}
                 <div className="bg-[var(--bg-tertiary)] border border-[var(--bg-grey)] rounded-3xl p-5 shadow-sm hover:shadow-md transition">
                   <div className="flex items-center gap-4">
                     <div className="bg-[var(--bg-grey)] p-3.5 rounded-2xl">
@@ -205,7 +352,7 @@ const VenueDetails = () => {
                     </div>
                   </div>
                 </div>
-                {/* Capacity */}
+
                 {venue.maxCapacity && (
                   <div className="bg-[var(--bg-tertiary)] border border-[var(--bg-grey)] rounded-3xl p-5 shadow-sm hover:shadow-md transition">
                     <div className="flex items-center gap-4">
@@ -221,7 +368,7 @@ const VenueDetails = () => {
                     </div>
                   </div>
                 )}
-                {/* Space Type */}
+
                 {venue.spaceAttributes?.length > 0 && (
                   <div className="bg-[var(--bg-tertiary)] border border-[var(--bg-grey)] rounded-3xl p-5 shadow-sm hover:shadow-md transition">
                     <div className="flex items-center gap-4">
@@ -237,7 +384,7 @@ const VenueDetails = () => {
                     </div>
                   </div>
                 )}
-                {/* Seating */}
+
                 {venue.seatingConfigurations?.length > 0 && (
                   <div className="bg-[var(--bg-tertiary)] border border-[var(--bg-grey)] rounded-3xl p-5 shadow-sm hover:shadow-md transition">
                     <div className="flex items-center gap-4">
@@ -256,7 +403,6 @@ const VenueDetails = () => {
               </div>
             </div>
 
-            {/* Location */}
             <div className="bg-[var(--bg-tertiary)] border border-[var(--bg-grey)] rounded-3xl p-8 shadow-sm">
               <div className="flex items-center gap-4 mb-6">
                 <div className="bg-[var(--bg-grey)] p-3.5 rounded-2xl">
@@ -405,24 +551,27 @@ const VenueDetails = () => {
           </div>
         </div>
 
-        {/* Right Booking Section */}
         <div className="lg:col-span-4">
           <div className="sticky top-28 bg-[var(--bg-tertiary)] border border-[var(--bg-grey)] rounded-3xl p-6 shadow-md">
             <h2 className="text-2xl font-bold text-[var(--text-primary)]">Book Venue</h2>
             <p className="text-[var(--text-secondary)] text-sm mt-1">Check availability and book</p>
 
-            {/* Date */}
+            {/* Date Input - Clears selection on date change */}
             <div className="mt-6">
               <label className="block text-sm font-semibold text-[var(--text-secondary)] mb-2">
                 Select Date
               </label>
               <input
                 type="date"
+                value={selectedDate}
+                onChange={(e) => {
+                  setSelectedDate(e.target.value);
+                  setSelectedSlots([]);
+                }}
                 className="w-full border border-[var(--bg-grey)] rounded-2xl px-4 py-3.5 outline-none focus:border-[var(--bg-green)] focus:ring-1 focus:ring-[var(--bg-green)] transition-all bg-[var(--bg-tertiary)] text-[var(--text-primary)]"
               />
             </div>
 
-            {/* slot selection*/}
             <div className="mt-8">
               <div className="flex justify-between items-end mb-4">
                 <h3 className="font-semibold text-[var(--text-primary)] text-lg">
@@ -433,92 +582,89 @@ const VenueDetails = () => {
                 </span>
               </div>
 
-              <div className="grid grid-cols-1 gap-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-                {/* for fixed slots */}
-                {venue.bookingType === 'fixedBooking' &&
-                  venue.fixedPackages?.length > 0 &&
-                  venue.fixedPackages.map((item, index) => (
-                    <button
-                      key={index}
-                      onClick={() => {
-                        if (selectedPackage.includes(index)) {
-                          setSelectedPackage(selectedPackage.filter((i) => i !== index));
-                        } else {
-                          setSelectedPackage([...selectedPackage, index]);
-                        }
-                      }}
-                      className={`w-full text-left border rounded-2xl p-4 transition-all cursor-pointer hover:shadow-md
-                        ${
-                          selectedPackage.includes(index)
-                            ? 'border-[var(--bg-green)] bg-[#e6f4ea] dark:bg-[var(--bg-green)]/10 ring-1 ring-[var(--bg-green)]'
-                            : 'border-[var(--bg-grey)] hover:border-gray-300'
-                        }
-                      `}
-                    >
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <h4 className="font-semibold text-[var(--text-primary)]">
-                            {item.slotName || 'Fixed Package'}
-                          </h4>
-                          <p className="text-sm text-[var(--text-secondary)] mt-1">
-                            {item.startTime} - {item.endTime}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <span className="font-bold text-lg text-[var(--bg-green)]">
-                            ₹{item.price}
-                          </span>
-                        </div>
-                      </div>
-                    </button>
-                  ))}
-
-                {/* flexible slots placeholder */}
-                {venue.bookingType === 'flexibleBooking' && (
-                  <div className="py-8 px-4 text-center border border-dashed border-[var(--bg-grey)] rounded-2xl bg-[var(--bg-primary)]/50">
-                    <p className="text-[var(--text-secondary)]">
-                      Select a date to see available time slots
-                    </p>
-                  </div>
-                )}
-
-                {venue.bookingType === 'fixedBooking' &&
-                  (!venue.fixedPackages || venue.fixedPackages.length === 0) && (
+              {isSlotsLoading ? (
+                <div className="text-center py-8">
+                  <p className="text-[var(--text-secondary)] animate-pulse">
+                    Calculating availability...
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 gap-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                  {!availabilityResponse?.slots || availabilityResponse.slots.length === 0 ? (
                     <div className="text-center py-8 text-[var(--text-secondary)]">
-                      No slots available for the selected date.
+                      {selectedDate
+                        ? 'No slots available for the selected date.'
+                        : 'Select a date to see available time slots.'}
                     </div>
+                  ) : (
+                    availabilityResponse.slots.map((slot) => {
+                      const isSelected = selectedSlots.some((s) => s.slotId === slot.slotId);
+                      return (
+                        <button
+                          key={slot.slotId}
+                          disabled={!slot.isAvailable}
+                          onClick={() => handleSlotSelect(slot)}
+                          className={`w-full text-left border rounded-2xl p-4 transition-all hover:shadow-md
+                            ${!slot.isAvailable ? 'opacity-50 cursor-not-allowed bg-[var(--bg-grey)] border-[var(--bg-grey)]' : 'cursor-pointer'}
+                            ${
+                              isSelected && slot.isAvailable
+                                ? 'border-[var(--bg-green)] bg-[#e6f4ea] dark:bg-[var(--bg-green)]/10 ring-1 ring-[var(--bg-green)]'
+                                : slot.isAvailable
+                                  ? 'border-[var(--bg-grey)] hover:border-gray-300'
+                                  : ''
+                            }
+                          `}
+                        >
+                          <div className="flex justify-between items-center">
+                            <div>
+                              <h4 className="font-semibold text-[var(--text-primary)]">
+                                {slot.startTime} - {slot.endTime}
+                                {!slot.isAvailable && (
+                                  <span className="text-red-500 text-xs ml-2">(Unavailable)</span>
+                                )}
+                              </h4>
+                            </div>
+                            <div className="text-right">
+                              <span
+                                className={`font-bold text-lg ${!slot.isAvailable ? 'text-[var(--text-secondary)]' : 'text-[var(--bg-green)]'}`}
+                              >
+                                ₹{slot.price}
+                              </span>
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })
                   )}
-              </div>
+                </div>
+              )}
             </div>
 
-            {/* Total Section (if fixed and selected) */}
-            {selectedPackage.length > 0 && venue.bookingType === 'fixedBooking' && (
-              <div className="mt-6 pt-4 border-t border-[var(--bg-grey)] flex justify-between items-center">
-                <span className="text-[var(--text-secondary)] font-medium">
-                  Selected ({selectedPackage.length})
-                </span>
-                <span className="font-bold text-xl text-[var(--text-primary)]">
-                  ₹
-                  {selectedPackage.reduce(
-                    (acc, idx) => acc + (venue.fixedPackages[idx]?.price || 0),
-                    0
-                  )}
-                </span>
+            <div className="mt-6 pt-4 border-t border-[var(--bg-grey)] flex justify-between items-center">
+              <div>
+                <span className="text-[var(--text-secondary)] font-medium block">Total Amount</span>
+                {selectedSlots.length > 0 && (
+                  <span className="text-xs text-[var(--bg-green)] font-semibold mt-1 block">
+                    {selectedSlots.length} {selectedSlots.length === 1 ? 'slot' : 'slots'} (
+                    {finalStartTime} - {finalEndTime})
+                  </span>
+                )}
               </div>
-            )}
+              <span className="font-bold text-2xl text-[var(--text-primary)]">₹{totalPrice}</span>
+            </div>
 
-            {/* Book Button */}
             <button
-              disabled={selectedPackage.length === 0 && venue.bookingType === 'fixedBooking'}
-              className={`w-full mt-6 py-4 rounded-2xl font-bold text-lg transition-all shadow-md cursor-pointer
+              onClick={handleProceedToBook}
+              disabled={isBlocking || selectedSlots.length === 0}
+              className={`w-full mt-6 py-4 rounded-2xl font-bold text-lg transition-all shadow-md flex items-center justify-center
                 ${
-                  selectedPackage.length !== 0 || venue.bookingType === 'flexibleBooking'
-                    ? 'bg-[var(--bg-green)] text-white hover:bg-green-600 hover:shadow-lg transform hover:-translate-y-0.5'
+                  selectedSlots.length > 0
+                    ? 'bg-[var(--bg-green)] text-white hover:bg-green-600 hover:shadow-lg transform hover:-translate-y-0.5 cursor-pointer'
                     : 'bg-[var(--bg-grey)] text-[var(--text-secondary)] cursor-not-allowed'
                 }
               `}
             >
-              Proceed to Book
+              {isBlocking ? 'Locking Slot...' : 'Proceed to Book'}
             </button>
           </div>
         </div>

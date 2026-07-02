@@ -114,8 +114,8 @@ const VenueSchema = new Schema<IVenue>(
     fixedPackages: { type: [FixedPackageSchema], default: [] },
     workingDays: { type: [String], default: [] },
     workingHours: {
-      open: { type: String, required: true },
-      close: { type: String, required: true },
+      open: { type: String, required: false },
+      close: { type: String, required: false },
     },
     blockedTimes: { type: [BlockedTimeSchema], default: [] },
     blockedDates: { type: [Date], default: [] },
@@ -125,7 +125,7 @@ const VenueSchema = new Schema<IVenue>(
     },
 
     // Pricing
-    pricing: { type: PricingSchema, required: true },
+    pricing: { type: PricingSchema, required: false },
 
     // Amenities
     amenities: { type: [String], default: [] },
@@ -149,6 +149,7 @@ const VenueSchema = new Schema<IVenue>(
     },
     ownerUserId: { type: Schema.Types.ObjectId, ref: 'Users', required: true },
     rejectionReason: { type: String },
+    suspensionReason: { type: String, default: null },
 
     // Audit
     createdBy: { type: Schema.Types.ObjectId, ref: 'Users', required: true },

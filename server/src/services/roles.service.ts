@@ -28,6 +28,22 @@ export async function getUserRole(userId: string): Promise<UserRoleInfo | null> 
         },
       },
       { $unwind: '$role' },
+      {
+        $addFields: {
+          priority: {
+            $switch: {
+              branches: [
+                { case: { $eq: ['$role.name', 'superAdmin'] }, then: 4 },
+                { case: { $eq: ['$role.name', 'admin'] }, then: 3 },
+                { case: { $eq: ['$role.name', 'owner'] }, then: 2 },
+                { case: { $eq: ['$role.name', 'user'] }, then: 1 }
+              ],
+              default: 0
+            }
+          }
+        }
+      },
+      { $sort: { priority: -1 } },
       { $limit: 1 },
       {
         $project: {

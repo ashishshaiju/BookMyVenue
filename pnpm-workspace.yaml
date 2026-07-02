@@ -8,5 +8,6 @@ allowBuilds:
   esbuild: true
 
 onlyBuiltDependencies:
+  - '@scarf/scarf'
   - bcrypt
   - esbuild

@@ -6,9 +6,9 @@ import { logInfo, logWarn, logError } from '../utils/logger';
 let isShuttingDown = false;
 let getServerFn: (() => Server | null) | null = null;
 
-// Utility 
+// Utility
 const withTimeout = async <T>(promise: Promise<T>, ms: number, name: string): Promise<void> => {
-  let timeoutHandle: NodeJS.Timeout | undefined;
+  let timeoutHandle: ReturnType<typeof setTimeout> | undefined;
   const timeoutPromise = new Promise<never>((_, reject) => {
     timeoutHandle = setTimeout(() => {
       reject(new Error(`[Timeout] ${name} shutdown exceeded ${ms.toString()}ms`));

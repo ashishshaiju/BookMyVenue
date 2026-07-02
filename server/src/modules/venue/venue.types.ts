@@ -76,21 +76,21 @@ export interface IVenue extends Document {
 
   // Booking Config
   bookingType: 'fixedBooking' | 'flexibleBooking';
-  fixedPackages: IFixedPackage[];
+  fixedPackages?: IFixedPackage[];
   workingDays: string[];
-  workingHours: {
+  workingHours?: {
     open: string;
     close: string;
   };
-  blockedTimes: IBlockedTime[];
+  blockedTimes?: IBlockedTime[];
   blockedDates: Date[];
-  flexibleBooking: {
+  flexibleBooking?: {
     slotDuration: number;
     bufferTime: number;
   };
 
   // Pricing
-  pricing: IPricing;
+  pricing?: IPricing;
 
   // Amenities
   amenities: string[];
@@ -109,6 +109,7 @@ export interface IVenue extends Document {
   status: VenueStatus;
   ownerUserId: mongoose.Types.ObjectId;
   rejectionReason?: string;
+  suspensionReason?: string;
 
   // Audit
   createdBy: mongoose.Types.ObjectId;
@@ -130,6 +131,7 @@ export type CreateVenueData = Omit<
   | 'active'
   | 'deleted'
   | 'rejectionReason'
+  | 'suspensionReason'
 >;
 
 export type UpdateVenueData = Partial<

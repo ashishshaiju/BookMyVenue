@@ -1,5 +1,5 @@
 import { Outlet } from 'react-router';
-import ListSidebar from '../../components/common/ListSidebar';
+import ListSidebar from '@/components/common/ListSidebar';
 
 const ListVenueLayout = () => {
   return (

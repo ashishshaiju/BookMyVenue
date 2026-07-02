@@ -1,6 +1,6 @@
 import { Field, FieldArray, ErrorMessage, useFormikContext } from 'formik';
 import { useState, useEffect } from 'react';
-import { useToast } from '../../../../hooks/useToast';
+import { useToast } from '@/hooks/useToast';
 
 type FinishStepValues = {
   contact: { name: string; phone: string; email?: string };

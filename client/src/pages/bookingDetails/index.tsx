@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useParams, Link, useSearchParams } from 'react-router';
 import { MapPin, Phone, Mail, Calendar, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { bookings } from '../myBooking/bookingsData';
+import { bookings } from '../myBookings/bookingsData';
 import ReviewModal from '@/components/common/ReviewModal';
 
 const BookingDetailsPage = () => {
