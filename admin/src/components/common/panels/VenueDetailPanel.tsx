@@ -13,6 +13,9 @@ export function VenueDetailPanel({ data: rawData }: { data: Record<string, unkno
   const data = rawData as unknown as VenueData;
   if (!data) return null;
 
+  const pricingRules = data.pricing?.pricingRules;
+  const fixedPackages = data.fixedPackages;
+
   return (
     <div className="space-y-6 text-sm">
       {/* Cover Image */}
@@ -77,11 +80,11 @@ export function VenueDetailPanel({ data: rawData }: { data: Record<string, unkno
                 <span className="text-muted-foreground">Type:</span> <span className="capitalize">{data.pricing.pricingType}</span>
                 <span className="text-muted-foreground">Base Price:</span> <span>₹{data.pricing.basePrice}</span>
               </div>
-              {data.pricing.pricingRules?.length > 0 && (
+              {pricingRules && pricingRules.length > 0 && (
                 <div className="mt-2 text-xs">
                   <span className="text-muted-foreground block mb-1">Time-based Rules:</span>
                   <ul className="list-disc list-inside space-y-1">
-                                        {data.pricing.pricingRules.map((rule: { fromTime: string; toTime: string; price: number }, i: number) => (
+                    {pricingRules.map((rule: { fromTime: string; toTime: string; price: number }, i: number) => (
                       <li key={i}>{rule.fromTime} - {rule.toTime}: ₹{rule.price}</li>
                     ))}
                   </ul>
@@ -89,11 +92,11 @@ export function VenueDetailPanel({ data: rawData }: { data: Record<string, unkno
               )}
             </div>
           )}
-          {data.fixedPackages?.length > 0 && (
+          {fixedPackages && fixedPackages.length > 0 && (
             <div className="space-y-1">
               <span className="text-muted-foreground block mb-1">Packages:</span>
               <ul className="list-disc list-inside space-y-1 text-xs">
-                                {data.fixedPackages.map((pkg: { name: string; startTime: string; endTime: string; price: number }, i: number) => (
+                {fixedPackages.map((pkg: { name: string; startTime: string; endTime: string; price: number }, i: number) => (
                   <li key={i}>{pkg.name} ({pkg.startTime}-{pkg.endTime}): ₹{pkg.price}</li>
                 ))}
               </ul>

@@ -4,7 +4,7 @@ import { User, Mail, Phone, Calendar, Store, ShieldCheck } from 'lucide-react';
 
 interface OwnerData {
   username?: string; name?: string; email?: string; phone?: string; active?: boolean; _id?: string; role?: string; createdAt?: string; updatedAt?: string;
-  venues?: Record<string, unknown>[];
+  venues?: { name?: string; city?: string; address?: string; status?: string }[];
   [key: string]: unknown;
 }
 export function OwnerDetailPanel({ data: rawData }: { data: Record<string, unknown> }) {
@@ -58,7 +58,7 @@ export function OwnerDetailPanel({ data: rawData }: { data: Record<string, unkno
           <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
             {data.venues && data.venues.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                {data.venues.map((venue: { name: string; city: string; address: string; status: string }, idx: number) => (
+                {data.venues.map((venue, idx) => (
                   <div key={idx} className="flex items-center justify-between p-3 rounded-lg border border-border/50 bg-background/30 hover:bg-background/80 transition-colors">
                     <div className="truncate pr-2">
                       <span className="font-medium text-foreground block truncate">{venue.name}</span>

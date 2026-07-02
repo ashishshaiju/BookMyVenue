@@ -4,8 +4,10 @@ import { Clock, Calendar as CalendarIcon, MapPin, IndianRupee, User, FileText } 
 
 interface BookingData {
   status: string; duration?: number; venueId?: string; date?: string; startTime?: number; endTime?: number; amountPaid?: number; platformFee?: number; taxAmount?: number; contactNumber?: string; customerName?: string; guests?: number; paymentReference?: string; createdAt?: string; _id?: string; cancellationReason?: string;
+  eventType?: string; price?: number; paymentMethod?: string; userId?: string;
   user?: Record<string, unknown>;
-  venue?: Record<string, unknown>;
+  bookerInfo?: { name?: string; email?: string; phone?: string };
+  venue?: { _id?: string; name?: string; city?: string; address?: string };
   [key: string]: unknown;
 }
 export function BookingDetailPanel({ data: rawData }: { data: Record<string, unknown> }) {

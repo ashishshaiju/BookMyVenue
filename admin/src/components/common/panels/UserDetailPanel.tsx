@@ -4,11 +4,16 @@ import { User, Calendar, Shield, Activity, Phone, Mail } from 'lucide-react';
 
 interface UserData {
   name?: string; username?: string; email?: string; phone?: string; createdAt?: string | Date; updatedAt?: string | Date; status?: string; active?: boolean; _id?: string; role?: string; venues?: Record<string, unknown>[];
+  deleted?: boolean;
+  roles?: string[];
+  passwordChangedAt?: string | Date;
   [key: string]: unknown;
 }
 export function UserDetailPanel({ data: rawData }: { data: Record<string, unknown> }) {
   const data = rawData as unknown as UserData;
   if (!data) return null;
+
+  const roles = data.roles;
 
   return (
     <div className="space-y-6 text-sm">
@@ -52,8 +57,8 @@ export function UserDetailPanel({ data: rawData }: { data: Record<string, unknow
             <div>
               <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-2">Assigned Roles</span>
               <div className="flex flex-wrap gap-2">
-                {data.roles?.length > 0 ? (
-                  data.roles.map((role: string, i: number) => (
+                {roles && roles.length > 0 ? (
+                  roles.map((role: string, i: number) => (
                     <Badge key={i} variant="secondary" className="capitalize px-3 py-1">
                       {role}
                     </Badge>

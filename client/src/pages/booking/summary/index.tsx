@@ -12,8 +12,10 @@ import { saveBookerDetails } from '@/services/bookingService';
 
 declare global {
   interface Window {
-
-    Razorpay: unknown;
+    Razorpay: new (options: Record<string, unknown>) => {
+      on: (event: string, handler: (response: RazorpayErrorResponse) => void) => void;
+      open: () => void;
+    };
   }
 }
 
