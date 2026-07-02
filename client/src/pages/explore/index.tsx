@@ -16,7 +16,7 @@ import { Link } from 'react-router';
 import { useExploreVenues } from '@/hooks/useExploreVenues';
 import { useDebounce } from '@/hooks/useDebounce';
 import type { PublicVenue, VenueFilters } from '@/types/venue.types';
-import { PRICE_STEPS, KERALA_DISTRICTS } from '@/constants';
+import { FILTER_PRICE_STEPS, KERALA_DISTRICTS } from '@/constants';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AlertCircle, Snowflake, X, Filter, Loader2 } from 'lucide-react';
 
@@ -26,7 +26,7 @@ const ExplorePage = () => {
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
   const [priceRangeIndex, setPriceRangeIndex] = useState<[number, number]>([
     0,
-    PRICE_STEPS.length - 1,
+    FILTER_PRICE_STEPS.length - 1,
   ]);
 
   const [isScrolled, setIsScrolled] = useState(false);
@@ -46,8 +46,8 @@ const ExplorePage = () => {
     useExploreVenues({
       ...filters,
       searchTerm: debouncedSearchTerm || undefined,
-      minPrice: PRICE_STEPS[debouncedPriceRangeIndex[0]],
-      maxPrice: PRICE_STEPS[debouncedPriceRangeIndex[1]],
+      minPrice: FILTER_PRICE_STEPS[debouncedPriceRangeIndex[0]],
+      maxPrice: FILTER_PRICE_STEPS[debouncedPriceRangeIndex[1]],
     });
 
   const observerRef = useRef<IntersectionObserver | null>(null);
@@ -126,7 +126,7 @@ const ExplorePage = () => {
   const handleClearFilters = () => {
     setFilters({});
     setSearchTerm('');
-    setPriceRangeIndex([0, PRICE_STEPS.length - 1]);
+    setPriceRangeIndex([0, FILTER_PRICE_STEPS.length - 1]);
   };
 
   const venues = data?.pages.flatMap((page) => page.venues) || [];
@@ -148,7 +148,7 @@ const ExplorePage = () => {
 
   return (
     <section className="px-8 pt-24 mb-20 mx-auto">
-      <div className="flex flex-col lg:grid lg:grid-cols-[300px_1fr] gap-6 items-start">
+      <div className="flex flex-col lg:grid lg:grid-cols-[300px_1fr] gap-6 p-2 items-start">
         {/* Mobile Sidebar Overlay */}
         <div
           className={`fixed inset-0 z-40 bg-black/50 transition-opacity lg:hidden ${isMobileFiltersOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
@@ -197,7 +197,7 @@ const ExplorePage = () => {
               <Slider
                 value={priceRangeIndex}
                 min={0}
-                max={PRICE_STEPS.length - 1}
+                max={FILTER_PRICE_STEPS.length - 1}
                 step={1}
                 className="cursor-pointer"
                 onValueChange={(val) => setPriceRangeIndex([val[0], val[1]])}
@@ -206,13 +206,13 @@ const ExplorePage = () => {
                 <div className="flex-1 rounded-2xl border border-[var(--bg-grey)] p-3">
                   <p className="text-xs text-[var(--text-secondary)]">Min</p>
                   <p className="font-medium text-[var(--text-primary)]">
-                    ₹{PRICE_STEPS[priceRangeIndex[0]]}
+                    ₹{FILTER_PRICE_STEPS[priceRangeIndex[0]]}
                   </p>
                 </div>
                 <div className="flex-1 rounded-2xl border border-[var(--bg-grey)] p-3">
                   <p className="text-xs text-[var(--text-secondary)]">Max</p>
                   <p className="font-medium text-[var(--text-primary)]">
-                    ₹{PRICE_STEPS[priceRangeIndex[1]]}
+                    ₹{FILTER_PRICE_STEPS[priceRangeIndex[1]]}
                   </p>
                 </div>
               </div>
@@ -361,7 +361,7 @@ const ExplorePage = () => {
 
         <main>
           {/* Header */}
-          <div className="mb-8 mt-0">
+          <div className="mb-8 mt-0 lg:pl-6 lg:pt-2">
             <div
               className={`sticky top-18 z-20 bg-[var(--bg-primary)] transition-all duration-300 ${isScrolled ? 'pt-2 pb-3' : 'pt-4 pb-5'}`}
             >
@@ -552,7 +552,7 @@ const ExplorePage = () => {
                                     <span className="text-xl font-bold text-[var(--text-primary)]">
                                       ₹ {price.toLocaleString()}
                                     </span>
-                                    {venue.flexibleBooking?.slotDuration ? (
+                                    {venue.bookingType==='flexibleBooking' && venue.flexibleBooking?.slotDuration ? (
                                       <span className="text-xs text-[var(--text-secondary)]">
                                         / {venue.flexibleBooking.slotDuration} mins
                                       </span>

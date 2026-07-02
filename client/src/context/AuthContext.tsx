@@ -3,6 +3,7 @@ import { axiosInstance } from '../config/axios';
 import { API_ENDPOINTS, STORAGE_KEYS } from '../constants';
 import { showSuccess, showError } from '../utils/toast';
 import { clearDraft, clearDraftSession } from '../utils/venueDraft';
+import { queryClient } from '../config/queryClient';
 
 export interface User {
   id: string;
@@ -20,11 +21,13 @@ interface AuthContextType {
   verifySession: () => Promise<void>;
 }
 
-// eslint-disable-next-line react-refresh/only-export-components
+
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const clearAuthData = (setUser: React.Dispatch<React.SetStateAction<User | null>>) => {
   setUser(null);
+  queryClient.clear();
+  localStorage.removeItem('x-session-token');
   localStorage.removeItem(STORAGE_KEYS.IS_LOGGED_IN);
   localStorage.removeItem(STORAGE_KEYS.USER_ID);
   localStorage.removeItem(STORAGE_KEYS.USER_NAME);
@@ -64,7 +67,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  // Initialize auth state on mount
   useEffect(() => {
     const checkAuth = async () => {
       try {
@@ -78,7 +80,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     checkAuth();
 
-    // Listen to global auth:logout events from axios interceptor
     const handleLogoutEvent = () => {
       clearAuthData(setUser);
     };

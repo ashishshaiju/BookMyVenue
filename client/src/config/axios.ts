@@ -35,13 +35,19 @@ export const createAxiosInstance = (): AxiosInstance => {
   });
 
   instance.interceptors.request.use((config) => {
-    // let sessionToken = localStorage.getItem("x-session-token");
-    // if (!sessionToken) {
-    //   sessionToken = crypto.randomUUID();
-    //   localStorage.setItem("x-session-token", sessionToken);
-    // }
+    let sessionToken = localStorage.getItem('x-session-token');
+    if (!sessionToken) {
+      sessionToken = crypto.randomUUID();
+      localStorage.setItem('x-session-token', sessionToken);
+    }
+    
+    // Attach to headers
+    config.headers['x-session-token'] = sessionToken;
 
-    // config.headers["x-session-token"] = sessionToken;
+    // Bypass zrok interstitial in development
+    if (import.meta.env.MODE === 'development') {
+      config.headers['skip_zrok_interstitial'] = 'true';
+    }
 
     return config;
   });

@@ -1,21 +1,22 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router';
+import { BrowserRouter, Routes, Route } from 'react-router';
 import HomePage from './pages/home';
-import ExplorePage from './pages/explore';
-import RegisterPage from './pages/register';
-import LoginPage from './pages/login';
-import ForgotPasswordPage from './pages/forgotPassword';
-import ResetPasswordPage from './pages/resetPassword';
+import ExplorePage from './pages/Explore';
+import RegisterPage from './pages/Auth/register';
+import LoginPage from './pages/Auth/login';
+import ForgotPasswordPage from './pages/Auth/forgotPassword';
+import ResetPasswordPage from './pages/Auth/resetPassword';
 import MainLayout from './layout/MainLayout';
 import ListVenueLayout from './pages/listVenue/ListVenueLayout';
 import MyVenues from './pages/listVenue/myVenue';
 import AddVenue from './pages/listVenue/addVenue';
 import AuthGuard from './components/common/AuthGuard';
 import GuestGuard from './components/common/GuestGuard';
-import VenueDetails from './pages/venueDetails';
-import BookingSummary from './pages/booking/summary';
-import BookingConfirmation from './pages/booking/confirmation';
-import MyBookingsPage from './pages/myBookings';
-import BookingDetailsPage from './pages/bookingDetails';
+import VenueDetails from './pages/Explore/venueDetails';
+import BookingSummary from './pages/Booking/summary';
+import BookingConfirmation from './pages/Booking/confirmation';
+import MyBookingsPage from './pages/Booking/myBookings';
+import BookingDetailsPage from './pages/Booking/bookingDetails';
+import NotFound from './pages/NotFound';
 
 export function AppRouter() {
   return (
@@ -42,7 +43,7 @@ export function AppRouter() {
             <Route path="/booking/summary" element={<BookingSummary />} />
             <Route path="/booking/confirmation" element={<BookingConfirmation />} />
             <Route path="/my-bookings" element={<MyBookingsPage />} />
-            <Route path="/my-bookings/:bookingId" element={<BookingDetailsPage />} />
+            <Route path="/booking/:bookingRefId" element={<BookingDetailsPage />} />
           </Route>
 
           <Route path="/list-venue" element={<ListVenueLayout />}>
@@ -52,7 +53,7 @@ export function AppRouter() {
           </Route>
         </Route>
 
-        <Route path="*" element={<Navigate to="/not-found" replace />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
   );

@@ -80,27 +80,29 @@ export interface AddVenueFormValues {
     open: string;
     close: string;
   };
-  // Nested flexible booking config
+
   flexibleBooking: {
     slotDuration: number | string;
     bufferTime: number | string;
   };
-  // Nested pricing config
+
   pricing: {
     pricingType: string;
     basePrice: number | string;
     pricingRules: IAddVenuePricingRule[];
   };
   blockedTimes: IBlockedTime[];
+  pricingType?: string;
+  samePrice?: number | string;
   amenities: string[];
   venuePhotos: File[];
-  // Nested contact
+
   contact: {
     name: string;
     phone: string;
     email?: string;
   };
-  // Nested cancellation
+
   cancellation: {
     policy: string;
     refundType: string;

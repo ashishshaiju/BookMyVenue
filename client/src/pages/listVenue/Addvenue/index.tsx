@@ -16,10 +16,10 @@ import type { AddVenueFormValues } from '@/types/venue.types';
 
 import BasicInfoStep from './components/BasicInfoStep';
 import { basicInfoSchema } from './components/BasicValidation';
-import BookingStep from './components/MiddleStep';
+import BookingStep from './components/middleStep';
 import FinishStep from './components/FinishStep';
 import { finishSchema } from './components/FinishValidation';
-import { middleSchema } from './components/MiddleValidation';
+import { middleSchema } from './components/middleValidation';
 
 const BLANK_FORM: AddVenueFormValues = {
   VenueName: '',

@@ -20,14 +20,12 @@ export function mapFormToDTO(values: AddVenueFormValues, imageUrls: string[]) {
     workingDays: values.workingDays,
     amenities: values.amenities,
 
-    // Nested contact
     contact: {
       name: values.contact.name,
       phone: values.contact.phone,
       ...(values.contact.email ? { email: values.contact.email } : {}),
     },
 
-    // Nested cancellation
     cancellation: {
       policy: values.cancellation.policy,
       ...(values.cancellation.refundType ? { refundType: values.cancellation.refundType } : {}),
@@ -65,6 +63,11 @@ export function mapFormToDTO(values: AddVenueFormValues, imageUrls: string[]) {
       price: Number(r.price),
     }));
 
+  const pricingType = values.pricingType;
+  const basePrice = pricingType === 'fixedPricing'
+    ? Number(values.samePrice ?? 0)
+    : Number(values.pricing.basePrice ?? 0);
+
   return {
     ...base,
     workingHours: {
@@ -83,9 +86,9 @@ export function mapFormToDTO(values: AddVenueFormValues, imageUrls: string[]) {
           : Number(values.flexibleBooking.bufferTime),
     },
     pricing: {
-      pricingType: values.pricing.pricingType,
-      basePrice: Number(values.pricing.basePrice ?? 0),
-      pricingRules,
+      pricingType,
+      basePrice,
+      pricingRules: pricingType === 'timeBasedPricing' ? pricingRules : [],
     },
     blockedTimes: (values.blockedTimes ?? []).filter((b) => b.fromTime && b.toTime),
   };

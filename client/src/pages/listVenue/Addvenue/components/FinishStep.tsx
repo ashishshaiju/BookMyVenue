@@ -24,7 +24,7 @@ const FinishStep = () => {
 
   useEffect(() => {
     const urls = values.venuePhotos?.map((file) => URL.createObjectURL(file)) || [];
-    setPreviewImages(urls); // eslint-disable-line react-hooks/set-state-in-effect
+    Promise.resolve().then(() => setPreviewImages(urls));
     return () => {
       urls.forEach((url) => URL.revokeObjectURL(url));
     };

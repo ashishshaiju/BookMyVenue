@@ -1,5 +1,5 @@
 import { INDIA_STATES } from './india';
-export { PRICE_STEPS, KERALA_DISTRICTS } from './filterConstants';
+export { FILTER_PRICE_STEPS, KERALA_DISTRICTS } from './filterConstants';
 
 // API Configuration
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3003';
@@ -34,6 +34,11 @@ const API_ENDPOINTS = {
   BLOCK_SLOT: (id: string) => `/availability/${id}/block`,
   GET_AVAILABILITY: (id: string) => `/availability/${id}`,
   CHECKOUT: '/bookings/checkout',
+  RELEASE_LOCK: '/availability/lock',
+  MY_BOOKINGS: '/bookings/my-bookings',
+  BOOKING_BY_ID: (id: string) => `/bookings/${id}`,
+  SAVE_BOOKER_DETAILS: '/bookings/booker-details',
+  CANCEL_BOOKING: (id: string) => `/bookings/${id}`,
 } as const;
 
 export { INDIA_STATES, API_ENDPOINTS, STORAGE_KEYS, API_BASE_URL, DASHBOARD_URL };
