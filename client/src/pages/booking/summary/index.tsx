@@ -10,10 +10,34 @@ import { MdOutlineMeetingRoom } from 'react-icons/md';
 import type { CheckoutResponse, RazorpaySuccessResponse, RazorpayErrorResponse } from '@/types/booking.types';
 import { saveBookerDetails } from '@/services/bookingService';
 
+interface RazorpayOptions {
+  key: string;
+  amount: number;
+  currency: string;
+  order_id: string;
+  name: string;
+  description: string;
+  timeout: number;
+  handler: (response: RazorpaySuccessResponse) => void;
+  prefill: {
+    name: string;
+    email: string;
+    contact: string;
+  };
+  theme: {
+    color: string;
+  };
+  modal: {
+    ondismiss: () => void;
+  };
+}
+
 declare global {
   interface Window {
-
-    Razorpay: unknown;
+    Razorpay: new (options: RazorpayOptions) => {
+      on(event: 'payment.failed', handler: (response: RazorpayErrorResponse) => void): void;
+      open(): void;
+    };
   }
 }
 
