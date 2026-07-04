@@ -11,6 +11,7 @@ import type { Server } from 'http';
 
 import { corsOptions } from './configs/cors.config';
 import { connectDatabase } from './configs/database.config';
+import { validateEnv } from './configs/envValidation.config';
 import router from './router';
 import { ResponseUtil } from './utils/responseUtils';
 import { validateEmailConfig } from './services/email.service';
@@ -18,6 +19,7 @@ import { startEmailWorker } from './workers/email.worker';
 import { setupGracefulShutdown } from './utils/shutdownUtils';
 import { requestLogger, logInfo, logError } from './utils/logger';
 import { webhookRouter } from './modules/webhook/webhook.router';
+import { verifyRbacSeed } from './services/roles.service';
 
 const PORT = parseInt(process.env.PORT ?? '3000', 10);
 
@@ -86,8 +88,10 @@ let server: Server | null = null;
 
 // Start server
 async function startServer(): Promise<void> {
+  validateEnv();
   validateEmailConfig();
   await connectDatabase();
+  await verifyRbacSeed();
   startEmailWorker();
   server = app.listen(PORT, '0.0.0.0', () => {
     logInfo(`Server started on port ${String(PORT)}`);

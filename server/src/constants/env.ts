@@ -31,6 +31,6 @@ export const authEnvs = {
 } as const;
 
 export const swaggerConfig = {
-  user: process.env.SWAGGER_USER ?? 'admin',
-  pass: process.env.SWAGGER_PASS ?? 'swagger',
+  user: process.env.SWAGGER_USER,
+  pass: process.env.SWAGGER_PASS,
 } as const;
