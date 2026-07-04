@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import * as repo from './user.repository';
 import { NotFoundError } from '../../utils/errors';
 import type { IUser } from './user.models';
@@ -39,7 +40,7 @@ export async function toggleUserStatus(userId: string): Promise<IUser | null> {
 
 export async function generateRandomPasswordWithHash(): Promise<{ plain: string; hashed: string }> {
   const bcrypt = await import('bcrypt');
-  const newPassword = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-4);
+  const newPassword = crypto.randomBytes(12).toString('base64url');
   const hashedPassword = await bcrypt.hash(newPassword, 12);
   return { plain: newPassword, hashed: hashedPassword };
 }

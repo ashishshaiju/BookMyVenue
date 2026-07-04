@@ -31,7 +31,7 @@ export function validateEmailConfig(): void {
     process.exit(1);
   }
 
-  logInfo('Resend Email service config validated');
+  logInfo('Email config validated');
 }
 
 let _resend: Resend | null = null;

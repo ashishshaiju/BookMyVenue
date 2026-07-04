@@ -12,6 +12,7 @@ import type {
   SaveBookerDetailsBodyDTO,
   VerifyPaymentBodyDTO,
   VenueIdParamDTO,
+  AdminBookingFiltersDTO,
 } from './booking.validator';
 
 export const blockSlot = async (req: Request, res: Response): Promise<void> => {
@@ -263,13 +264,13 @@ export const cancelBooking = async (req: Request, res: Response): Promise<void> 
 
 export const getAllBookings = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { status, venueId } = req.query as { status?: string; venueId?: string };
+    const { status, venueId } = req.validated?.query as AdminBookingFiltersDTO;
     const paginationParams = req.pagination ?? { page: 1, limit: 10, skip: 0, sort: '' };
-    const result = await findAllBookings(paginationParams, { 
-      status: status as BookingStatusType | undefined, 
-      venueId 
+    const result = await findAllBookings(paginationParams, {
+      status: status as BookingStatusType | undefined,
+      venueId
     });
-    
+
     ResponseUtil.paginated(res, 'All bookings retrieved successfully', result.bookings, result.pagination, 'bookings');
   } catch (err) {
     const error = err as Error;

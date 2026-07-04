@@ -15,7 +15,7 @@ export const connectDatabase = async (): Promise<typeof mongoose> => {
     const connection = await mongoose.connect(mongodburi, {
       autoIndex: process.env.NODE_ENV !== 'production',
     });
-    logInfo('Connected to MongoDB');
+    logInfo('DB connected');
 
     const client = mongoose.connection.getClient();
     const topologyType = (client as unknown as { topology?: { description?: { type?: string } } })
@@ -24,9 +24,9 @@ export const connectDatabase = async (): Promise<typeof mongoose> => {
       typeof topologyType === 'string' &&
       (topologyType.includes('ReplicaSet') || topologyType.includes('Sharded'));
 
-    logInfo('MongoDB topology detected', {
-      topologyType: topologyType ?? 'unknown',
-      transactionsSupported: dbSupportsTransactions,
+    logInfo('DB topology details', {
+      topology: topologyType ?? 'unknown',
+      txSupported: dbSupportsTransactions,
     });
 
     return connection;

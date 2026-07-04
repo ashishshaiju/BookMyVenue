@@ -1,7 +1,9 @@
 import mongoose from 'mongoose';
 import { UserRoleModel } from '../models/user-role.model';
 import { RoleModel } from '../models/role.model';
-import { logError } from '../utils/logger';
+import { PermissionModel } from '../models/permission.model';
+import { RolePermissionModel } from '../models/role-permission.model';
+import { logError, logInfo } from '../utils/logger';
 
 export interface UserRoleInfo {
   roleId: string;
@@ -142,5 +144,94 @@ export async function fetchRolePermissions(roleId: string): Promise<string[]> {
       roleId,
     });
     return [];
+  }
+}
+
+export async function verifyRbacSeed(): Promise<void> {
+  try {
+    const requiredRoles = ['user', 'owner', 'admin', 'superAdmin'];
+
+    // Check all required roles exist
+    const roleCount = await RoleModel.countDocuments({
+      active: true,
+      deleted: false,
+    });
+
+    if (roleCount === 0) {
+      throw new Error('No active roles found in database. Run "pnpm script seed:rbac" to initialize RBAC data.');
+    }
+
+    for (const roleName of requiredRoles) {
+      const exists = await RoleModel.exists({
+        name: roleName,
+        active: true,
+        deleted: false,
+      });
+
+      if (!exists) {
+        throw new Error(
+          `Required role "${roleName}" not found in database. Run "pnpm script seed:rbac" to initialize RBAC data.`
+        );
+      }
+    }
+
+    // Check permissions exist
+    const permissionCount = await PermissionModel.countDocuments({
+      active: true,
+      deleted: false,
+    });
+
+    if (permissionCount === 0) {
+      throw new Error('No active permissions found in database. Run "pnpm script seed:rbac" to initialize RBAC data.');
+    }
+
+    // Check role-permission links exist
+    const rolePermissionCount = await RolePermissionModel.countDocuments({
+      active: true,
+      deleted: false,
+    });
+
+    if (rolePermissionCount === 0) {
+      throw new Error(
+        'No active role-permission links found in database. Run "pnpm script seed:rbac" to initialize RBAC data.'
+      );
+    }
+
+    // Check admin and superAdmin have at least one permission
+    const adminRole = await RoleModel.findOne({ name: 'admin', active: true, deleted: false });
+    const superAdminRole = await RoleModel.findOne({ name: 'superAdmin', active: true, deleted: false });
+
+    if (adminRole) {
+      const adminPerms = await RolePermissionModel.countDocuments({
+        roleId: adminRole._id,
+        active: true,
+        deleted: false,
+      });
+
+      if (adminPerms === 0) {
+        throw new Error('Admin role has no permissions. Run "pnpm script seed:rbac" to initialize RBAC data.');
+      }
+    }
+
+    if (superAdminRole) {
+      const superAdminPerms = await RolePermissionModel.countDocuments({
+        roleId: superAdminRole._id,
+        active: true,
+        deleted: false,
+      });
+
+      if (superAdminPerms === 0) {
+        throw new Error('SuperAdmin role has no permissions. Run "pnpm script seed:rbac" to initialize RBAC data.');
+      }
+    }
+
+    logInfo('RBAC verified');
+  } catch (err) {
+    const error = err instanceof Error ? err : new Error(String(err));
+    logError('RBAC seed verification failed', {
+      module: 'roles.service.ts/verifyRbacSeed',
+      error: error.message,
+    });
+    process.exit(1);
   }
 }

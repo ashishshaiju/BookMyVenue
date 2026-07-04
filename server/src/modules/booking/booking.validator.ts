@@ -224,6 +224,20 @@ export type VerifyPaymentBodyDTO = z.infer<typeof verifyPaymentBodySchema>;
 export const fetchMyBookingsQuerySchema = z.object({});
 export type FetchMyBookingsQueryDTO = z.infer<typeof fetchMyBookingsQuerySchema>;
 
+export const adminBookingFiltersSchema = z.object({
+  status: z.enum(['confirmed', 'pending', 'cancelled', 'completed']).optional(),
+  venueId: z
+    .string()
+    .trim()
+    .regex(/^[a-f\d]{24}$/i, 'Invalid venue ID format')
+    .optional(),
+  page: z.coerce.number().int().positive().default(1),
+  limit: z.coerce.number().int().positive().max(100).default(20),
+  sort: z.string().optional(),
+});
+
+export type AdminBookingFiltersDTO = z.infer<typeof adminBookingFiltersSchema>;
+
 export const bookingRefIdParamSchema = z.object({
   bookingRefId: z.string().trim().refine((val) => {
     const isObjectId = /^[a-f\d]{24}$/i.test(val);

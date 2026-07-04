@@ -1,14 +1,15 @@
+import crypto from 'crypto';
 import { Router } from 'express';
 import type { Request, Response, NextFunction } from 'express';
 import swaggerUi from 'swagger-ui-express';
 import { openapiDocument } from './swagger.config';
-import { swaggerConfig } from '../../constants/env';
+import { swaggerConfig, nodeEnv } from '../../constants/env';
 
 const router: Router = Router();
 
 // Only serve Swagger UI in development
 function devOnly(_req: Request, res: Response, next: NextFunction): void {
-  if (process.env.NODE_ENV !== 'development') {
+  if (nodeEnv !== 'development') {
     res.status(404).json({ message: 'Not found' });
     return;
   }
@@ -25,12 +26,23 @@ function basicAuth(req: Request, res: Response, next: NextFunction): void {
     return;
   }
 
+  // Reject if credentials are not configured
+  if (!swaggerConfig.user || !swaggerConfig.pass) {
+    res.setHeader('WWW-Authenticate', 'Basic realm="Swagger UI"');
+    res.status(401).json({ message: 'Invalid credentials' });
+    return;
+  }
+
   const base64 = authHeader.slice('Basic '.length);
   const decoded = Buffer.from(base64, 'base64').toString('utf8');
   const [user, ...rest] = decoded.split(':');
   const pass = rest.join(':');
 
-  if (user !== swaggerConfig.user || pass !== swaggerConfig.pass) {
+  // Use timing-safe comparison to prevent timing attacks
+  const userMatch = crypto.timingSafeEqual(Buffer.from(user), Buffer.from(swaggerConfig.user)).valueOf();
+  const passMatch = crypto.timingSafeEqual(Buffer.from(pass), Buffer.from(swaggerConfig.pass)).valueOf();
+
+  if (!userMatch || !passMatch) {
     res.setHeader('WWW-Authenticate', 'Basic realm="Swagger UI"');
     res.status(401).json({ message: 'Invalid credentials' });
     return;
