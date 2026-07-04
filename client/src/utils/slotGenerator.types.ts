@@ -1,11 +1,4 @@
-/**
- * Type definitions for the slot generation system
- */
-
-/**
- * Represents a preview slot in the slot generation system
- */
-export interface PreviewSlot {
+export interface IPreviewSlot {
   id: string;
   startTime: string; // HH:MM format
   endTime: string; // HH:MM format
@@ -15,51 +8,40 @@ export interface PreviewSlot {
   reason?: string;
 }
 
-/**
- * Represents a fixed package for venue booking
- */
-export interface FixedPackage {
+export interface IFixedPackage {
   slotName: string;
   startTime: string;
   endTime: string;
-  price: string;
+  price: number;
 }
 
-/**
- * Represents a pricing rule based on time of day
- */
-export interface PricingRule {
+export interface IPricingRule {
   fromTime: string;
   toTime: string;
-  price: string;
+  price: number;
 }
 
-/**
- * Represents a blocked time period when venue is unavailable
- */
-export interface BlockedTime {
+export interface IBlockedTime {
   fromTime: string;
   toTime: string;
+  reason?: string;
 }
 
-/**
- * Represents working hours for venue operation
- */
-export interface WorkingHours {
+export interface IWorkingHours {
   open: string;
   close: string;
 }
 
-/**
- * Configuration for slot generation based on booking type
- */
-export interface SlotConfig {
+export interface ISlotConfig {
   bookingType: 'fixedBooking' | 'flexibleBooking';
   workingDays: string[];
-  workingHours?: WorkingHours;
-  fixedPackages?: FixedPackage[];
+  workingHours?: IWorkingHours;
+  fixedPackages?: IFixedPackage[];
   slotDuration?: string;
-  pricingRules?: PricingRule[];
-  blockedTimes?: BlockedTime[];
+  bufferTime?: string;
+  pricingType?: string;
+  pricingRules?: IPricingRule[];
+  blockedTimes?: IBlockedTime[];
   samePrice?: string;
+  basePrice?: string;
 }
