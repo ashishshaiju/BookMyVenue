@@ -26,8 +26,8 @@ export const adminService = {
     const response = await axiosInstance.post(`${API_ENDPOINTS.VENUES}/${id}/reject`, { reason });
     return response.data;
   },
-  featureVenue: async (id: string, duration: number | null) => {
-    const response = await axiosInstance.post(`${API_ENDPOINTS.VENUES}/${id}/feature`, { duration });
+  featureVenue: async (id: string, durationDays: string) => {
+    const response = await axiosInstance.post(`${API_ENDPOINTS.VENUES}/${id}/feature`, { durationDays });
     return response.data;
   },
   activateVenue: async (id: string) => {
@@ -59,6 +59,36 @@ export const adminService = {
   },
   demoteAdmin: async (userId: string) => {
     const response = await axiosInstance.post(API_ENDPOINTS.RBAC_DEMOTE, { userId });
+    return response.data;
+  },
+  getModerationSummary: async () => {
+    const response = await axiosInstance.get('/moderation/summary');
+    return response.data.data;
+  },
+  moderateReview: async (reviewId: string, action: 'flag' | 'remove' | 'restore', reason?: string) => {
+    const response = await axiosInstance.post(`/reviews/${reviewId}/moderate`, { action, reason });
+    return response.data;
+  },
+  banUser: async (userId: string, scope: string, reason: string, venueId?: string | null, expiresAt?: string | null) => {
+    const response = await axiosInstance.post(API_ENDPOINTS.MODERATION_BANS, {
+      userId,
+      scope,
+      reason,
+      venueId: venueId || undefined,
+      expiresAt: expiresAt || undefined,
+    });
+    return response.data;
+  },
+  liftBan: async (banId: string) => {
+    const response = await axiosInstance.delete(`${API_ENDPOINTS.MODERATION_BANS}/${banId}`);
+    return response.data;
+  },
+  getUserBans: async (userId: string) => {
+    const response = await axiosInstance.get(`${API_ENDPOINTS.MODERATION_BANS}/user/${userId}`);
+    return response.data.data;
+  },
+  unbanUser: async (userId: string) => {
+    const response = await axiosInstance.post(`/user/${userId}/unban`);
     return response.data;
   },
 };

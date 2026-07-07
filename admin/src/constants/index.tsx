@@ -18,6 +18,7 @@ export const API_ENDPOINTS = {
     PROFILE: '/user/profile',
     DASHBOARD: '/dashboard',
     VENUES: '/venues',
+    FEATURED_VENUES: '/venues/featured',
     SEARCH: '/search',
     ADMIN_VENUES: '/venues/all',
     ADMIN_BOOKINGS: '/bookings/all',
@@ -30,4 +31,5 @@ export const API_ENDPOINTS = {
     OWNER_BLOCK_DATES: '/owner',
     OWNER_VENUE_BOOKINGS: '/owner/venue',
     OWNER_OFFLINE_BOOKING: '/owner/bookings/offline',
+    MODERATION_BANS: '/moderation/bans',
 } as const;

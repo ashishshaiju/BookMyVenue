@@ -32,7 +32,7 @@ export const useRejectVenue = () => {
 export const useFeatureVenue = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, duration }: { id: string; duration: number | null }) => adminService.featureVenue(id, duration),
+    mutationFn: ({ id, durationDays }: { id: string; durationDays: string }) => adminService.featureVenue(id, durationDays),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ADMIN_VENUES });
     },

@@ -7,6 +7,7 @@ import toast from 'react-hot-toast';
 import { useApiQuery, useApiMutation } from '../../hooks/useApi';
 import { useModal } from '../../hooks/useModal';
 import { VenueDetailPanel } from '../../components/common/panels/VenueDetailPanel';
+import { FeaturedVenuesPanel } from '../../components/common/panels/FeaturedVenuesPanel';
 import { QUERY_KEYS } from '../../config/queryKeys';
 import { API_ENDPOINTS } from '../../constants';
 import { DataTable } from '../../components/ui/data-table';
@@ -136,11 +137,11 @@ export default function VenuesPage() {
     },
   );
 
-  const featureMutation = useApiMutation<unknown, { id: string; duration: number | null }>(
+  const featureMutation = useApiMutation<unknown, { id: string; durationDays: string }>(
     (vars) => ({
       method: 'POST',
       url: `${API_ENDPOINTS.VENUES}/${vars.id}/feature`,
-      data: { duration: vars.duration },
+      data: { durationDays: vars.durationDays },
     }),
     {
       onSuccess: () => {
@@ -201,8 +202,7 @@ export default function VenuesPage() {
   };
 
   const handleFeature = () => {
-    const duration = featureDuration === 'indefinite' ? null : Number(featureDuration);
-    featureMutation.mutate({ id: featureDialog.venueId, duration });
+    featureMutation.mutate({ id: featureDialog.venueId, durationDays: featureDuration });
   };
 
   const handleSuspend = () => {
@@ -351,22 +351,36 @@ export default function VenuesPage() {
           <h1 className="text-3xl font-bold tracking-tight">Venues</h1>
           <p className="text-muted-foreground mt-1">Manage all venues on the platform.</p>
         </div>
-        <div className="w-[200px]">
-          <Select
-            value={statusFilter}
-            onValueChange={(v) => { setStatusFilter(v); setPage(1); }}
+        <div className="flex items-center gap-4">
+          <Button 
+            variant="outline" 
+            onClick={() => openModal({
+              title: 'Featured Venues',
+              component: FeaturedVenuesPanel,
+              size: 'lg',
+              data: {},
+              actions: []
+            })}
           >
-            <SelectTrigger>
-              <SelectValue placeholder="Filter by status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="All">All Statuses</SelectItem>
-              <SelectItem value="PendingReview">Pending Review</SelectItem>
-              <SelectItem value="Approved">Approved</SelectItem>
-              <SelectItem value="Suspended">Suspended</SelectItem>
-              <SelectItem value="Rejected">Rejected</SelectItem>
-            </SelectContent>
-          </Select>
+            ★ View Featured Venues
+          </Button>
+          <div className="w-[200px]">
+            <Select
+              value={statusFilter}
+              onValueChange={(v) => { setStatusFilter(v); setPage(1); }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="All">All Statuses</SelectItem>
+                <SelectItem value="PendingReview">Pending Review</SelectItem>
+                <SelectItem value="Approved">Approved</SelectItem>
+                <SelectItem value="Suspended">Suspended</SelectItem>
+                <SelectItem value="Rejected">Rejected</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
 
