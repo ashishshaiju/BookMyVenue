@@ -23,6 +23,7 @@ const API_ENDPOINTS = {
   PROFILE: '/user/profile',
   SEARCH: '/search',
   VENUES: '/venues',
+  FEATURED_VENUES: '/venues/featured',
   MY_VENUES: '/venues/my-venues',
   VENUE_BY_ID: (id: string) => `/venues/${id}`,
   VENUE_SUBMIT: (id: string) => `/venues/${id}/submit`,

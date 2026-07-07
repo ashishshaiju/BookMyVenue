@@ -50,6 +50,7 @@ export interface BookingCardDTO {
   totalPrice: number;
   paymentMethod?: string;
   uiStatus: 'upcoming' | 'completed' | 'cancelled';
+  hasReview?: boolean;
 }
 
 export interface BookingDetailDTO extends BookingCardDTO {
