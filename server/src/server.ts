@@ -16,6 +16,7 @@ import router from './router';
 import { ResponseUtil } from './utils/responseUtils';
 import { validateEmailConfig } from './services/email.service';
 import { startEmailWorker } from './workers/email.worker';
+import { startBanExpiryWorker } from './workers/banExpiry.worker';
 import { setupGracefulShutdown } from './utils/shutdownUtils';
 import { requestLogger, logInfo, logError } from './utils/logger';
 import { webhookRouter } from './modules/webhook/webhook.router';
@@ -93,6 +94,7 @@ async function startServer(): Promise<void> {
   await connectDatabase();
   await verifyRbacSeed();
   startEmailWorker();
+  startBanExpiryWorker();
   server = app.listen(PORT, '0.0.0.0', () => {
     logInfo(`Server started on port ${String(PORT)}`);
   });

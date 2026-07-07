@@ -122,6 +122,7 @@ export async function findAllUsers(
           username: 1,
           email: 1,
           active: 1,
+          isBanned: 1,
           createdAt: 1,
           roles: { $map: { input: '$roles', as: 'r', in: '$$r.name' } },
           venues: 1,
@@ -149,5 +150,42 @@ export async function toggleUserStatus(userId: string): Promise<IUser | null> {
   }
   user.active = !user.active;
   await user.save();
+  return user;
+}
+
+export async function banUser(userId: string, adminId: string, banReason: string): Promise<IUser> {
+  const user = await UserModel.findByIdAndUpdate(
+    userId,
+    {
+      active: false,
+      banReason,
+      bannedBy: adminId,
+      bannedAt: new Date(),
+    },
+    { new: true }
+  ).exec();
+
+  if (!user) {
+    throw new Error('User not found');
+  }
+
+  return user;
+}
+
+export async function unbanUser(userId: string): Promise<IUser> {
+  const user = await UserModel.findByIdAndUpdate(
+    userId,
+    {
+      banReason: null,
+      bannedBy: null,
+      bannedAt: null,
+    },
+    { new: true }
+  ).exec();
+
+  if (!user) {
+    throw new Error('User not found');
+  }
+
   return user;
 }

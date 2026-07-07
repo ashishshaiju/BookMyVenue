@@ -16,7 +16,9 @@ export async function resetUserPasswordWorkflow(userId: string): Promise<boolean
   await EmailTaskModel.create({
     recipient: user.email,
     intent: EmailIntent.ADMIN_PASSWORD_RESET,
+    subject: `Password Reset – ${user.username}`,
     status: EmailTaskStatus.PENDING,
+    retryAfter: new Date(),
     metadata: { newPassword, username: user.username }
   });
 

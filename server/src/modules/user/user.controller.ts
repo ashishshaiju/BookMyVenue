@@ -4,6 +4,10 @@ import * as service from './user.service';
 import * as workflow from './user.workflow';
 import { handleError } from '../../utils/errors';
 
+interface BanUserRequest {
+  banReason: string;
+}
+
 export const getProfile = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = req.user?.userId;
@@ -67,5 +71,38 @@ export const resetUserPassword = async (req: Request, res: Response): Promise<vo
     } else {
       handleError(res, e, 'resetUserPassword');
     }
+  }
+};
+
+export const banUser = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const adminId = req.user?.userId;
+    if (!adminId) {
+      ResponseUtil.unauthorized(res, 'Unauthorized');
+      return;
+    }
+
+    const userId = Array.isArray(req.params.userId) ? req.params.userId[0] : req.params.userId;
+    const { banReason } = req.body as BanUserRequest;
+
+    if (!banReason || banReason.trim().length < 10) {
+      ResponseUtil.badRequest(res, 'Ban reason must be at least 10 characters');
+      return;
+    }
+
+    const user = await service.banUser(userId, adminId, banReason);
+    ResponseUtil.success(res, 'User banned successfully', { username: user.username, isBanned: user.isBanned });
+  } catch (e) {
+    handleError(res, e, 'banUser');
+  }
+};
+
+export const unbanUser = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = Array.isArray(req.params.userId) ? req.params.userId[0] : req.params.userId;
+    const user = await service.unbanUser(userId);
+    ResponseUtil.success(res, 'User unbanned successfully', { username: user.username });
+  } catch (e) {
+    handleError(res, e, 'unbanUser');
   }
 };

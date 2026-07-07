@@ -9,6 +9,7 @@ export interface IUser extends Document {
   active: boolean;
   deleted: boolean;
   passwordChangedAt?: Date | null;
+  isBanned: boolean;
 }
 
 const UserSchema = new Schema<IUser>(
@@ -19,6 +20,7 @@ const UserSchema = new Schema<IUser>(
     active: { type: Boolean, default: true },
     deleted: { type: Boolean, default: false },
     passwordChangedAt: { type: Date, default: null },
+    isBanned: { type: Boolean, default: false, index: true },
   },
   { timestamps: true }
 );
@@ -26,6 +28,11 @@ const UserSchema = new Schema<IUser>(
 UserSchema.index(
   { email: 1 },
   { unique: true, sparse: true, partialFilterExpression: { active: true } }
+);
+
+UserSchema.index(
+  { active: 1, deleted: 1, isBanned: 1 },
+  { name: 'idx_active_deleted_banned' }
 );
 
 export const UserModel = mongoose.model<IUser>('Users', UserSchema, 'Users');
