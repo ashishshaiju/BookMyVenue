@@ -1,5 +1,4 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { IoLocationOutline } from 'react-icons/io5';
 import { Slider } from '@/components/ui/slider';
 import {
   Select,
@@ -12,13 +11,14 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
-import { Link } from 'react-router';
 import { useExploreVenues } from '@/hooks/useExploreVenues';
 import { useDebounce } from '@/hooks/useDebounce';
-import type { PublicVenue, VenueFilters } from '@/types/venue.types';
+import { useToggleWishlist, useWishlistSync } from '@/hooks/useWishlist';
+import type { VenueFilters } from '@/types/venue.types';
 import { FILTER_PRICE_STEPS, KERALA_DISTRICTS } from '@/constants';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AlertCircle, Snowflake, X, Filter, Loader2 } from 'lucide-react';
+import { AlertCircle, X, Filter, Loader2 } from 'lucide-react';
+import { VenueCard } from '@/components/VenueCard';
 
 const ExplorePage = () => {
   const [filters, setFilters] = useState<VenueFilters>({});
@@ -28,8 +28,13 @@ const ExplorePage = () => {
     0,
     FILTER_PRICE_STEPS.length - 1,
   ]);
-
   const [isScrolled, setIsScrolled] = useState(false);
+  const [togglingVenues, setTogglingVenues] = useState<Set<string>>(new Set());
+
+  const { toggleWishlist: toggleWishlistFn } = useToggleWishlist();
+
+  // Merge any guest-liked venues into the account's wishlist on login
+  useWishlistSync();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -49,6 +54,27 @@ const ExplorePage = () => {
       minPrice: FILTER_PRICE_STEPS[debouncedPriceRangeIndex[0]],
       maxPrice: FILTER_PRICE_STEPS[debouncedPriceRangeIndex[1]],
     });
+
+  const handleToggleWishlist = useCallback(
+    async (venueId: string, e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      setTogglingVenues((prev) => new Set([...prev, venueId]));
+
+      try {
+        // toggleWishlistFn handles both authenticated (API) and guest (localStorage) cases
+        return await toggleWishlistFn(venueId);
+      } finally {
+        setTogglingVenues((prev) => {
+          const next = new Set(prev);
+          next.delete(venueId);
+          return next;
+        });
+      }
+    },
+    [toggleWishlistFn]
+  );
 
   const observerRef = useRef<IntersectionObserver | null>(null);
   const lastVenueElementRef = useCallback(
@@ -131,20 +157,6 @@ const ExplorePage = () => {
 
   const venues = data?.pages.flatMap((page) => page.venues) || [];
   const totalVenues = data?.pages[0]?.pagination?.total || 0;
-
-  const getStartingPrice = (venue: PublicVenue) => {
-    if (venue.pricing) {
-      const rules = venue.pricing.pricingRules || [];
-      if (rules.length > 0) {
-        return Math.min(venue.pricing.basePrice, ...rules.map((r) => r.price));
-      }
-      return venue.pricing.basePrice;
-    }
-    if (venue.fixedPackages?.length) {
-      return Math.min(...venue.fixedPackages.map((p) => p.price));
-    }
-    return null;
-  };
 
   return (
     <section className="px-8 pt-24 mb-20 mx-auto">
@@ -401,7 +413,7 @@ const ExplorePage = () => {
             </div>
 
             {/* results + sort */}
-            <div className="mb-6 flex items-center justify-between">
+            <div className="mb-6 flex items-center justify-between gap-4 flex-wrap">
               <h2 className="text-lg font-semibold text-[var(--text-primary)]">
                 {totalVenues} Venues Found
               </h2>
@@ -480,109 +492,13 @@ const ExplorePage = () => {
                 <div className="grid grid-cols-1 gap-6">
                   {venues.map((venue, index) => {
                     const isLastItem = index === venues.length - 1;
-                    const price = getStartingPrice(venue);
-
                     return (
-                      <div
-                        key={venue._id}
-                        ref={isLastItem ? lastVenueElementRef : null}
-                        className="group overflow-hidden rounded-3xl border border-[var(--bg-grey)] bg-[var(--bg-tertiary)] hover:shadow-lg transition duration-300 flex flex-col sm:flex-row sm:min-h-[16rem]"
-                      >
-                        {/* Left Image */}
-                        <div className="w-full sm:w-[40%] h-52 sm:h-64 shrink-0 overflow-hidden flex">
-                          <img
-                            src={venue.coverImage}
-                            alt={venue.name}
-                            className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
-                          />
-                        </div>
-
-                        {/* Right Content */}
-                        <div className="p-5 flex-1 flex flex-col justify-between overflow-hidden">
-                          <div>
-                            <div className="flex justify-between items-start gap-2 mb-1">
-                              <h3
-                                className="text-xl font-bold text-[var(--text-primary)] line-clamp-1 uppercase"
-                                title={venue.name}
-                              >
-                                {venue.name}
-                              </h3>
-                              <span className="shrink-0 inline-block px-3 py-1 bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 text-[10px] font-bold tracking-wider rounded-full border border-orange-200 dark:border-orange-800">
-                                {venue.venueType}
-                              </span>
-                            </div>
-
-                            <p
-                              className="text-sm text-[var(--text-secondary)] flex items-center gap-1 line-clamp-1 mb-4"
-                              title={`${venue.city}, ${venue.district}`}
-                            >
-                              <IoLocationOutline className="shrink-0 text-gray-400" size={16} />{' '}
-                              {venue.city}, {venue.district}
-                            </p>
-
-                            {/* Amenities Tags */}
-                            {venue.amenities && venue.amenities.length > 0 && (
-                              <div className="flex flex-wrap gap-2 mb-1">
-                                {venue.amenities.slice(0, 3).map((amenity, i) => (
-                                  <span
-                                    key={i}
-                                    className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium border border-[var(--bg-grey)] rounded-md text-[var(--text-secondary)]"
-                                  >
-                                    {amenity === 'AC' && <Snowflake size={12} />}
-                                    {amenity}
-                                  </span>
-                                ))}
-                                {venue.amenities.length > 3 && (
-                                  <span className="inline-flex items-center px-2.5 py-1 text-xs font-medium border border-[var(--bg-grey)] rounded-md text-[var(--text-secondary)]">
-                                    + {venue.amenities.length - 3} more
-                                  </span>
-                                )}
-                              </div>
-                            )}
-                          </div>
-
-                          <div className="flex flex-wrap sm:flex-nowrap justify-between items-end gap-4 mt-2 pt-2 border-t border-[var(--bg-grey)]/50">
-                            <div className="flex flex-col">
-                              {price !== null ? (
-                                <>
-                                  <span className="text-[10px] font-bold text-gray-400 tracking-wider uppercase mb-0.5">
-                                    Starts From
-                                  </span>
-                                  <div className="flex items-baseline gap-1">
-                                    <span className="text-xl font-bold text-[var(--text-primary)]">
-                                      ₹ {price.toLocaleString()}
-                                    </span>
-                                    {venue.bookingType==='flexibleBooking' && venue.flexibleBooking?.slotDuration ? (
-                                      <span className="text-xs text-[var(--text-secondary)]">
-                                        / {venue.flexibleBooking.slotDuration} mins
-                                      </span>
-                                    ) : (
-                                      <span className="text-xs text-[var(--text-secondary)]">
-                                        / slot
-                                      </span>
-                                    )}
-                                  </div>
-                                  <span className="text-xs text-[var(--bg-green)] font-medium mt-1">
-                                    {venue.bookingType === 'fixedBooking'
-                                      ? 'Fixed Packages Available'
-                                      : 'Flexible Booking'}
-                                  </span>
-                                </>
-                              ) : (
-                                <span className="text-sm text-[var(--text-secondary)]">
-                                  Price on request
-                                </span>
-                              )}
-                            </div>
-
-                            <Link
-                              to={`/venue/${venue._id}`}
-                              className="shrink-0 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl font-semibold transition shadow-md hover:shadow-lg"
-                            >
-                              Book Now
-                            </Link>
-                          </div>
-                        </div>
+                      <div key={venue._id} ref={isLastItem ? lastVenueElementRef : null}>
+                        <VenueCard
+                          venue={venue}
+                          onToggleWishlist={handleToggleWishlist}
+                          isLoadingWishlist={togglingVenues.has(venue._id)}
+                        />
                       </div>
                     );
                   })}

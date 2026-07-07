@@ -40,7 +40,7 @@ export const createAxiosInstance = (): AxiosInstance => {
       sessionToken = crypto.randomUUID();
       localStorage.setItem('x-session-token', sessionToken);
     }
-    
+
     // Attach to headers
     config.headers['x-session-token'] = sessionToken;
 

@@ -21,7 +21,6 @@ interface AuthContextType {
   verifySession: () => Promise<void>;
 }
 
-
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const clearAuthData = (setUser: React.Dispatch<React.SetStateAction<User | null>>) => {

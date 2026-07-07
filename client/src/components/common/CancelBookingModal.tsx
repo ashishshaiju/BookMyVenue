@@ -19,8 +19,11 @@ const CancelBookingModal = ({ booking, open, onOpenChange }: CancelBookingModalP
   const [reason, setReason] = useState('');
   const toast = useToast();
   const navigate = useNavigate();
-  
-  const { mutate: cancelBooking, isPending } = useApiMutation<CancelBookingResponse, { reason?: string }>({
+
+  const { mutate: cancelBooking, isPending } = useApiMutation<
+    CancelBookingResponse,
+    { reason?: string }
+  >({
     url: API_ENDPOINTS.CANCEL_BOOKING(booking._id),
     method: 'DELETE',
   });
@@ -31,7 +34,9 @@ const CancelBookingModal = ({ booking, open, onOpenChange }: CancelBookingModalP
       {
         onSuccess: (data: CancelBookingResponse) => {
           // data.refundAmount is in Rupees (sent as amountPaise / 100)
-          toast.success(`Booking cancelled successfully. Refund of ₹${data.refundAmount} initiated.`);
+          toast.success(
+            `Booking cancelled successfully. Refund of ₹${data.refundAmount} initiated.`
+          );
           queryClient.invalidateQueries({ queryKey: ['bookings', 'my'] });
           queryClient.invalidateQueries({ queryKey: ['bookings', booking._id] });
           onOpenChange(false);
@@ -39,12 +44,14 @@ const CancelBookingModal = ({ booking, open, onOpenChange }: CancelBookingModalP
         },
         onError: () => {
           toast.error('Failed to cancel booking');
-        }
+        },
       }
     );
   };
 
-  const refundAmount = Math.floor(booking.totalPrice * ((booking.cancellationRefundPct || 0) / 100));
+  const refundAmount = Math.floor(
+    booking.totalPrice * ((booking.cancellationRefundPct || 0) / 100)
+  );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -60,33 +67,38 @@ const CancelBookingModal = ({ booking, open, onOpenChange }: CancelBookingModalP
 
         <div className="mt-2">
           <p className="text-sm text-[var(--text-secondary)]">
-             Are you sure you want to cancel your booking at <span className="font-semibold text-[var(--text-primary)]">{booking.venueName}</span>?
-             This action cannot be undone.
+            Are you sure you want to cancel your booking at{' '}
+            <span className="font-semibold text-[var(--text-primary)]">{booking.venueName}</span>?
+            This action cannot be undone.
           </p>
-          
+
           <div className="mt-4 p-4 bg-orange-50 border border-orange-200 rounded-lg">
             <h4 className="text-sm font-semibold text-orange-800 mb-1">Cancellation Policy</h4>
             <p className="text-sm text-orange-700">{booking.cancellationPolicy}</p>
           </div>
 
           <div className="mt-4 p-4 bg-[var(--bg-primary)] border border-[var(--bg-grey)] rounded-lg flex justify-between items-center">
-             <span className="text-sm font-medium text-[var(--text-secondary)]">Estimated Refund</span>
-             <span className="text-lg font-bold text-[var(--bg-green)]">₹{refundAmount}</span>
+            <span className="text-sm font-medium text-[var(--text-secondary)]">
+              Estimated Refund
+            </span>
+            <span className="text-lg font-bold text-[var(--bg-green)]">₹{refundAmount}</span>
           </div>
 
           <div className="mt-4">
-             <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">Reason for Cancellation (Optional)</label>
-             <textarea 
-               value={reason}
-               onChange={(e) => setReason(e.target.value)}
-               placeholder="Please tell us why you are cancelling..."
-               maxLength={200}
-               rows={3}
-               className="w-full bg-[var(--bg-primary)] border border-[var(--bg-grey)] rounded-lg p-3 text-sm text-[var(--text-primary)] focus:ring-1 focus:ring-[var(--bg-green)] outline-none resize-none"
-             ></textarea>
-             <div className="text-right mt-1 text-xs text-[var(--text-secondary)]">
-               {reason.length}/200
-             </div>
+            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
+              Reason for Cancellation (Optional)
+            </label>
+            <textarea
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="Please tell us why you are cancelling..."
+              maxLength={200}
+              rows={3}
+              className="w-full bg-[var(--bg-primary)] border border-[var(--bg-grey)] rounded-lg p-3 text-sm text-[var(--text-primary)] focus:ring-1 focus:ring-[var(--bg-green)] outline-none resize-none"
+            ></textarea>
+            <div className="text-right mt-1 text-xs text-[var(--text-secondary)]">
+              {reason.length}/200
+            </div>
           </div>
         </div>
 
@@ -97,7 +109,9 @@ const CancelBookingModal = ({ booking, open, onOpenChange }: CancelBookingModalP
             onClick={handleCancel}
             className="inline-flex w-full justify-center rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-500 sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
-            {isPending && <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>}
+            {isPending && (
+              <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+            )}
             Yes, Cancel Booking
           </button>
           <button

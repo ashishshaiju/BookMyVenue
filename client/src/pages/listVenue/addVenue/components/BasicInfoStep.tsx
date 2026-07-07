@@ -1,5 +1,6 @@
 import { Field, ErrorMessage } from 'formik';
 import { KERALA_DISTRICTS } from '@/constants';
+import { PlaceAutocomplete } from '@/components/PlaceAutocomplete';
 
 const venueTypes = [
   'Hall',
@@ -110,12 +111,7 @@ const BasicInfoStep = () => {
           {/* City */}
           <div>
             <label className="block mb-2 font-bold">City / Place</label>
-            <Field
-              name="city"
-              type="text"
-              placeholder="Enter Your City"
-              className="w-full rounded-xl border border-[var(--bg-grey)] px-4 py-3 outline-none focus:border-[var(--bg-green)]"
-            />
+            <PlaceAutocomplete fieldName="city" placeholder="Search for your city or place..." />
             <ErrorMessage name="city" component="p" className={err} />
           </div>
 

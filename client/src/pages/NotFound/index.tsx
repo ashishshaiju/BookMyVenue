@@ -17,9 +17,10 @@ const NotFound = () => {
 
       <h1 className="text-8xl font-black text-[var(--bg-green)] tracking-wider mb-2">404</h1>
       <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-4">Page Not Found</h2>
-      
+
       <p className="text-[var(--text-secondary)] max-w-md mb-8 text-sm md:text-base leading-relaxed">
-        The venue you are looking for, or the page you requested, might have been moved, deleted, or is temporarily unavailable.
+        The venue you are looking for, or the page you requested, might have been moved, deleted, or
+        is temporarily unavailable.
       </p>
 
       <div className="flex flex-col sm:flex-row items-center gap-4 justify-center">

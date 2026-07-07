@@ -1,9 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Calendar } from '@/components/ui/calendar';
-import type {
-  ISlotConfig,
-  IPreviewSlot,
-} from '@/utils/slotGenerator.types';
+import type { ISlotConfig, IPreviewSlot } from '@/utils/slotGenerator.types';
 import {
   generateSlots,
   isWorkingDay,
@@ -86,16 +83,13 @@ const SlotPreviewPanel: React.FC<SlotPreviewPanelProps> = ({
       })
     : '';
 
-  const bookingTypeLabel =
-    bookingType === 'fixedBooking' ? 'Fixed Package' : 'Flexible Booking';
+  const bookingTypeLabel = bookingType === 'fixedBooking' ? 'Fixed Package' : 'Flexible Booking';
 
   return (
     <div className="mt-26 h-fit max-h-[80vh] lg:max-h-full flex flex-col bg-gradient-to-b from-white via-white to-gray-50/50 backdrop-blur-md rounded-3xl p-6 space-y-6">
       {/* Booking Type Badge */}
       <div className="flex justify-between items-center shrink-0">
-        <h3 className="text-lg font-semibold text-[var(--text-primary)]">
-          Preview
-        </h3>
+        <h3 className="text-lg font-semibold text-[var(--text-primary)]">Preview</h3>
         <span className="px-3 py-1 rounded-full text-sm font-medium bg-[var(--bg-green)] text-white">
           {bookingTypeLabel}
         </span>
@@ -103,9 +97,7 @@ const SlotPreviewPanel: React.FC<SlotPreviewPanelProps> = ({
 
       {/* Calendar Section */}
       <div className="space-y-3 flex flex-col items-center shrink-0">
-        <label className="block font-semibold text-[var(--text-primary)]">
-          Select Date
-        </label>
+        <label className="block font-semibold text-[var(--text-primary)]">Select Date</label>
         <div className="overflow-x-auto w-full flex justify-center">
           <Calendar
             mode="single"
@@ -128,9 +120,7 @@ const SlotPreviewPanel: React.FC<SlotPreviewPanelProps> = ({
 
       {/* Available Slots Section */}
       <div className="space-y-3 flex flex-col flex-1 min-h-0">
-        <h4 className="font-semibold text-[var(--text-primary)] shrink-0">
-          Available Slots
-        </h4>
+        <h4 className="font-semibold text-[var(--text-primary)] shrink-0">Available Slots</h4>
 
         {!selectedPreviewDate ? (
           <div className="text-center py-8 text-[var(--text-secondary)]">
@@ -174,7 +164,8 @@ const SlotPreviewPanel: React.FC<SlotPreviewPanelProps> = ({
       {/* Disclaimer Note */}
       <div className="pt-2 border-t border-[var(--bg-grey)] shrink-0">
         <p className="text-[11px] text-[var(--text-secondary)] text-center leading-relaxed">
-          * Note: This preview is for visualization purposes only. Actual slot generation is handled server-side and may evaluate additional constraints and edge cases.
+          * Note: This preview is for visualization purposes only. Actual slot generation is handled
+          server-side and may evaluate additional constraints and edge cases.
         </p>
       </div>
     </div>

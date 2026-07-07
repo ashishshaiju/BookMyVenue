@@ -1,15 +1,23 @@
 import { useNavigate } from 'react-router';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Link } from 'react-router';
-import { featuredVenues } from './featuredVenues';
 import { IoLocationOutline, IoSearch } from 'react-icons/io5';
-import { TiStar } from 'react-icons/ti';
 import heroImage from '@/assets/hero.png';
+import { useApiQuery } from '@/hooks/useApi';
+import { API_ENDPOINTS } from '@/constants';
+import { CompactVenueCard } from '@/components/CompactVenueCard';
+import { useToggleWishlist, useWishlistSync } from '@/hooks/useWishlist';
+import type { PublicVenue } from '@/types/venue.types';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const HomePage = () => {
   const [search, setSearch] = useState('');
+  const [togglingVenues, setTogglingVenues] = useState<Set<string>>(new Set());
 
   const navigate = useNavigate();
+  
+  const { toggleWishlist: toggleWishlistFn } = useToggleWishlist();
+  useWishlistSync();
 
   const handleSearch = () => {
     const trimmedSearch = search.trim();
@@ -20,6 +28,32 @@ const HomePage = () => {
       navigate('/explore');
     }
   };
+
+  const { data: featuredVenues = [], isLoading } = useApiQuery<PublicVenue[]>(
+    ['featured-venues'],
+    { method: 'GET', url: API_ENDPOINTS.FEATURED_VENUES }
+  );
+
+  const handleToggleWishlist = useCallback(
+    async (venueId: string, e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      setTogglingVenues((prev) => new Set([...prev, venueId]));
+
+      try {
+        return await toggleWishlistFn(venueId);
+      } finally {
+        setTogglingVenues((prev) => {
+          const next = new Set(prev);
+          next.delete(venueId);
+          return next;
+        });
+      }
+    },
+    [toggleWishlistFn]
+  );
+
   return (
     <div>
       <section className="relative h-[550px] md:h-[620px] w-full overflow-hidden flex items-center justify-center">
@@ -88,35 +122,36 @@ const HomePage = () => {
 
           {/* cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {featuredVenues.map((venue) => (
-              <div
-                key={venue.id}
-                className="bg-[var(--bg-tertiary)] rounded-2xl overflow-hidden border border-[var(--bg-grey)] hover:shadow-lg transition duration-300"
-              >
-                <img src={venue.image} alt={venue.name} className="w-full h-56 object-cover" />
-
-                <div className="p-5">
-                  <h3 className="text-lg font-semibold text-[var(--text-primary)]">{venue.name}</h3>
-                  <div className="flex justify-between">
-                    <p className="text-sm text-[var(--text-secondary)] mt-2 flex items-center gap-1">
-                      <IoLocationOutline /> {venue.place} , {venue.district}
-                    </p>
-                    <p className="flex items-center">
-                      <TiStar color="#a8dc55" /> {venue.rating}
-                    </p>
+            {isLoading ? (
+              Array.from({ length: 4 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="flex flex-col h-[380px] rounded-2xl border border-[var(--bg-grey)] bg-[var(--bg-tertiary)] overflow-hidden"
+                >
+                  <Skeleton className="w-full h-48 shrink-0" />
+                  <div className="flex-1 p-5 flex flex-col justify-between">
+                    <div>
+                      <Skeleton className="h-6 w-3/4 mb-3" />
+                      <Skeleton className="h-4 w-1/2 mb-2" />
+                      <Skeleton className="h-4 w-1/3" />
+                    </div>
                   </div>
-
-                  <p className="text-sm text-[var(--text-secondary)] mt-2">Upto {venue.guests}</p>
-
-                  <Link
-                    to={`/venue/${venue.id}`}
-                    className="mt-5 inline-block w-full text-center bg-[var(--bg-green)] text-white py-3 rounded-xl font-medium hover:opacity-90 transition"
-                  >
-                    View Details
-                  </Link>
                 </div>
+              ))
+            ) : featuredVenues.length > 0 ? (
+              featuredVenues.map((venue: PublicVenue) => (
+                <CompactVenueCard
+                  key={venue._id}
+                  venue={venue}
+                  onToggleWishlist={handleToggleWishlist}
+                  isLoadingWishlist={togglingVenues.has(venue._id)}
+                />
+              ))
+            ) : (
+              <div className="col-span-full py-12 text-center text-[var(--text-secondary)]">
+                No featured venues currently available.
               </div>
-            ))}
+            )}
           </div>
 
           {/* Mobile View All */}

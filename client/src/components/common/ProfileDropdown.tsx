@@ -1,6 +1,6 @@
 import { useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router';
-import { FiLogOut, FiUser, FiX } from 'react-icons/fi';
+import { FiLogOut, FiUser, FiX, FiHeart } from 'react-icons/fi';
 import { LuCalendarDays } from 'react-icons/lu';
 import { MdOutlineMeetingRoom } from 'react-icons/md';
 import { useAuth } from '@/hooks/useAuth';
@@ -87,6 +87,15 @@ const ProfileDropdown = ({ onClose }: ProfileDropdownProps) => {
           >
             <LuCalendarDays className="text-base" />
             My Bookings
+          </Link>
+
+          <Link
+            to="/wishlist"
+            onClick={onClose}
+            className="flex items-center gap-3 px-5 py-3 text-[var(--text-primary)] hover:bg-[var(--bg-primary)] transition"
+          >
+            <FiHeart className="text-base" />
+            My Wishlist
           </Link>
 
           <Link

@@ -1,6 +1,9 @@
-import { FaBuilding } from 'react-icons/fa';
+import { useState } from 'react';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import { Link, useNavigate, useLocation } from 'react-router';
+import { HiOutlineMail, HiOutlineLockClosed, HiOutlineEye } from 'react-icons/hi';
+import { HiOutlineEyeSlash } from 'react-icons/hi2';
+import AuthLayout from '@/layout/AuthLayout';
 import { signinSchema } from './validation';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
@@ -13,125 +16,185 @@ const LoginPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const [showPassword, setShowPassword] = useState(false);
+
   const searchParams = new URLSearchParams(location.search);
   const redirectParam = searchParams.get('redirect');
+
   const registerLink = redirectParam
     ? `/register?redirect=${encodeURIComponent(redirectParam)}`
     : '/register';
 
   return (
-    <div className="min-h-screen flex flex-col justify-center items-center p-5">
-      <div className="flex flex-col items-center gap-4">
-        <h1 className="text-[var(--text-primary)] font-sans text-5xl font-bold">Book My Venue</h1>
-        <div className="bg-[var(--bg-secondary)] p-2 rounded-sm">
-          <FaBuilding className="text-5xl" color="white" />
-        </div>
-      </div>
-      <div className="flex flex-col justify-center items-center">
-        <h2 className="text-3xl text-[var(--text-primary)] mt-10 font-semibold">Welcome Back</h2>
-        <p className="text-[var(--text-secondary)] mt-2"> Sign in to continue exploring venues.</p>
+    <AuthLayout
+      title="Welcome Back 👋"
+      subtitle="Sign in to continue discovering amazing venues for your next celebration."
+      footer={
+        <>
+          Don't have an account?
+          <Link to={registerLink} className="ml-2 font-semibold text-zinc-900 hover:underline">
+            Create Account
+          </Link>
+        </>
+      }
+    >
+      <Formik
+        initialValues={{
+          email: '',
+          password: '',
+        }}
+        validationSchema={signinSchema}
+        onSubmit={async (values, { setSubmitting }) => {
+          try {
+            await login(values.email, values.password);
 
-        <Formik
-          initialValues={{
-            email: '',
-            password: '',
-          }}
-          validationSchema={signinSchema}
-          onSubmit={async (values, { setSubmitting }) => {
-            try {
-              await login(values.email, values.password);
-              toast.success("Welcome back! You're now signed in.");
+            toast.success("Welcome back! You're now signed in.");
 
-              const localRedirect = localStorage.getItem('redirectUrl');
-              let finalRedirect = '/';
+            const localRedirect = localStorage.getItem('redirectUrl');
 
-              if (redirectParam && localRedirect && redirectParam === localRedirect) {
-                finalRedirect = getSafeRedirectUrl(redirectParam);
-              } else if (redirectParam) {
-                finalRedirect = getSafeRedirectUrl(redirectParam);
-              } else if (localRedirect) {
-                finalRedirect = getSafeRedirectUrl(localRedirect);
-              }
+            let finalRedirect = '/';
 
-              try {
-                localStorage.removeItem('redirectUrl');
-              } catch {
-                // Ignore localStorage errors
-              }
-
-              navigate(finalRedirect);
-            } catch (err: unknown) {
-              toast.error(extractErrorMessage(err) || 'Invalid email or password');
-            } finally {
-              setSubmitting(false);
+            if (redirectParam && localRedirect && redirectParam === localRedirect) {
+              finalRedirect = getSafeRedirectUrl(redirectParam);
+            } else if (redirectParam) {
+              finalRedirect = getSafeRedirectUrl(redirectParam);
+            } else if (localRedirect) {
+              finalRedirect = getSafeRedirectUrl(localRedirect);
             }
-          }}
-        >
-          {({ isSubmitting }) => (
-            <Form className="flex flex-col gap-5 w-full mt-10">
-              <div className="flex flex-col gap-2">
-                <label className="text-[var(--text-secondary)] text-sm " htmlFor="email">
-                  Email
-                </label>
+
+            try {
+              localStorage.removeItem('redirectUrl');
+            } catch {
+              // Ignore localStorage errors
+            }
+
+            navigate(finalRedirect);
+          } catch (err: unknown) {
+            toast.error(extractErrorMessage(err) || 'Invalid email or password');
+          } finally {
+            setSubmitting(false);
+          }
+        }}
+      >
+        {({ isSubmitting }) => (
+          <Form className="space-y-6">
+            {/* Email */}
+
+            <div>
+              <label htmlFor="email" className="mb-2 block text-sm font-medium text-zinc-700">
+                Email Address
+              </label>
+
+              <div className="group flex h-14 items-center rounded-2xl border border-zinc-300 bg-white px-4 transition-all duration-200 focus-within:border-black focus-within:ring-4 focus-within:ring-zinc-200">
+                <HiOutlineMail className="mr-3 text-xl text-zinc-400 transition-colors group-focus-within:text-black" />
+
                 <Field
-                  type="email"
                   id="email"
                   name="email"
-                  placeholder="Enter your email"
-                  className="w-120 p-3 border border-[var(--text-secondary)] rounded-xl bg-[var(--bg-tertiary)] text-[var(--text-primary)]"
+                  type="email"
+                  placeholder="john@example.com"
+                  className="h-full w-full bg-transparent text-zinc-900 outline-none placeholder:text-zinc-400"
                 />
-                <div className="h-2">
-                  <ErrorMessage name="email" component="p" className="text-red-500 text-sm" />
-                </div>
               </div>
 
-              <div className="flex flex-col gap-2">
-                <label className="text-[var(--text-secondary)] text-sm" htmlFor="password">
+              <ErrorMessage name="email" component="p" className="mt-2 text-sm text-red-500" />
+            </div>
+
+            {/* Password */}
+
+            <div>
+              <div className="mb-2 flex items-center justify-between">
+                <label htmlFor="password" className="text-sm font-medium text-zinc-700">
                   Password
                 </label>
-                <Field
-                  type="password"
-                  id="password"
-                  name="password"
-                  placeholder="Enter password"
-                  className="w-120 p-3 border border-[var(--text-secondary)] rounded-xl bg-[var(--bg-tertiary)] text-[var(--text-primary)]"
-                />
-                <div className="flex flex-col justify-between">
-                  <div className="h-2">
-                    <ErrorMessage name="password" component="p" className="text-red-500 text-sm" />
-                  </div>
-                  <Link
-                    to="/forgot-password"
-                    className="text-[var(--text-primary)] self-end mt-1 font-medium hover:underline transition-all"
-                  >
-                    Forgot Password?
-                  </Link>
-                </div>
+
+                <Link
+                  to="/forgot-password"
+                  className="text-sm font-medium text-zinc-600 transition hover:text-black hover:underline"
+                >
+                  Forgot Password?
+                </Link>
               </div>
 
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-120 mt-6 bg-[var(--bg-secondary)] border-2 border-transparent hover:bg-[var(--bg-primary)] hover:border-2 hover:text-[var(--text-primary)] hover:border-[var(--bg-secondary)] transition-all duration-200 p-3 rounded-xl text-white font-medium disabled:opacity-50"
-              >
-                {isSubmitting ? 'Signing In...' : 'Sign In'}
-              </button>
-            </Form>
-          )}
-        </Formik>
-        <div className="mt-10">
-          <p className="text-[var(--text-secondary)]">
-            Don't have an account?
-            <Link
-              to={registerLink}
-              className="text-[var(--text-primary)] ml-2 font-medium hover:underline transition-all"
+              <div className="group flex h-14 items-center rounded-2xl border border-zinc-300 bg-white px-4 transition-all duration-200 focus-within:border-black focus-within:ring-4 focus-within:ring-zinc-200">
+                <HiOutlineLockClosed className="mr-3 text-xl text-zinc-400 transition-colors group-focus-within:text-black" />
+
+                <Field
+                  id="password"
+                  name="password"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Enter your password"
+                  className="h-full w-full bg-transparent text-zinc-900 outline-none placeholder:text-zinc-400"
+                />
+
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="text-zinc-400 transition hover:text-zinc-700"
+                >
+                  {showPassword ? <HiOutlineEyeSlash size={22} /> : <HiOutlineEye size={22} />}
+                </button>
+              </div>
+
+              <ErrorMessage name="password" component="p" className="mt-2 text-sm text-red-500" />
+            </div>
+            {/* Remember Me */}
+
+            <div className="flex items-center justify-between">
+              <label className="flex cursor-pointer items-center gap-2 text-sm text-zinc-600">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 rounded border-zinc-300 text-black focus:ring-black"
+                />
+                Remember me
+              </label>
+            </div>
+
+            {/* Submit */}
+
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="group flex h-14 w-full items-center justify-center rounded-2xl bg-zinc-900 text-base font-semibold text-white shadow-lg transition-all duration-300 hover:-translate-y-0.5 hover:bg-black hover:shadow-xl active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Register
-            </Link>
-          </p>
-        </div>
-      </div>
-    </div>
+              {isSubmitting ? (
+                <>
+                  <svg
+                    className="mr-2 h-5 w-5 animate-spin"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-20"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+
+                    <path
+                      className="opacity-90"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                    />
+                  </svg>
+                  Signing In...
+                </>
+              ) : (
+                <>
+                  Sign In
+                  <span className="ml-2 transition-transform duration-300 group-hover:translate-x-1">
+                    →
+                  </span>
+                </>
+              )}
+            </button>
+          </Form>
+        )}
+      </Formik>
+    </AuthLayout>
   );
 };
 

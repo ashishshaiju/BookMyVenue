@@ -31,6 +31,7 @@ const BLANK_FORM: AddVenueFormValues = {
   pincode: '',
   fullAddress: '',
   googleMapsLink: '',
+  coordinates: null,
   spaceAttributes: [],
   seatingConfigurations: [],
   maxCapacity: '',
