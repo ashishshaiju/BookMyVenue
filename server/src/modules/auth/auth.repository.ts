@@ -188,7 +188,7 @@ export async function createEmailTask(
   },
   session?: mongoose.ClientSession
 ): Promise<void> {
-  await EmailTaskModel.create([data], { session });
+  await EmailTaskModel.create([{ ...data, retryAfter: new Date() }], { session });
 }
 
 export async function markPasswordResetTokenAsUsed(

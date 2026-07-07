@@ -3,7 +3,6 @@ import * as controller from './auth.controller';
 import * as authValidator from './auth.validator';
 import { validateBody } from '../../middlewares/validation.middleware';
 import { verifyAccessToken, verifyRefreshToken } from '../../middlewares/auth.middleware';
-import { requireRole } from '../../middlewares/rbac.middleware';
 import rateLimit from 'express-rate-limit';
 
 const router: Router = Router();
@@ -12,6 +11,14 @@ const secondaryRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 5,
   message: 'Too many requests from this IP. Please try again after 15 minutes.',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const loginRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: 'Too many login attempts from this IP. Please try again after 15 minutes.',
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -88,8 +95,10 @@ router.route('/register').post(validateBody(authValidator.registerSchema), contr
  *         description: Validation error or missing credentials
  *       401:
  *         description: Invalid credentials
+ *       429:
+ *         description: Too many requests
  */
-router.route('/login').post(validateBody(authValidator.loginSchema), controller.login);
+router.route('/login').post(loginRateLimiter, validateBody(authValidator.loginSchema), controller.login);
 
 /**
  * @openapi
@@ -224,7 +233,6 @@ router
   .route('/change-password')
   .patch(
     verifyAccessToken,
-    requireRole('superAdmin'),
     controller.changePassword
   );
 
