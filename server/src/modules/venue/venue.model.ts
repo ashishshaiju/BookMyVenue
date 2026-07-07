@@ -140,6 +140,10 @@ const VenueSchema = new Schema<IVenue>(
     // Cancellation & Refund
     cancellation: { type: CancellationSchema, required: true },
 
+    // Ratings & Reviews
+    avgRating: { type: Number, default: 0, min: 0, max: 5 },
+    reviewCount: { type: Number, default: 0, min: 0 },
+
     // Operational
     status: {
       type: String,

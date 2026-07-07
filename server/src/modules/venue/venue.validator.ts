@@ -18,6 +18,26 @@ const phoneSchema = z
 
 const urlSchema = z.string().regex(/^https?:\/\/.+/, 'Must be a valid URL');
 
+const GOOGLE_MAPS_ALLOWED_HOSTS = new Set([
+  'maps.google.com',
+  'www.google.com',
+  'google.com',
+  'goo.gl',
+  'maps.app.goo.gl',
+]);
+
+const googleMapsUrlSchema = z
+  .url('Must be a valid URL')
+  .refine((url) => {
+    try {
+      const { protocol, hostname } = new URL(url);
+      return protocol === 'https:' && GOOGLE_MAPS_ALLOWED_HOSTS.has(hostname);
+    } catch {
+      return false;
+    }
+  }, 'Must be a valid Google Maps URL (google.com or maps.google.com)')
+  .optional();
+
 const venueIdSchema = z
   .string()
   .trim()
@@ -62,7 +82,7 @@ export const createVenueSchema = z
     district: z.enum(KERALA_DISTRICTS),
     pincode: z.string().trim().min(4).max(20),
     coordinates: coordinatesSchema.optional(),
-    googleMapsUrl: urlSchema.optional(),
+    googleMapsUrl: googleMapsUrlSchema,
 
     // Space & Capacity
     spaceAttributes: z.array(z.string()).default([]),
@@ -295,7 +315,7 @@ export const updateVenueSchema = z
     district: z.string().trim().min(2).max(100),
     pincode: z.string().trim().min(4).max(20),
     coordinates: coordinatesSchema.optional(),
-    googleMapsUrl: urlSchema.optional(),
+    googleMapsUrl: googleMapsUrlSchema,
     spaceAttributes: z.array(z.string()),
     seatingConfigurations: z.array(z.string()),
     maxCapacity: z.coerce.number().int().positive().optional(),
@@ -384,20 +404,37 @@ const stringOrArray = z.preprocess(
   z.array(z.string()).optional()
 );
 
-export const publicVenueFiltersSchema = z.object({
-  searchTerm: z.string().trim().max(100).optional(),
-  minPrice: z.coerce.number().min(0).optional(),
-  maxPrice: z.coerce.number().min(0).optional(),
-  venueType: stringOrArray,
-  district: z.enum(KERALA_DISTRICTS).optional(),
-  capacity: z.coerce.number().int().positive().optional(),
-  spaceAttributes: stringOrArray,
-  seatingConfigurations: stringOrArray,
-  amenities: stringOrArray,
-  sortBy: z.enum(['price-low', 'price-high', 'rating']).optional(),
-  page: z.coerce.number().int().positive().default(1),
-  limit: z.coerce.number().int().positive().max(100).default(20),
-});
+export const publicVenueFiltersSchema = z
+  .object({
+    searchTerm: z.string().trim().max(100).optional(),
+    minPrice: z.coerce.number().min(0).optional(),
+    maxPrice: z.coerce.number().min(0).optional(),
+    venueType: stringOrArray,
+    district: z.enum(KERALA_DISTRICTS).optional(),
+    capacity: z.coerce.number().int().positive().optional(),
+    spaceAttributes: stringOrArray,
+    seatingConfigurations: stringOrArray,
+    amenities: stringOrArray,
+    lat: z.coerce.number().min(-90).max(90).optional(),
+    lng: z.coerce.number().min(-180).max(180).optional(),
+    radiusKm: z.coerce.number().positive().max(200).default(25).optional(),
+    sortBy: z.enum(['price-low', 'price-high', 'rating', 'distance']).optional(),
+    page: z.coerce.number().int().positive().default(1),
+    limit: z.coerce.number().int().positive().max(100).default(20),
+  })
+  .refine(
+    (data) => {
+      // If lat is provided, lng must also be provided
+      if (data.lat !== undefined && data.lng === undefined) return false;
+      // If lng is provided, lat must also be provided
+      if (data.lng !== undefined && data.lat === undefined) return false;
+      return true;
+    },
+    {
+      message: 'Both latitude and longitude must be provided together',
+      path: ['lat', 'lng'],
+    }
+  );
 
 export type PublicVenueFiltersDTO = z.infer<typeof publicVenueFiltersSchema>;
 

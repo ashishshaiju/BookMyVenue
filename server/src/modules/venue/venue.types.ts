@@ -105,6 +105,10 @@ export interface IVenue extends Document {
   // Cancellation & Refund
   cancellation: ICancellation;
 
+  // Ratings & Reviews
+  avgRating: number;
+  reviewCount: number;
+
   // Operational
   status: VenueStatus;
   ownerUserId: mongoose.Types.ObjectId;
@@ -157,5 +161,8 @@ export interface PublicVenueFilters {
   spaceAttributes?: string[];
   seatingConfigurations?: string[];
   amenities?: string[];
-  sortBy?: 'price-low' | 'price-high' | 'rating';
+  sortBy?: 'price-low' | 'price-high' | 'rating' | 'distance';
+  lat?: number;
+  lng?: number;
+  radiusKm?: number;
 }

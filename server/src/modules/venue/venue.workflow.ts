@@ -1,6 +1,7 @@
 import type { IVenue, VenueStatus } from './venue.types';
 import { SUBMISSION_REQUIRED_FIELDS } from '../../constants/venue.constants';
 import { WorkflowError, ValidationError } from '../../utils/errors';
+import { timeStringToMinutes } from '../../utils/timeUtils';
 
 /**
  * Venue Status State Machine
@@ -54,6 +55,10 @@ export function canSubmit(venue: IVenue): void {
     throw new ValidationError('Cannot submit: at least one working day must be selected');
   }
 
+  if (venue.amenities.length === 0) {
+    throw new ValidationError('Cannot submit: at least one amenity is required');
+  }
+
   // Fixed booking checks
   if (venue.bookingType === 'fixedBooking') {
     if (!venue.fixedPackages || venue.fixedPackages.length === 0) {
@@ -61,6 +66,13 @@ export function canSubmit(venue: IVenue): void {
         'Cannot submit: at least one fixed package is required for fixed booking type'
       );
     }
+    venue.fixedPackages.forEach((pkg) => {
+      if (timeStringToMinutes(pkg.endTime) <= timeStringToMinutes(pkg.startTime)) {
+        throw new ValidationError(
+          `Cannot submit: fixed package "${pkg.slotName}" must have endTime after startTime`
+        );
+      }
+    });
   }
 
   // Flexible booking checks
@@ -85,6 +97,35 @@ export function canSubmit(venue: IVenue): void {
         'Cannot submit: at least one pricing rule is required for time-based pricing'
       );
     }
+
+    const openMin = timeStringToMinutes(venue.workingHours.open);
+    const closeMin = timeStringToMinutes(venue.workingHours.close);
+
+    venue.pricing.pricingRules.forEach((rule) => {
+      const from = timeStringToMinutes(rule.fromTime);
+      const to = timeStringToMinutes(rule.toTime);
+      if (to <= from) {
+        throw new ValidationError('Cannot submit: pricing rule toTime must be after fromTime');
+      }
+      if (from < openMin || to > closeMin) {
+        throw new ValidationError(
+          'Cannot submit: pricing rule times must be within working hours'
+        );
+      }
+    });
+
+    (venue.blockedTimes ?? []).forEach((block) => {
+      const from = timeStringToMinutes(block.fromTime);
+      const to = timeStringToMinutes(block.toTime);
+      if (to <= from) {
+        throw new ValidationError('Cannot submit: blocked time toTime must be after fromTime');
+      }
+      if (from < openMin || to > closeMin) {
+        throw new ValidationError(
+          'Cannot submit: blocked time must be within working hours'
+        );
+      }
+    });
   }
 
   // Refund policy checks
