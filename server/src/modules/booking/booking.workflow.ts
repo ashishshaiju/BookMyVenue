@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import { Types } from 'mongoose';
 import { runInTransaction } from '../../utils/dbUtils';
+import { acquireSlotMutex, releaseSlotMutex } from '../../utils/mutex';
 import { checkOverlap } from '../../utils/timeUtils';
 import { logInfo, logWarn, logError } from '../../utils/logger';
 import { LockModel } from './lock.model';
@@ -57,40 +58,50 @@ export async function blockSlotWorkflow(
     ? crypto.createHash('sha256').update(sessionToken).digest('hex')
     : undefined;
 
-  const lock = await runInTransaction(async (session) => {
-    const conflicts = await repo.fetchActiveConflicts(venueId, date, {
-      excludeUserId: userId,
-      excludeSessionTokenHash: sessionTokenHash,
-      session,
+  const mutexAcquired = await acquireSlotMutex(venueId, date);
+  if (!mutexAcquired) {
+    throw new Error('Someone else is booking this slot right now. Please try again in a moment.');
+  }
+
+  let lock;
+  try {
+    lock = await runInTransaction(async (session) => {
+      const conflicts = await repo.fetchActiveConflicts(venueId, date, {
+        excludeUserId: userId,
+        excludeSessionTokenHash: sessionTokenHash,
+        session,
+      });
+
+      if (checkOverlap(effectiveStart, effectiveEnd, conflicts)) {
+        throw new Error('The selected time slot is no longer available. Please choose a different slot.');
+      }
+
+      const deleteConditions: Record<string, unknown>[] = [{ userId: new Types.ObjectId(userId) }];
+      if (sessionTokenHash) {
+        deleteConditions.push({ sessionTokenHash });
+      }
+      await LockModel.deleteMany({ $or: deleteConditions }, { session });
+
+      const [newLock] = await LockModel.create(
+        [
+          {
+            venueId: new Types.ObjectId(venueId),
+            userId: new Types.ObjectId(userId),
+            date,
+            startTime: effectiveStart,
+            endTime: effectiveEnd,
+            price: serverPrice,
+            sessionTokenHash,
+            createdAt: new Date(),
+          },
+        ],
+        { session }
+      );
+      return newLock;
     });
-
-    if (checkOverlap(effectiveStart, effectiveEnd, conflicts)) {
-      throw new Error('The selected time slot is no longer available. Please choose a different slot.');
-    }
-
-    const deleteConditions: Record<string, unknown>[] = [{ userId: new Types.ObjectId(userId) }];
-    if (sessionTokenHash) {
-      deleteConditions.push({ sessionTokenHash });
-    }
-    await LockModel.deleteMany({ $or: deleteConditions }, { session });
-
-    const [newLock] = await LockModel.create(
-      [
-        {
-          venueId: new Types.ObjectId(venueId),
-          userId: new Types.ObjectId(userId),
-          date,
-          startTime: effectiveStart,
-          endTime: effectiveEnd,
-          price: serverPrice,
-          sessionTokenHash,
-          createdAt: new Date(),
-        },
-      ],
-      { session }
-    );
-    return newLock;
-  });
+  } finally {
+    await releaseSlotMutex(venueId, date);
+  }
 
   const expiresAt = new Date(lock.createdAt.getTime() + LOCK_TTL_SECONDS * 1000);
 
@@ -125,7 +136,7 @@ export async function saveBookerDetailsWorkflow(
 }
 
 export async function initCheckoutWorkflow(userId: string, lockId: string): Promise<{ orderId: string; amount: number; currency: string }> {
-  const lock = await repo.findLockById(lockId);
+  const lock = await repo.findLockById(lockId, userId);
 
   if (!lock) {
     throw new Error('Lock expired. Please re-select your slot and try again.');
@@ -209,24 +220,32 @@ export async function cancelBookingWorkflow(userId: string, bookingId: string, r
      throw new Error('Cancellation window passed or non-refundable venue');
   }
 
-  const amountPaise = booking.price * 100;
+  // Atomic guard: only one concurrent cancellation request can ever pass
+  // this point for a given booking. If another request already cancelled
+  // it (race or retry), this returns null and we stop before touching
+  // Razorpay — this is what prevents a double refund.
+  const claimed = await repo.claimBookingForCancellation(booking._id.toString(), userId, reason);
+  if (!claimed) {
+    throw new Error('This booking has already been cancelled.');
+  }
+
+  const amountPaise = claimed.price * 100;
   const refundAmountPaise = Math.floor(amountPaise * ((bookingDetails.cancellationRefundPct as number) / 100));
 
-  if (refundAmountPaise > 0 && booking.paymentReference) {
+  if (refundAmountPaise > 0 && claimed.paymentReference) {
       try {
-        await issueRefund(booking.paymentReference, refundAmountPaise);
+        await issueRefund(claimed.paymentReference, refundAmountPaise);
       } catch (err) {
-        logError('CRITICAL: Razorpay refund failed during manual cancellation', {
+        logError('CRITICAL: Razorpay refund failed after booking was already marked cancelled', {
            module: 'booking.workflow.ts/cancelBookingWorkflow',
-           paymentId: booking.paymentReference,
+           bookingId: claimed._id.toString(),
+           paymentId: claimed.paymentReference,
            amountPaise: refundAmountPaise,
            error: (err as Error).message,
         });
-        throw new Error('Refund failed. Please contact support.', { cause: err });
+        throw new Error('Booking cancelled, but the refund failed. Please contact support.', { cause: err });
       }
   }
-
-  await repo.updateBookingToCancelled(booking, reason);
 
   try {
     const user = await UserModel.findById(userId).select('email').lean();

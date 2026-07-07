@@ -48,7 +48,7 @@ export const blockSlot = async (req: Request, res: Response): Promise<void> => {
     const error = err as Error;
     if (error.message.includes('not found') || error.message.includes('unavailable')) {
       ResponseUtil.notFound(res, error.message);
-    } else if (error.message.includes('no longer available')) {
+    } else if (error.message.includes('no longer available') || error.message.includes('Someone else is booking')) {
       ResponseUtil.conflict(res, error.message);
     } else if (error.message.includes('Invalid') || error.message.includes('mismatch')) {
       ResponseUtil.badRequest(res, error.message);
@@ -267,6 +267,8 @@ export const cancelBooking = async (req: Request, res: Response): Promise<void> 
     const error = err as Error;
     if (error.message.includes('not found')) {
       ResponseUtil.notFound(res, error.message);
+    } else if (error.message.includes('already been cancelled')) {
+      ResponseUtil.conflict(res, error.message);
     } else if (error.message.includes('Cannot') || error.message.includes('Only confirmed') || error.message.includes('Cancellation window')) {
       ResponseUtil.badRequest(res, error.message);
     } else {

@@ -1,4 +1,4 @@
-import { Link } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import { Heart, Snowflake } from 'lucide-react';
 import { IoLocationOutline } from 'react-icons/io5';
 import { useState } from 'react';
@@ -12,6 +12,8 @@ interface VenueCardProps {
 }
 
 export function VenueCard({ venue, onToggleWishlist, isLoadingWishlist = false }: VenueCardProps) {
+  const navigate = useNavigate();
+
   // Use wishlisted from venue object, or check localStorage for unauthenticated users
   const getWishlistStatus = (): boolean => {
     if (venue.wishlisted !== undefined) {
@@ -46,6 +48,20 @@ export function VenueCard({ venue, onToggleWishlist, isLoadingWishlist = false }
     }
   };
 
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Don't navigate if clicking on interactive elements
+    const target = e.target as HTMLElement;
+    const isInteractive =
+      target.tagName === 'A' ||
+      target.tagName === 'BUTTON' ||
+      target.closest('button') ||
+      target.closest('a');
+
+    if (!isInteractive) {
+      navigate(`/venue/${venue._id}`);
+    }
+  };
+
   const getStartingPrice = (v: PublicVenue) => {
     // Try fixedPackages first
     if (v.bookingType === 'fixedBooking' && v.fixedPackages && v.fixedPackages.length > 0) {
@@ -61,7 +77,10 @@ export function VenueCard({ venue, onToggleWishlist, isLoadingWishlist = false }
   const price = getStartingPrice(venue);
 
   return (
-    <div className="group overflow-hidden rounded-3xl border border-[var(--bg-grey)] bg-[var(--bg-tertiary)] hover:shadow-lg transition duration-300 flex flex-col sm:flex-row sm:min-h-[16rem]">
+    <div
+      onClick={handleCardClick}
+      className="group overflow-hidden rounded-3xl border border-[var(--bg-grey)] bg-[var(--bg-tertiary)] hover:shadow-lg transition duration-300 flex flex-col sm:flex-row sm:min-h-[16rem] cursor-pointer"
+    >
       {/* Left Image */}
       <div className="relative w-full sm:w-[40%] h-52 sm:h-64 shrink-0 overflow-hidden flex">
         <img
@@ -88,13 +107,19 @@ export function VenueCard({ venue, onToggleWishlist, isLoadingWishlist = false }
       <div className="p-5 flex-1 flex flex-col justify-between overflow-hidden">
         <div>
           <div className="flex justify-between items-start gap-2 mb-1">
-            <div className="flex flex-col">
-              <h3
-                className="text-xl font-bold text-[var(--text-primary)] line-clamp-1 uppercase"
-                title={venue.name}
+            <div className="flex flex-col flex-1">
+              <Link
+                to={`/venue/${venue._id}`}
+                onClick={(e) => e.stopPropagation()}
+                className="no-underline hover:opacity-80 transition"
               >
-                {venue.name}
-              </h3>
+                <h3
+                  className="text-xl font-bold text-[var(--text-primary)] line-clamp-1 uppercase"
+                  title={venue.name}
+                >
+                  {venue.name}
+                </h3>
+              </Link>
               <div className="flex items-center gap-1 mt-0.5 text-sm">
                 <span className="text-yellow-500 font-bold">
                   ★ {(venue.avgRating || 0).toFixed(1)}
@@ -120,9 +145,9 @@ export function VenueCard({ venue, onToggleWishlist, isLoadingWishlist = false }
           {/* Amenities Tags */}
           {venue.amenities && venue.amenities.length > 0 && (
             <div className="flex flex-wrap gap-2 mb-1">
-              {venue.amenities.slice(0, 3).map((amenity: string, i: number) => (
+              {venue.amenities.slice(0, 3).map((amenity: string) => (
                 <span
-                  key={i}
+                  key={amenity}
                   className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium border border-[var(--bg-grey)] rounded-md text-[var(--text-secondary)]"
                 >
                   {amenity === 'AC' && <Snowflake size={12} />}

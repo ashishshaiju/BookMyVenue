@@ -145,6 +145,17 @@ export async function processCapturedPayment(
 
   // Scenario A: Slot lock is active. Confirm the booking and delete the lock.
   if (lock) {
+    const expectedAmountPaise = Math.round(lock.price * 100);
+    if (Math.abs(amountPaise - expectedAmountPaise) > 100) {
+      logWarn('Captured payment amount does not match lock price — proceeding, but flagging for review', {
+        module: 'booking.service.ts/processCapturedPayment',
+        lockId,
+        paymentId,
+        expectedAmountPaise,
+        capturedAmountPaise: amountPaise,
+      });
+    }
+
     logInfo('Webhook Scenario A: Lock exists, creating booking', {
       lockId,
       venueId,

@@ -1,4 +1,4 @@
-import { Types, type Document, type ClientSession } from 'mongoose';
+import { Types, type ClientSession } from 'mongoose';
 import { buildPaginationMeta } from '../../utils/paginationUtils';
 import { BookingStatus, type BookingStatusType } from '../../constants/booking.constants';
 import { LockModel } from './lock.model';
@@ -233,10 +233,8 @@ export async function fetchActiveConflicts(
     lockQuery = { ...lockQuery, $nor: excludeConditions };
   }
 
-  const [locks, bookings] = await Promise.all([
-    LockModel.find(lockQuery).session(options?.session ?? null).lean(),
-    BookingModel.find({ venueId: vId, date, status: BookingStatus.CONFIRMED }).session(options?.session ?? null).lean(),
-  ]);
+  const locks = await LockModel.find(lockQuery).session(options?.session ?? null).lean();
+  const bookings = await BookingModel.find({ venueId: vId, date, status: BookingStatus.CONFIRMED }).session(options?.session ?? null).lean();
 
   return [
     ...locks.map((l: ILock) => ({ start: l.startTime, end: l.endTime })),
@@ -402,8 +400,8 @@ export async function fetchUserBookingByRefIdOrId(bookingId: string, userId: str
   }
 }
 
-export async function findLockById(lockId: string): Promise<ILock | null> {
-  return LockModel.findById(lockId).lean();
+export async function findLockById(lockId: string, userId: string): Promise<ILock | null> {
+  return LockModel.findOne({ _id: new Types.ObjectId(lockId), userId: new Types.ObjectId(userId) }).lean();
 }
 
 export async function deleteLocksByConditions(deleteConditions: Record<string, unknown>[]): Promise<unknown> {
@@ -417,12 +415,30 @@ export async function fetchBookingByPaymentReference(paymentId: string): Promise
   return BookingModel.findOne({ paymentReference: paymentId }).lean();
 }
 
-export async function updateBookingToCancelled(booking: Document & IBooking, reason?: string): Promise<IBooking> {
-  booking.set('status', BookingStatus.CANCELLED);
-  if (reason) {
-    booking.set('cancellationReason', reason);
-  }
-  return booking.save();
+// Atomically transitions CONFIRMED -> CANCELLED. Returns the pre-update
+// document if this call won the race, or null if the booking was already
+// cancelled (by a concurrent request or otherwise). This is the sole gate
+// that must pass before a refund is issued — it guarantees at most one
+// caller can ever proceed to refund for a given booking.
+export async function claimBookingForCancellation(
+  bookingId: string,
+  userId: string,
+  reason?: string
+): Promise<IBooking | null> {
+  return BookingModel.findOneAndUpdate(
+    {
+      _id: new Types.ObjectId(bookingId),
+      userId: new Types.ObjectId(userId),
+      status: BookingStatus.CONFIRMED,
+    },
+    {
+      $set: {
+        status: BookingStatus.CANCELLED,
+        ...(reason ? { cancellationReason: reason } : {}),
+      },
+    },
+    { new: false }
+  ).lean();
 }
 
 export async function findVerifiedUserIds(venueId: string, userIds: string[]): Promise<Set<string>> {

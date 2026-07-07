@@ -1,4 +1,5 @@
 import type { z } from 'zod';
+import type { Document } from 'mongoose';
 import type { Request, Response } from 'express';
 import { ResponseUtil } from '../../utils/responseUtils';
 import * as service from './venue.service';
@@ -18,6 +19,10 @@ import { handleError } from '../../utils/errors';
 import { v2 as cloudinary } from 'cloudinary';
 import { PERMISSIONS } from '../../constants/permissions';
 
+// Plain-object shape of an IVenue after `.toObject()` — retains `_id` and all
+// data fields but drops Document's instance methods (save, populate, etc.),
+// which a `.toObject()` result never actually has at runtime.
+type PlainVenue = Omit<IVenue, keyof Document> & { _id: IVenue['_id'] };
 
 // Helpers
 function isCallerPrivileged(req: Request): boolean {
@@ -70,16 +75,18 @@ export const getPaginatedActiveVenues = async (req: Request, res: Response): Pro
     const venuesData = await service.getPaginatedActiveVenues(paginationParams, filters);
 
     // Add wishlisted flag for authenticated users (bulk check, not N+1)
-    let finalVenues: (IVenue & { wishlisted?: boolean })[] = venuesData.venues;
+    let finalVenues: (PlainVenue & { wishlisted?: boolean })[];
     if (req.user?.userId) {
-      const venueIds = finalVenues.map((v) => v._id.toString());
+      const venueIds = venuesData.venues.map((v) => v._id.toString());
       const wishlistedIds = await wishlistRepo.getWishlistedVenueIds(req.user.userId, venueIds);
-      finalVenues = finalVenues.map((venue) => Object.assign({}, venue, {
+      finalVenues = venuesData.venues.map((venue) => ({
+        ...(venue.toObject() as PlainVenue),
         wishlisted: wishlistedIds.has(venue._id.toString()),
       }));
     } else {
       // For unauthenticated users, client will use localStorage
-      finalVenues = finalVenues.map((venue) => Object.assign({}, venue, {
+      finalVenues = venuesData.venues.map((venue) => ({
+        ...(venue.toObject() as PlainVenue),
         wishlisted: false,
       }));
     }
@@ -185,7 +192,7 @@ export const getVenueById = async (req: Request, res: Response): Promise<void> =
 
     // Add wishlisted flag if user is authenticated
     const venueWithWishlist = {
-      ...venue,
+      ...(venue.toObject() as PlainVenue),
       wishlisted: false,
     };
 
@@ -350,16 +357,18 @@ export const getFeaturedVenues = async (req: Request, res: Response): Promise<vo
   try {
     const venues = await service.getFeaturedVenues();
     
-    let finalVenues: (IVenue & { wishlisted?: boolean; featuredExpiresAt?: Date | null })[] = venues;
+    let finalVenues: (PlainVenue & { wishlisted?: boolean; featuredExpiresAt?: Date | null })[] = venues;
     if (req.user?.userId) {
       const venueIds = venues.map((v) => v._id.toString());
       const wishlistedIds = await wishlistRepo.getWishlistedVenueIds(req.user.userId, venueIds);
-      finalVenues = venues.map((venue) => Object.assign({}, venue, {
+      finalVenues = venues.map((venue) => ({
+        ...(venue.toObject() as PlainVenue),
         wishlisted: wishlistedIds.has(venue._id.toString()),
         featuredExpiresAt: venue.featuredExpiresAt,
       }));
     } else {
-      finalVenues = venues.map((venue) => Object.assign({}, venue, {
+      finalVenues = venues.map((venue) => ({
+        ...(venue.toObject() as PlainVenue),
         wishlisted: false,
         featuredExpiresAt: venue.featuredExpiresAt,
       }));

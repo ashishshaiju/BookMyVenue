@@ -5,6 +5,7 @@ import { MdOutlineMeetingRoom } from 'react-icons/md';
 import { GiTable } from 'react-icons/gi';
 import { FiArrowRight, FiCalendar } from 'react-icons/fi';
 import toast from 'react-hot-toast';
+import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import {
   TbBuildingEstate,
   TbBuildingOff,
@@ -40,6 +41,8 @@ const VenueDetails = () => {
   const [bookingOpen, setBookingOpen] = useState(false);
   const [showFab, setShowFab] = useState(false);
   const [isReviewsExpanded, setIsReviewsExpanded] = useState(false);
+  const [galleryOpen, setGalleryOpen] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   const { reviews, pagination, isLoading: isReviewsLoading, fetchReviews } = useVenueReviews();
 
@@ -252,6 +255,114 @@ const VenueDetails = () => {
       })),
       expectedPrice: totalPrice,
     });
+  };
+
+  // Gallery handlers
+  const handleOpenGallery = (index: number) => {
+    setCurrentImageIndex(index);
+    setGalleryOpen(true);
+  };
+
+  const handlePrevImage = () => {
+    const allImages = venue?.coverImage
+      ? [venue.coverImage, ...(venue.galleryImages || [])]
+      : [];
+    setCurrentImageIndex((prev) => (prev === 0 ? allImages.length - 1 : prev - 1));
+  };
+
+  const handleNextImage = () => {
+    const allImages = venue?.coverImage
+      ? [venue.coverImage, ...(venue.galleryImages || [])]
+      : [];
+    setCurrentImageIndex((prev) => (prev === allImages.length - 1 ? 0 : prev + 1));
+  };
+
+  const renderGalleryModal = () => {
+    const allImages = venue?.coverImage
+      ? [venue.coverImage, ...(venue.galleryImages || [])]
+      : [];
+
+    if (allImages.length === 0) return null;
+
+    return (
+      <div
+        className={`fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-sm transition-all duration-300 ${
+          galleryOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        }`}
+        onClick={() => setGalleryOpen(false)}
+      >
+        {/* Container */}
+        <div
+          className="flex flex-col items-center justify-center w-full h-full px-4 py-4 sm:py-6 relative"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Close Button */}
+          <button
+            onClick={() => setGalleryOpen(false)}
+            className="absolute top-4 right-4 z-10 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
+            aria-label="Close gallery"
+          >
+            <X size={24} />
+          </button>
+
+          {/* Main Image Container */}
+          <div className="flex-1 flex items-center justify-center max-w-4xl max-h-[calc(100vh-160px)] w-full">
+            <img
+              src={allImages[currentImageIndex]}
+              alt={`Gallery view ${currentImageIndex + 1}`}
+              className="w-full h-full object-contain rounded-2xl"
+            />
+          </div>
+
+          {/* Image Counter */}
+          <div className="mt-4 text-center text-white text-sm font-semibold">
+            {currentImageIndex + 1} / {allImages.length}
+          </div>
+
+          {/* Navigation */}
+          <div className="flex items-center gap-4 mt-6 sm:mt-8">
+            {/* Previous Button */}
+            <button
+              onClick={handlePrevImage}
+              className="p-2 sm:p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
+              aria-label="Previous image"
+            >
+              <ChevronLeft size={24} />
+            </button>
+
+            {/* Thumbnail Navigation */}
+            <div className="flex gap-2 overflow-x-auto max-w-[calc(100vw-200px)] sm:max-w-none px-2 py-2">
+              {allImages.map((img, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setCurrentImageIndex(idx)}
+                  className={`h-12 w-12 rounded-lg overflow-hidden border-2 transition-all flex-shrink-0 ${
+                    idx === currentImageIndex
+                      ? 'border-white/80 scale-110'
+                      : 'border-white/20 opacity-60 hover:opacity-100'
+                  }`}
+                >
+                  <img
+                    src={img}
+                    alt={`Thumbnail ${idx + 1}`}
+                    className="w-full h-full object-cover"
+                  />
+                </button>
+              ))}
+            </div>
+
+            {/* Next Button */}
+            <button
+              onClick={handleNextImage}
+              className="p-2 sm:p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
+              aria-label="Next image"
+            >
+              <ChevronRight size={24} />
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   const renderBookingContent = () => (
@@ -705,10 +816,10 @@ const VenueDetails = () => {
                   Explore
                 </Link>
                 <span>/</span>
-                <span className="capitalize">{venue.city.toLowerCase()}</span>
+                <span className="capitalize">{venue.city?.toLowerCase() || 'Unknown City'}</span>
                 <span>/</span>
                 <span className="text-[var(--text-primary)] font-medium capitalize">
-                  {venue.name.toLowerCase()}
+                  {venue.name?.toLowerCase() || 'Unknown Venue'}
                 </span>
               </div>
               <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-[var(--text-primary)] mb-2 capitalize leading-tight">
@@ -728,33 +839,45 @@ const VenueDetails = () => {
 
             {images.length > 0 && (
               <div className="grid grid-cols-1 sm:grid-cols-4 grid-rows-3 gap-4 h-[240px] sm:h-[340px] lg:h-[440px] mb-12">
-                <div className="col-span-4 sm:col-span-3 row-span-3 overflow-hidden rounded-3xl border border-[var(--bg-grey)]/65 shadow-md">
+                <button
+                  onClick={() => handleOpenGallery(0)}
+                  className="col-span-4 sm:col-span-3 row-span-3 overflow-hidden rounded-3xl border border-[var(--bg-grey)]/65 shadow-md cursor-pointer group"
+                >
                   <img
                     src={images[0]}
                     alt={`${venue.name} main`}
-                    className="w-full h-full object-cover transition-transform duration-700 hover:scale-[1.03] cursor-pointer"
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
                   />
-                </div>
+                </button>
                 {images.length > 1 && (
-                  <div className="hidden sm:block overflow-hidden rounded-2xl border border-[var(--bg-grey)]/65 shadow-sm">
+                  <button
+                    onClick={() => handleOpenGallery(1)}
+                    className="hidden sm:block overflow-hidden rounded-2xl border border-[var(--bg-grey)]/65 shadow-sm cursor-pointer group"
+                  >
                     <img
                       src={images[1]}
                       alt={`${venue.name} view 1`}
-                      className="w-full h-full object-cover transition-transform duration-500 hover:scale-[1.05] cursor-pointer"
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.05]"
                     />
-                  </div>
+                  </button>
                 )}
                 {images.length > 2 && (
-                  <div className="hidden sm:block overflow-hidden rounded-2xl border border-[var(--bg-grey)]/65 shadow-sm">
+                  <button
+                    onClick={() => handleOpenGallery(2)}
+                    className="hidden sm:block overflow-hidden rounded-2xl border border-[var(--bg-grey)]/65 shadow-sm cursor-pointer group"
+                  >
                     <img
                       src={images[2]}
                       alt={`${venue.name} view 2`}
-                      className="w-full h-full object-cover transition-transform duration-500 hover:scale-[1.05] cursor-pointer"
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.05]"
                     />
-                  </div>
+                  </button>
                 )}
                 {images.length > 3 && (
-                  <button className="hidden sm:block relative cursor-pointer overflow-hidden rounded-2xl border border-[var(--bg-grey)]/65 shadow-sm group">
+                  <button
+                    onClick={() => handleOpenGallery(3)}
+                    className="hidden sm:block relative cursor-pointer overflow-hidden rounded-2xl border border-[var(--bg-grey)]/65 shadow-sm group"
+                  >
                     <img
                       src={images[3]}
                       alt={`${venue.name} view 3`}
@@ -1181,6 +1304,9 @@ const VenueDetails = () => {
           await submitReviewMutation.mutateAsync({ rating, comment });
         }}
       />
+
+      {/* Image Gallery Modal */}
+      {renderGalleryModal()}
     </section>
   );
 };

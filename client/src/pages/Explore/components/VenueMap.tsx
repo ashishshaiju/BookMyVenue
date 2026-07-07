@@ -24,7 +24,7 @@ export function VenueMap({ onBBoxChange, selectedVenueId, onPinClick, venues }: 
     // Dynamically import Leaflet to avoid SSR issues
     const initMap = async () => {
       try {
-        // @ts-expect-error - leaflet not yet installed
+        // @ts-expect-error - leaflet types not installed
         const L = await import('leaflet');
         // @ts-expect-error - leaflet css not yet installed
         await import('leaflet/dist/leaflet.css');
