@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router";
-import HomePage from "./pages/home";
+// import HomePage from "./pages/home";
 import DashboardPage from "./pages/dashboard";
 import LoginPage from "./pages/login";
 import UnauthorizedPage from "./pages/unauthorized";
@@ -14,23 +14,25 @@ import BookingsPage from "./pages/admin/BookingsPage";
 import OwnersPage from "./pages/admin/OwnersPage";
 import TeamPage from "./pages/superadmin/TeamPage";
 import UsersPage from "./pages/admin/UsersPage";
+import ModerationPage from "./pages/admin/ModerationPage";
 import VenueSelectorPage from "./pages/owner/VenueSelectorPage";
 import ReportsPage from "./pages/owner/ReportsPage";
 import OwnerBookingsPage from "./pages/owner/OwnerBookingsPage";
+import ReviewsPage from "./pages/owner/ReviewsPage";
 import CalendarPage from "./pages/owner/CalendarPage";
 
 export function AppRouter() {
 	return (
 		<BrowserRouter>
 			<Routes>
-				<Route path="/" element={<HomePage />} />
+				<Route path="/" element={<Navigate to="/dashboard" replace />} />
 				<Route path="/login" element={<LoginPage />} />
 				<Route path="/unauthorized" element={<UnauthorizedPage />} />
 
 				{/* Protected routes */}
 				<Route path="/dashboard" element={<AuthGuard />}>
 					<Route element={<MainLayout />}>
-						
+
 						{/* Owner routes */}
 						<Route element={<RoleGuard allowedRoles={['owner']} />}>
 							<Route path="select-venue" element={<VenueSelectorPage />} />
@@ -38,6 +40,7 @@ export function AppRouter() {
 								<Route index element={<Navigate to="reports" replace />} />
 								<Route path="reports" element={<ReportsPage />} />
 								<Route path="bookings" element={<OwnerBookingsPage />} />
+								<Route path="reviews" element={<ReviewsPage />} />
 								<Route path="calendar" element={<CalendarPage />} />
 							</Route>
 						</Route>
@@ -47,6 +50,7 @@ export function AppRouter() {
 							<Route path="venues" element={<VenuesPage />} />
 							<Route path="bookings" element={<BookingsPage />} />
 							<Route path="owners" element={<OwnersPage />} />
+							<Route path="moderation" element={<ModerationPage />} />
 							<Route element={<RoleGuard allowedRoles={['superAdmin']} />}>
 								<Route path="team" element={<TeamPage />} />
 								<Route path="users" element={<UsersPage />} />

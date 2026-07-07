@@ -1,13 +1,15 @@
 import { NavLink, useNavigate } from 'react-router';
-import { 
-  CalendarCheck, 
-  Calendar, 
-  BarChart2, 
-  Building2, 
-  Users, 
+import {
+  CalendarCheck,
+  Calendar,
+  BarChart2,
+  Building2,
+  Users,
   Shield,
-  UserCog, 
+  UserCog,
+  AlertTriangle,
   LogOut,
+  Star,
 } from 'lucide-react';
 import { useApiQuery } from '../../hooks/useApi';
 import { QUERY_KEYS } from '../../config/queryKeys';
@@ -41,12 +43,14 @@ interface MyVenuesResponse {
 const NAV_CONFIG: NavItem[] = [
   // owner
   { label: 'Bookings',        path: (venueId) => `/dashboard/venue/${venueId}/bookings`,      icon: CalendarCheck, roles: ['owner'] },
+  { label: 'Reviews',         path: (venueId) => `/dashboard/venue/${venueId}/reviews`,       icon: Star,          roles: ['owner'] },
   { label: 'Calendar',        path: (venueId) => `/dashboard/venue/${venueId}/calendar`,      icon: Calendar,      roles: ['owner'] },
   { label: 'Reports',         path: (venueId) => `/dashboard/venue/${venueId}/reports`,       icon: BarChart2,     roles: ['owner'] },
   // admin
   { label: 'Global Bookings', path: '/dashboard/bookings',      icon: CalendarCheck, roles: ['admin', 'superAdmin'] },
   { label: 'Global Venues',   path: '/dashboard/venues',        icon: Building2,     roles: ['admin', 'superAdmin'] },
   { label: 'Global Owners',   path: '/dashboard/owners',        icon: Users,         roles: ['admin', 'superAdmin'] },
+  { label: 'Moderation',      path: '/dashboard/moderation',    icon: AlertTriangle, roles: ['admin', 'superAdmin'] },
   // superAdmin only
   { label: 'Team',            path: '/dashboard/team',          icon: Shield,        roles: ['superAdmin'] },
   { label: 'Users',           path: '/dashboard/users',         icon: UserCog,       roles: ['superAdmin'] },
