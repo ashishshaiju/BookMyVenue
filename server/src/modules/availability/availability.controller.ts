@@ -5,7 +5,7 @@ import { generateAvailability, getBookableDates } from './availability.workflow'
 import { ResponseUtil } from '../../utils/responseUtils';
 import { logError, logInfo } from '../../utils/logger';
 import crypto from 'crypto';
-import type { VenueIdParamDTO } from '../booking/booking.validator';
+import { validateDateForVenue, type VenueIdParamDTO } from '../booking/booking.validator';
 import type { AvailabilityQueryDTO } from './availability.validator';
 
 export const getVenueAvailability = async (req: Request, res: Response): Promise<void> => {
@@ -28,6 +28,12 @@ export const getVenueAvailability = async (req: Request, res: Response): Promise
     if (!date) {
       const bookableData = getBookableDates(venue);
       ResponseUtil.success(res, 'Bookable dates calculated successfully', bookableData);
+      return;
+    }
+
+    const dateCheck = validateDateForVenue(venue, date);
+    if (!dateCheck.valid) {
+      ResponseUtil.badRequest(res, dateCheck.reason ?? 'This date is not available for booking.');
       return;
     }
 

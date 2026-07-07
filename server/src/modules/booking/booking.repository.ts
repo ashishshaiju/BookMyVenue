@@ -1,4 +1,4 @@
-import { Types, type Document } from 'mongoose';
+import { Types, type Document, type ClientSession } from 'mongoose';
 import { buildPaginationMeta } from '../../utils/paginationUtils';
 import { BookingStatus, type BookingStatusType } from '../../constants/booking.constants';
 import { LockModel } from './lock.model';
@@ -214,13 +214,14 @@ export async function fetchActiveConflicts(
   options?: {
     excludeUserId?: string;
     excludeSessionTokenHash?: string;
+    session?: ClientSession;
   }
 ): Promise<{ start: number; end: number }[]> {
   const vId = new Types.ObjectId(venueId);
 
   let lockQuery: Record<string, unknown> = { venueId: vId, date };
   const excludeConditions: Record<string, unknown>[] = [];
-  
+
   if (options?.excludeUserId) {
     excludeConditions.push({ userId: new Types.ObjectId(options.excludeUserId) });
   }
@@ -233,8 +234,8 @@ export async function fetchActiveConflicts(
   }
 
   const [locks, bookings] = await Promise.all([
-    LockModel.find(lockQuery).lean(),
-    BookingModel.find({ venueId: vId, date, status: BookingStatus.CONFIRMED }).lean(),
+    LockModel.find(lockQuery).session(options?.session ?? null).lean(),
+    BookingModel.find({ venueId: vId, date, status: BookingStatus.CONFIRMED }).session(options?.session ?? null).lean(),
   ]);
 
   return [
@@ -422,4 +423,13 @@ export async function updateBookingToCancelled(booking: Document & IBooking, rea
     booking.set('cancellationReason', reason);
   }
   return booking.save();
+}
+
+export async function findVerifiedUserIds(venueId: string, userIds: string[]): Promise<Set<string>> {
+  const verified = await BookingModel.find({
+    venueId,
+    userId: { $in: userIds },
+    status: { $ne: BookingStatus.CANCELLED },
+  }).distinct('userId');
+  return new Set(verified.map(id => id.toString()));
 }

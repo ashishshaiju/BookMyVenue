@@ -57,16 +57,17 @@ export async function blockSlotWorkflow(
     ? crypto.createHash('sha256').update(sessionToken).digest('hex')
     : undefined;
 
-  const conflicts = await repo.fetchActiveConflicts(venueId, date, {
-    excludeUserId: userId,
-    excludeSessionTokenHash: sessionTokenHash,
-  });
-  
-  if (checkOverlap(effectiveStart, effectiveEnd, conflicts)) {
-    throw new Error('The selected time slot is no longer available. Please choose a different slot.');
-  }
-
   const lock = await runInTransaction(async (session) => {
+    const conflicts = await repo.fetchActiveConflicts(venueId, date, {
+      excludeUserId: userId,
+      excludeSessionTokenHash: sessionTokenHash,
+      session,
+    });
+
+    if (checkOverlap(effectiveStart, effectiveEnd, conflicts)) {
+      throw new Error('The selected time slot is no longer available. Please choose a different slot.');
+    }
+
     const deleteConditions: Record<string, unknown>[] = [{ userId: new Types.ObjectId(userId) }];
     if (sessionTokenHash) {
       deleteConditions.push({ sessionTokenHash });
@@ -240,7 +241,9 @@ export async function cancelBookingWorkflow(userId: string, bookingId: string, r
       await EmailTaskModel.create({
         recipient: customerEmail,
         intent: EmailIntent.ACCOUNT_NOTIFICATION,
+        subject: `Booking Cancelled – ${venueName}`,
         status: EmailTaskStatus.PENDING,
+        retryAfter: new Date(),
         metadata: {
           bookingRef,
           venueName,

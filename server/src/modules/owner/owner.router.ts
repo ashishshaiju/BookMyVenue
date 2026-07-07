@@ -248,4 +248,136 @@ router.post(
   controller.createOfflineBooking
 );
 
+/**
+ * @openapi
+ * /owner/venue/{venueId}/reviews:
+ *   get:
+ *     tags: [Owner]
+ *     summary: Get reviews for a specific venue (owner only)
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: venueId
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Reviews for the venue
+ *       403:
+ *         description: Not the venue owner
+ */
+router.get(
+  '/venue/:venueId/reviews',
+  verifyAccessToken,
+  requirePermission(P.reviews.read),
+  validateParams(validator.analyticsParamsSchema),
+  ownerTenantMiddleware,
+  controller.getVenueReviews
+);
+
+/**
+ * @openapi
+ * /owner/venue/{venueId}/reviews/{reviewId}/reply:
+ *   post:
+ *     tags: [Owner]
+ *     summary: Reply to a review (owner only)
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: venueId
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: path
+ *         name: reviewId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [text]
+ *             properties:
+ *               text:
+ *                 type: string
+ *                 maxLength: 500
+ *     responses:
+ *       200:
+ *         description: Reply added successfully
+ *       403:
+ *         description: Not the venue owner
+ */
+router.post(
+  '/venue/:venueId/reviews/:reviewId/reply',
+  verifyAccessToken,
+  requirePermission(P.reviews.update),
+  validateParams(validator.reviewParamsSchema),
+  validateBody(validator.ownerReplySchema),
+  ownerTenantMiddleware,
+  controller.replyToReview
+);
+
+/**
+ * @openapi
+ * /owner/venue/{venueId}/reviews/{reviewId}/report:
+ *   post:
+ *     tags: [Owner]
+ *     summary: Report a review to admin for hiding (owner only)
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: venueId
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: path
+ *         name: reviewId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [reason]
+ *             properties:
+ *               reason:
+ *                 type: string
+ *                 minLength: 10
+ *                 maxLength: 500
+ *     responses:
+ *       200:
+ *         description: Report submitted to admin
+ *       403:
+ *         description: Not the venue owner
+ *       409:
+ *         description: Hide request already pending
+ */
+router.post(
+  '/venue/:venueId/reviews/:reviewId/report',
+  verifyAccessToken,
+  requirePermission(P.reviews.update),
+  validateParams(validator.reviewParamsSchema),
+  validateBody(validator.requestHideSchema),
+  ownerTenantMiddleware,
+  controller.reportReview
+);
+
 export default router;

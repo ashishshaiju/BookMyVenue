@@ -39,6 +39,7 @@ async function enqueueEmail(
       status: EmailTaskStatus.PENDING,
       workerId: null,
       lockedAt: null,
+      retryAfter: new Date(),
       retries: 0,
       lastError: null,
     });
@@ -167,11 +168,33 @@ export async function processCapturedPayment(
         paymentMethod: paymentMethod,
       });
     } catch (err) {
+      const error = err as { code?: number; message: string };
+      if (error.code === 11000) {
+        logError('CRITICAL: Slot already booked (duplicate-key) — issuing automatic refund', {
+          module: 'booking.service.ts/processCapturedPayment',
+          lockId,
+          paymentId,
+          venueId,
+          userId,
+        });
+        try {
+          await issueRefund(paymentId, amountPaise);
+        } catch (refundErr) {
+          logError('CRITICAL: Automatic refund failed after lost double-booking race', {
+            module: 'booking.service.ts/processCapturedPayment',
+            lockId,
+            paymentId,
+            error: (refundErr as Error).message,
+          });
+        }
+        await LockModel.deleteOne({ _id: new Types.ObjectId(lockId) }).catch(() => undefined);
+        return { success: false, error: 'Slot already booked; refund issued' };
+      }
       logError('CRITICAL: Failed to create booking in Scenario A', {
         module: 'booking.service.ts/processCapturedPayment',
         lockId,
         paymentId,
-        error: (err as Error).message,
+        error: error.message,
       });
       return { success: false, error: 'Booking creation failed' };
     }

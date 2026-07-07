@@ -38,4 +38,9 @@ BookingSchema.index({ venueId: 1, date: 1 });
 
 BookingSchema.index({ venueId: 1, date: 1, startTime: 1, endTime: 1, status: 1 });
 
+BookingSchema.index(
+  { venueId: 1, date: 1, startTime: 1, endTime: 1 },
+  { unique: true, partialFilterExpression: { status: BookingStatus.CONFIRMED } }
+);
+
 export const BookingModel = mongoose.model<IBooking>('Bookings', BookingSchema, 'Bookings');

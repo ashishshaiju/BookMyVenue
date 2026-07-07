@@ -6,6 +6,7 @@ import * as workflow from './booking.workflow';
 import { fetchMyBookings, fetchBookingById, fetchBookingByPaymentReference, findAllBookings } from './booking.repository';
 import type { BookingStatusType } from '../../constants/booking.constants';
 import { verifyPaymentSignature } from '../../services/razorpay.service';
+import { getUserReviewedBookings } from '../review/review.service';
 import type {
   BlockSlotBodyDTO,
   CheckoutBodyDTO,
@@ -183,7 +184,23 @@ export const getMyBookings = async (req: Request, res: Response): Promise<void> 
       return;
     }
 
-    const result = await fetchMyBookings(userId);
+    const [bookingsResult, reviewedBookingIds] = await Promise.all([
+      fetchMyBookings(userId),
+      getUserReviewedBookings(userId),
+    ]);
+
+    // Merge hasReview flag into completed bookings
+    const result = {
+      ...bookingsResult,
+      bookings: {
+        ...bookingsResult.bookings,
+        completed: bookingsResult.bookings.completed.map((booking: Record<string, unknown>) => ({
+          ...booking,
+          hasReview: reviewedBookingIds.has(booking._id as string),
+        })),
+      },
+    };
+
     ResponseUtil.success(res, 'My bookings retrieved successfully', result);
   } catch (err) {
     const error = err as Error;
