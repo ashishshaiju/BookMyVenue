@@ -61,7 +61,7 @@ router.route('/profile').get(verifyAccessToken, controller.getProfile);
  */
 router.route('/all').get(
   verifyAccessToken,
-  requireRole('superAdmin'),
+  requireRole('admin'),
   controller.getAllUsers
 );
 
@@ -119,6 +119,71 @@ router.route('/:userId/reset-password').post(
   verifyAccessToken,
   requireRole('superAdmin'),
   controller.resetUserPassword
+);
+
+/**
+ * @openapi
+ * /user/{userId}/ban:
+ *   post:
+ *     tags: [User]
+ *     summary: Ban a user (Admin)
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               banReason:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: User banned successfully
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Admin role required
+ */
+router.route('/:userId/ban').post(
+  verifyAccessToken,
+  requireRole('admin'),
+  controller.banUser
+);
+
+/**
+ * @openapi
+ * /user/{userId}/unban:
+ *   post:
+ *     tags: [User]
+ *     summary: Unban a user (Admin)
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: User unbanned successfully
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Admin role required
+ */
+router.route('/:userId/unban').post(
+  verifyAccessToken,
+  requireRole('admin'),
+  controller.unbanUser
 );
 
 export { router as userRouter };
