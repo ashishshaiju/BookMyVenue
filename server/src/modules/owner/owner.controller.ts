@@ -22,8 +22,7 @@ export const getVenueAnalytics = async (req: Request, res: Response): Promise<vo
 export const getVenueBookings = async (req: Request, res: Response): Promise<void> => {
   try {
     const venueId = req.params.venueId as string;
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 10;
+    const { page, limit } = req.pagination ?? { page: 1, limit: 10, skip: 0, sort: '' };
 
     const result = await service.getVenueBookingsService(venueId, page, limit);
 
@@ -99,9 +98,7 @@ export const unblockDates = async (req: Request, res: Response): Promise<void> =
 export const getVenueReviews = async (req: Request, res: Response): Promise<void> => {
   try {
     const venueId = req.params.venueId as string;
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 10;
-    const skip = (page - 1) * limit;
+    const { page, limit, skip } = req.pagination ?? { page: 1, limit: 10, skip: 0, sort: '' };
 
     const result = await reviewService.getOwnerVenueReviews(venueId, { page, limit, skip, sort: '' });
     ResponseUtil.paginated(res, 'Venue reviews retrieved', result.reviews, result.pagination, 'reviews');

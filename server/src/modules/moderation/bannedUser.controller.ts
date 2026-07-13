@@ -2,15 +2,7 @@ import type { Request, Response } from 'express';
 import { ResponseUtil } from '../../utils/responseUtils';
 import { handleError } from '../../utils/errors';
 import * as service from '../moderation/bannedUser.service';
-import type { BanScope } from './bannedUser.model';
-
-interface CreateBanRequest {
-  userId: string;
-  scope: BanScope;
-  reason: string;
-  venueId?: string;
-  expiresAt?: string;
-}
+import type { CreateBanRequest } from './bannedUser.types';
 
 export const banUser = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -47,6 +39,23 @@ export const liftBan = async (req: Request, res: Response): Promise<void> => {
     ResponseUtil.success(res, 'Ban lifted successfully', ban);
   } catch (e) {
     handleError(res, e, 'liftBan');
+  }
+};
+
+export const liftAllBansForUser = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const adminId = req.user?.userId;
+    if (!adminId) {
+      ResponseUtil.unauthorized(res, 'Unauthorized');
+      return;
+    }
+
+    const userId = Array.isArray(req.params.userId) ? req.params.userId[0] : req.params.userId;
+
+    const count = await service.liftAllBansForUser(adminId, userId);
+    ResponseUtil.success(res, 'All active bans lifted successfully', { liftedCount: count });
+  } catch (e) {
+    handleError(res, e, 'liftAllBansForUser');
   }
 };
 

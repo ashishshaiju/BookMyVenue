@@ -21,7 +21,7 @@ import type {
 } from './venue.validator';
 import { VenueFields } from '../../constants/venue.constants';
 import { RoleModel } from '../../models/role.model';
-import { UserModel } from '../user/user.models';
+import { findUserEmailById } from '../user/user.repository';
 import * as authRepo from '../auth/auth.repository';
 import { getUserRole } from '../../services/roles.service';
 import { emailService } from '../../services/email.service';
@@ -142,6 +142,13 @@ async function assignOwnerRoleIfNeeded(userId: string): Promise<void> {
 }
 
 export async function createVenue(userId: string, dto: CreateVenueDTO): Promise<IVenue> {
+  // Guard: Check for venue creation ban
+  const { isBannedForScope } = await import('../moderation/bannedUser.service');
+  const isBanned = await isBannedForScope(userId, 'venue_creation');
+  if (isBanned) {
+    throw new ConflictError('You are currently banned from creating new venues.');
+  }
+
   const nameExists = await repo.existsByOwnerAndName(userId, dto.name);
   if (nameExists) {
     throw new ConflictError(`You already have a venue named "${dto.name}"`);
@@ -306,9 +313,9 @@ export async function approveVenue(venueId: string, adminId: string): Promise<IV
   const updated = await repo.updateVenueStatus(venueId, 'Approved', adminId);
   if (!updated) throw new NotFoundError('Venue not found');
 
-  const owner = await UserModel.findById(venue.ownerUserId).lean();
-  if (owner?.email) {
-    void emailService.sendVenueApprovedEmail(owner.email, venue.name);
+  const ownerEmail = await findUserEmailById(venue.ownerUserId.toString());
+  if (ownerEmail) {
+    void emailService.sendVenueApprovedEmail(ownerEmail, venue.name);
   }
 
   return updated;
@@ -328,9 +335,9 @@ export async function rejectVenue(
   const updated = await repo.updateVenueStatus(venueId, 'Rejected', adminId, extra);
   if (!updated) throw new NotFoundError('Venue not found');
 
-  const owner = await UserModel.findById(venue.ownerUserId).lean();
-  if (owner?.email && dto.rejectionReason) {
-    void emailService.sendVenueRejectedEmail(owner.email, venue.name, dto.rejectionReason);
+  const ownerEmail = await findUserEmailById(venue.ownerUserId.toString());
+  if (ownerEmail && dto.rejectionReason) {
+    void emailService.sendVenueRejectedEmail(ownerEmail, venue.name, dto.rejectionReason);
   }
 
   return updated;
@@ -346,10 +353,14 @@ export async function suspendVenue(venueId: string, adminId: string, dto: Suspen
   const updated = await repo.updateVenueStatus(venueId, 'Suspended', adminId, extra);
   if (!updated) throw new NotFoundError('Venue not found');
 
-  const owner = await UserModel.findById(venue.ownerUserId).lean();
-  if (owner?.email) {
-    void emailService.sendVenueSuspendedEmail(owner.email, venue.name, dto.suspensionReason);
+  const ownerEmail = await findUserEmailById(venue.ownerUserId.toString());
+  if (ownerEmail) {
+    void emailService.sendVenueSuspendedEmail(ownerEmail, venue.name, dto.suspensionReason);
   }
+
+  // Log activity
+  const { logModerationAction } = await import('../moderation/moderationActivity.service');
+  await logModerationAction(adminId, 'suspend_venue', venueId, 'venue', dto.suspensionReason);
 
   return updated;
 }
@@ -363,10 +374,14 @@ export async function unsuspendVenue(venueId: string, adminId: string): Promise<
   const updated = await repo.updateVenueStatus(venueId, 'Approved', adminId);
   if (!updated) throw new NotFoundError('Venue not found');
 
-  const owner = await UserModel.findById(venue.ownerUserId).lean();
-  if (owner?.email) {
-    void emailService.sendVenueUnsuspendedEmail(owner.email, venue.name);
+  const ownerEmail = await findUserEmailById(venue.ownerUserId.toString());
+  if (ownerEmail) {
+    void emailService.sendVenueUnsuspendedEmail(ownerEmail, venue.name);
   }
+
+  // Log activity
+  const { logModerationAction } = await import('../moderation/moderationActivity.service');
+  await logModerationAction(adminId, 'unsuspend_venue', venueId, 'venue');
 
   return updated;
 }

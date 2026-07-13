@@ -1,5 +1,5 @@
 import { Types } from 'mongoose';
-import { BookingModel } from '../booking/booking.model';
+import { BookingModel } from '../booking/models/booking.model';
 import { VenueModel } from '../venue/venue.model';
 import { BookingStatus } from '../../constants/booking.constants';
 import type { IBooking } from '../booking/booking.types';

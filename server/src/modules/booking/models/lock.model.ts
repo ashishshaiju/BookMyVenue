@@ -1,5 +1,5 @@
 import mongoose, { Schema } from 'mongoose';
-import type { ILock } from './lock.types';
+import type { ILock } from '../lock.types';
 
 const LockSchema = new Schema<ILock>(
   {

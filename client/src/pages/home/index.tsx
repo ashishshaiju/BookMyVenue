@@ -1,7 +1,21 @@
 import { useNavigate } from 'react-router';
 import { useState, useCallback } from 'react';
 import { Link } from 'react-router';
-import { IoLocationOutline, IoSearch } from 'react-icons/io5';
+import {
+  IoLocationOutline,
+  IoSearch,
+  IoBusinessOutline,
+  IoCameraOutline,
+  IoCafeOutline,
+  IoStarOutline,
+  IoHomeOutline,
+  IoLeafOutline,
+  // IoLogoFacebook,
+  // IoLogoTwitter,
+  // IoLogoInstagram,
+  // IoLogoLinkedin,
+  IoCheckmarkCircle,
+} from 'react-icons/io5';
 import heroImage from '@/assets/hero.png';
 import { useApiQuery } from '@/hooks/useApi';
 import { API_ENDPOINTS } from '@/constants';
@@ -10,12 +24,21 @@ import { useToggleWishlist, useWishlistSync } from '@/hooks/useWishlist';
 import type { PublicVenue } from '@/types/venue.types';
 import { Skeleton } from '@/components/ui/skeleton';
 
+const VENUE_CATEGORIES = [
+  { name: 'Wedding Halls', icon: IoStarOutline, value: 'Wedding Hall' },
+  { name: 'Corporate Spaces', icon: IoBusinessOutline, value: 'Corporate Space' },
+  { name: 'Party Lawns', icon: IoLeafOutline, value: 'Party Lawn' },
+  { name: 'Banquet Halls', icon: IoCafeOutline, value: 'Banquet Hall' },
+  { name: 'Studios', icon: IoCameraOutline, value: 'Studio' },
+  { name: 'Resorts', icon: IoHomeOutline, value: 'Resort' },
+];
+
 const HomePage = () => {
   const [search, setSearch] = useState('');
   const [togglingVenues, setTogglingVenues] = useState<Set<string>>(new Set());
 
   const navigate = useNavigate();
-  
+
   const { toggleWishlist: toggleWishlistFn } = useToggleWishlist();
   useWishlistSync();
 
@@ -29,10 +52,14 @@ const HomePage = () => {
     }
   };
 
-  const { data: featuredVenues = [], isLoading } = useApiQuery<PublicVenue[]>(
-    ['featured-venues'],
-    { method: 'GET', url: API_ENDPOINTS.FEATURED_VENUES }
-  );
+  const handleCategoryClick = (category: string) => {
+    navigate(`/explore?venueTypes=${encodeURIComponent(category)}`);
+  };
+
+  const { data: featuredVenues = [], isLoading } = useApiQuery<PublicVenue[]>(['featured-venues'], {
+    method: 'GET',
+    url: API_ENDPOINTS.FEATURED_VENUES,
+  });
 
   const handleToggleWishlist = useCallback(
     async (venueId: string, e: React.MouseEvent) => {
@@ -55,75 +82,144 @@ const HomePage = () => {
   );
 
   return (
-    <div>
-      <section className="relative h-[550px] md:h-[620px] w-full overflow-hidden flex items-center justify-center">
-        <div className="absolute inset-0 bg-black/75 z-10" />
+    <div className="bg-[var(--bg-primary)]">
+      {/* Hero Section */}
+      <section className="px-4 md:px-6 lg:px-8 pt-22 pb-8">
+        <div className="relative h-[650px] md:h-[720px] w-full rounded-[2.5rem] overflow-hidden flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/60 z-10" />
 
-        <img
-          src={heroImage}
-          alt="Venue Hero"
-          className="absolute inset-0 w-full h-full object-cover"
-        />
+          <img
+            src={heroImage}
+            alt="Venue Hero"
+            className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1.5s] ease-out hover:scale-105"
+          />
 
-        <div className="relative z-20 px-6 w-full max-w-6xl text-center">
-          <h1 className="text-4xl md:text-6xl font-bold text-white leading-tight">
-            Find the Perfect Venue
-            <br />
-            for Every Occasion
-          </h1>
+          <div className="relative z-20 px-6 w-full max-w-6xl text-center flex flex-col justify-center">
+            <h1 className="text-4xl md:text-6xl font-bold text-white leading-tight animate-fade-in-up">
+              Find the Perfect Venue
+              <br />
+              for Every Occasion
+            </h1>
 
-          <p className="text-gray-200 mt-4 max-w-2xl mx-auto text-sm md:text-lg">
-            Curated spaces for corporate events, weddings, and private gatherings.
-          </p>
+            <p className="text-gray-200 mt-4 max-w-2xl mx-auto text-sm md:text-lg animate-fade-in-up">
+              Curated spaces for corporate events, weddings, and private gatherings.
+            </p>
 
-          <div className="mt-10 max-w-3xl mx-auto bg-white rounded-2xl p-2 shadow-xl flex flex-col md:flex-row items-center gap-2">
-            <div className="flex items-center gap-3 w-full px-4 py-3">
-              <IoLocationOutline className="text-[var(--text-secondary)] text-xl" />
+            <div className="w-[92%] md:w-full max-w-4xl mx-auto bg-[var(--bg-tertiary)] rounded-2xl p-2 shadow-xl flex flex-col md:flex-row items-center gap-2 animate-fade-in-up-delay mt-10 md:mt-20">
+              <div className="flex items-center gap-3 w-full px-4 py-3">
+                <IoLocationOutline className="text-[var(--text-secondary)] text-2xl shrink-0" />
 
-              <input
-                type="text"
-                placeholder="Search venue, city, or event type"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full outline-none bg-transparent text-[var(--text-primary)] placeholder:text-[var(--text-secondary)]"
-              />
+                <input
+                  type="text"
+                  placeholder="Search venue, city, or event type"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full outline-none bg-transparent text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] text-sm md:text-lg"
+                />
+              </div>
+
+              <button
+                onClick={handleSearch}
+                className="w-full md:w-auto px-8 py-4 bg-[var(--bg-green)] text-white rounded-xl font-semibold hover:opacity-90 transition flex items-center justify-center gap-2 text-base shrink-0"
+              >
+                <IoSearch className="text-xl" />
+                Search
+              </button>
             </div>
+          </div>
+        </div>
 
-            {/* search Button */}
-            <button
-              onClick={handleSearch}
-              className="w-full md:w-auto px-8 py-4 bg-[var(--bg-green)] text-white rounded-xl font-medium hover:opacity-90 transition flex items-center justify-center gap-2"
-            >
-              <IoSearch />
-              Search
-            </button>
+        {/* Features Strip */}
+        <div className="max-w-5xl mx-auto mt-10 grid grid-cols-1 md:grid-cols-3 gap-6 px-4 animate-fade-in-up-delay">
+          <div className="flex flex-col items-center md:items-start text-center md:text-left">
+            <div className="flex items-center gap-3 mb-2">
+              <IoCheckmarkCircle className="text-[var(--bg-green)] text-2xl" />
+              <h3 className="font-semibold text-[var(--text-primary)]">Verified Venues</h3>
+            </div>
+            <p className="text-[var(--text-secondary)] text-sm leading-relaxed">
+              Handpicked and verified spaces for your perfect event.
+            </p>
+          </div>
+
+          <div className="flex flex-col items-center md:items-start text-center md:text-left md:border-l border-[var(--bg-grey)] md:pl-6">
+            <div className="flex items-center gap-3 mb-2">
+              <IoBusinessOutline className="text-[var(--bg-green)] text-2xl" />
+              <h3 className="font-semibold text-[var(--text-primary)]">Transparent Pricing</h3>
+            </div>
+            <p className="text-[var(--text-secondary)] text-sm leading-relaxed">
+              What you see is what you pay. No hidden fees.
+            </p>
+          </div>
+
+          <div className="flex flex-col items-center md:items-start text-center md:text-left md:border-l border-[var(--bg-grey)] md:pl-6">
+            <div className="flex items-center gap-3 mb-2">
+              <IoStarOutline className="text-[var(--bg-green)] text-2xl" />
+              <h3 className="font-semibold text-[var(--text-primary)]">Instant Booking</h3>
+            </div>
+            <p className="text-[var(--text-secondary)] text-sm leading-relaxed">
+              Secure your date instantly with a seamless checkout.
+            </p>
           </div>
         </div>
       </section>
-      <section className="px-6 py-16 bg-[var(--bg-primary)]">
-        <div className="max-w-7xl mx-auto">
-          {/* header */}
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h2 className="text-3xl font-semibold text-[var(--text-primary)]">Featured Venues</h2>
 
-              <p className="text-[var(--text-secondary)] mt-2">
-                Explore some of our popular event spaces.
-              </p>
+      {/* Separator */}
+      <div className="max-w-7xl mx-auto px-6">
+        <div className="h-px bg-gradient-to-r from-transparent via-[var(--bg-grey)] to-transparent" />
+      </div>
+
+      {/* Categories Showcase */}
+      <section className="px-6 py-12 border-b border-[var(--bg-grey)]">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col items-center text-center mb-10">
+            <h2 className="text-2xl md:text-3xl font-bold text-[var(--text-primary)] mb-3">
+              Browse by Category
+            </h2>
+            <p className="text-[var(--text-secondary)]">
+              Find the perfect space tailored to your specific event needs
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            {VENUE_CATEGORIES.map((cat, idx) => (
+              <div
+                key={idx}
+                onClick={() => handleCategoryClick(cat.value)}
+                className="flex flex-col items-center justify-center p-6 bg-[var(--bg-tertiary)] rounded-2xl border border-[var(--bg-grey)] hover:shadow-md hover:border-[var(--bg-green)] transition cursor-pointer group"
+              >
+                <div className="w-12 h-12 flex items-center justify-center rounded-full bg-[var(--bg-green)]/10 text-[var(--bg-green)] group-hover:bg-[var(--bg-green)] group-hover:text-white transition-colors mb-4">
+                  <cat.icon size={24} />
+                </div>
+                <span className="text-sm font-medium text-[var(--text-primary)]">{cat.name}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Featured Venues Section */}
+      <section className="px-6 py-16">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col md:flex-row items-center justify-between mb-10 gap-4">
+            <div>
+              <h2 className="text-3xl font-bold text-[var(--text-primary)]">
+                Featured Properties
+                {/* <br className="hidden md:block" /> */}
+                <span className="text-[var(--bg-green)]"> On Our Listing</span>
+              </h2>
             </div>
 
             <Link
               to="/explore"
-              className="hidden md:block text-[var(--bg-green)] font-medium hover:underline"
+              className="px-6 py-3 border-2 border-[var(--bg-green)] text-[var(--bg-green)] rounded-xl font-medium hover:bg-[var(--bg-green)] hover:text-white transition"
             >
-              View All →
+              View All Properties
             </Link>
           </div>
 
-          {/* cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {isLoading ? (
-              Array.from({ length: 4 }).map((_, i) => (
+              Array.from({ length: 8 }).map((_, i) => (
                 <div
                   key={i}
                   className="flex flex-col h-[380px] rounded-2xl border border-[var(--bg-grey)] bg-[var(--bg-tertiary)] overflow-hidden"
@@ -139,26 +235,88 @@ const HomePage = () => {
                 </div>
               ))
             ) : featuredVenues.length > 0 ? (
-              featuredVenues.map((venue: PublicVenue) => (
-                <CompactVenueCard
-                  key={venue._id}
-                  venue={venue}
-                  onToggleWishlist={handleToggleWishlist}
-                  isLoadingWishlist={togglingVenues.has(venue._id)}
-                />
-              ))
+              featuredVenues
+                .slice(0, 8)
+                .map((venue: PublicVenue) => (
+                  <CompactVenueCard
+                    key={venue._id}
+                    venue={venue}
+                    onToggleWishlist={handleToggleWishlist}
+                    isLoadingWishlist={togglingVenues.has(venue._id)}
+                  />
+                ))
             ) : (
               <div className="col-span-full py-12 text-center text-[var(--text-secondary)]">
                 No featured venues currently available.
               </div>
             )}
           </div>
+        </div>
+      </section>
 
-          {/* Mobile View All */}
-          <div className="mt-8 md:hidden text-center">
-            <Link to="/explore" className="text-[var(--bg-green)] font-medium">
-              View All Venues →
+      {/* Become a Host Section */}
+      <section className="px-6 py-16 bg-[var(--bg-tertiary)] border-y border-[var(--bg-grey)]">
+        <div className="max-w-7xl mx-auto text-center md:text-left flex flex-col md:flex-row items-center justify-between gap-8">
+          <div>
+            <h2 className="text-3xl md:text-4xl font-bold text-[var(--text-primary)] mb-4">
+              List Your Property on BookMyVenue
+            </h2>
+            <p className="text-[var(--text-secondary)] text-lg max-w-2xl">
+              Have a beautiful space? Join thousands of hosts who are earning by renting out their
+              venues for events, meetings, and parties.
+            </p>
+          </div>
+          <div className="shrink-0">
+            <Link
+              to="/list-venue/add-venue"
+              className="inline-block px-8 py-4 bg-[var(--bg-green)] text-white font-semibold rounded-xl hover:opacity-90 transition shadow-lg"
+            >
+              Become a Host
             </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Discover BookMyVenue Section */}
+      <section className="px-6 py-20">
+        <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-12">
+          <div className="lg:w-1/2">
+            <h2 className="text-3xl md:text-4xl font-bold text-[var(--text-primary)] mb-6 leading-tight">
+              Discover More About <br className="hidden md:block" /> Property Rental
+            </h2>
+            <p className="text-[var(--text-secondary)] mb-8 leading-relaxed text-lg">
+              BookMyVenue provides a seamless experience for both guests looking to book the perfect
+              space and hosts wanting to maximize their property's potential.
+            </p>
+
+            <div className="space-y-4 mb-8">
+              {[
+                'Verified venues with detailed amenities',
+                'Transparent pricing with no hidden fees',
+                'Secure payment and instant booking confirmation',
+              ].map((item, idx) => (
+                <div key={idx} className="flex items-center gap-3">
+                  <IoCheckmarkCircle className="text-[var(--bg-green)] text-xl shrink-0" />
+                  <span className="text-[var(--text-primary)] font-medium">{item}</span>
+                </div>
+              ))}
+            </div>
+
+            <Link
+              to="/explore"
+              className="inline-block px-8 py-3 bg-[var(--bg-green)] hover:bg-[var(--text-primary)] text-white font-semibold rounded-full transition shadow-md"
+            >
+              Discover More
+            </Link>
+          </div>
+          <div className="lg:w-1/2 w-full">
+            <div className="relative rounded-3xl overflow-hidden shadow-2xl aspect-video lg:aspect-[4/3]">
+              <img
+                src="https://images.unsplash.com/photo-1519167758481-83f550bb49b3?q=80&w=2098&auto=format&fit=crop"
+                alt="Beautiful event space"
+                className="w-full h-full object-cover"
+              />
+            </div>
           </div>
         </div>
       </section>

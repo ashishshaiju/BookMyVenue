@@ -43,21 +43,43 @@ export async function banUser(
     throw new ValidationError('Reason must be at least 10 characters');
   }
 
-  return repo.createBan(userId, scope, reason, adminId, options);
+  const ban = await repo.createBan(userId, scope, reason, adminId, options);
+  
+  // Log activity
+  const { logModerationAction } = await import('./moderationActivity.service');
+  await logModerationAction(adminId, 'ban_user', userId, 'user', reason, { scope, ...options });
+
+  return ban;
 }
 
 export async function liftBan(adminId: string, banRecordId: string): Promise<IBannedUser> {
-  const ban = await repo.findActiveBan(adminId, 'full'); // dummy scope, just checking if admin exists
-  if (!ban && adminId !== adminId) {
-    // This is just a placeholder admin check; real auth happens at route level
-  }
-
   const updated = await repo.liftBan(banRecordId, adminId);
   if (!updated) {
     throw new NotFoundError('Ban record not found');
   }
 
+  // Log activity
+  const { logModerationAction } = await import('./moderationActivity.service');
+  await logModerationAction(adminId, 'unban_user', updated.userId.toString(), 'user', undefined, { banRecordId });
+
   return updated;
+}
+
+export async function liftAllBansForUser(adminId: string, userId: string): Promise<number> {
+  const targetUser = await UserModel.findById(userId).exec();
+  if (!targetUser) {
+    throw new NotFoundError('User not found');
+  }
+
+  const count = await repo.liftAllBansForUser(userId, adminId);
+  
+  if (count > 0) {
+    // Log activity
+    const { logModerationAction } = await import('./moderationActivity.service');
+    await logModerationAction(adminId, 'unban_user', userId, 'user', undefined, { count });
+  }
+  
+  return count;
 }
 
 export async function isBannedForScope(

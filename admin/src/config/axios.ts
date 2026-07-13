@@ -17,7 +17,10 @@ interface QueuedRequest {
 // Error message extractor
 const extractErrorMessage = (error: unknown): string => {
   if (axios.isAxiosError(error)) {
-    const err = error as import("axios").AxiosError<{message: string, error: string}>;
+    const err = error as import("axios").AxiosError<{
+      message: string;
+      error: string;
+    }>;
     const data = err.response?.data;
     return (
       (data?.message as string) ||
@@ -41,20 +44,20 @@ export const createAxiosInstance = (): AxiosInstance => {
   });
 
   instance.interceptors.request.use((config) => {
-		// let sessionToken = localStorage.getItem("x-session-token");
-		// if (!sessionToken) {
-		//   sessionToken = crypto.randomUUID();
-		//   localStorage.setItem("x-session-token", sessionToken);
-		// }
+    // let sessionToken = localStorage.getItem("x-session-token");
+    // if (!sessionToken) {
+    //   sessionToken = crypto.randomUUID();
+    //   localStorage.setItem("x-session-token", sessionToken);
+    // }
 
-		// config.headers["x-session-token"] = sessionToken;
+    // config.headers["x-session-token"] = sessionToken;
 
-		// if (import.meta.env.MODE === 'development') {
-		//   config.headers.skip_zrok_interstitial = 'true';
-		// }
+    // if (import.meta.env.MODE === 'development') {
+    //   config.headers.skip_zrok_interstitial = 'true';
+    // }
 
-		return config;
-	});
+    return config;
+  });
 
   // Response interceptor
   let isRefreshing = false;

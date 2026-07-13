@@ -92,12 +92,16 @@ export function VenueCard({ venue, onToggleWishlist, isLoadingWishlist = false }
           <button
             onClick={handleWishlistClick}
             disabled={isLoadingWishlist}
-            className="absolute top-3 right-3 p-2 bg-white/80 hover:bg-white rounded-full transition z-10 disabled:opacity-50"
+            className="absolute top-3 right-3 p-2 bg-[var(--bg-tertiary)]/80 hover:bg-[var(--bg-tertiary)] rounded-full transition z-10 disabled:opacity-50"
             title={optimisticWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
           >
             <Heart
               size={20}
-              className={optimisticWishlist ? 'fill-red-500 text-red-500' : 'text-gray-600'}
+              className={
+                optimisticWishlist
+                  ? 'fill-red-500 text-red-500 dark:fill-red-400 dark:text-red-400'
+                  : 'text-[var(--text-secondary)]'
+              }
             />
           </button>
         )}
@@ -138,8 +142,8 @@ export function VenueCard({ venue, onToggleWishlist, isLoadingWishlist = false }
             className="text-sm text-[var(--text-secondary)] flex items-center gap-1 line-clamp-1 mb-4"
             title={`${venue.city}, ${venue.district}`}
           >
-            <IoLocationOutline className="shrink-0 text-gray-400" size={16} /> {venue.city},{' '}
-            {venue.district}
+            <IoLocationOutline className="shrink-0 text-[var(--text-secondary)]" size={16} />{' '}
+            {venue.city}, {venue.district}
           </p>
 
           {/* Amenities Tags */}
@@ -167,7 +171,7 @@ export function VenueCard({ venue, onToggleWishlist, isLoadingWishlist = false }
           <div className="flex flex-col">
             {price !== null ? (
               <>
-                <span className="text-[10px] font-bold text-gray-400 tracking-wider uppercase mb-0.5">
+                <span className="text-[10px] font-bold text-[var(--text-secondary)] tracking-wider uppercase mb-0.5">
                   Starts From
                 </span>
                 <div className="flex items-baseline gap-1">
@@ -196,7 +200,7 @@ export function VenueCard({ venue, onToggleWishlist, isLoadingWishlist = false }
 
           <Link
             to={`/venue/${venue._id}`}
-            className="shrink-0 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl font-semibold transition shadow-md hover:shadow-lg"
+            className="shrink-0 bg-[var(--bg-green)] hover:bg-[var(--bg-green)]/90 text-white px-6 py-2.5 rounded-xl font-semibold transition shadow-md hover:shadow-lg"
           >
             Book Now
           </Link>

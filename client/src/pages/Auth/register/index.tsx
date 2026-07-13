@@ -61,7 +61,10 @@ const RegisterPage = () => {
       footer={
         <>
           Already have an account?
-          <Link to={loginLink} className="ml-2 font-semibold text-zinc-900 hover:underline">
+          <Link
+            to={loginLink}
+            className="ml-2 font-semibold text-[var(--text-primary)] hover:underline"
+          >
             Sign In
           </Link>
         </>
@@ -99,45 +102,59 @@ const RegisterPage = () => {
               {/* Name */}
 
               <div>
-                <label htmlFor="name" className="mb-2 block text-sm font-medium text-zinc-700">
+                <label
+                  htmlFor="name"
+                  className="mb-2 block text-sm font-medium text-[var(--text-secondary)]"
+                >
                   Full Name
                 </label>
 
-                <div className="group flex h-14 items-center rounded-2xl border border-zinc-300 bg-white px-4 transition-all duration-200 focus-within:border-black focus-within:ring-4 focus-within:ring-zinc-200">
-                  <HiOutlineUser className="mr-3 text-xl text-zinc-400 transition-colors group-focus-within:text-black" />
+                <div className="group flex h-14 items-center rounded-2xl border border-[var(--bg-grey)] bg-[var(--bg-tertiary)] px-4 transition-all duration-200 focus-within:border-[var(--text-primary)] focus-within:ring-4 focus-within:ring-[var(--bg-grey)]">
+                  <HiOutlineUser className="mr-3 text-xl text-[var(--text-secondary)] transition-colors group-focus-within:text-[var(--text-primary)]" />
 
                   <Field
                     id="name"
                     name="name"
                     type="text"
                     placeholder="John Doe"
-                    className="h-full w-full bg-transparent outline-none placeholder:text-zinc-400"
+                    className="h-full w-full bg-transparent outline-none placeholder:text-[var(--text-secondary)]"
                   />
                 </div>
 
-                <ErrorMessage name="name" component="p" className="mt-2 text-sm text-red-500" />
+                <ErrorMessage
+                  name="name"
+                  component="p"
+                  className="mt-2 text-sm text-red-500 dark:text-red-400"
+                />
               </div>
 
               {/* Email */}
 
               <div>
-                <label htmlFor="email" className="mb-2 block text-sm font-medium text-zinc-700">
+                <label
+                  htmlFor="email"
+                  className="mb-2 block text-sm font-medium text-[var(--text-secondary)]"
+                >
                   Email Address
                 </label>
 
-                <div className="group flex h-14 items-center rounded-2xl border border-zinc-300 bg-white px-4 transition-all duration-200 focus-within:border-black focus-within:ring-4 focus-within:ring-zinc-200">
-                  <HiOutlineMail className="mr-3 text-xl text-zinc-400 transition-colors group-focus-within:text-black" />
+                <div className="group flex h-14 items-center rounded-2xl border border-[var(--bg-grey)] bg-[var(--bg-tertiary)] px-4 transition-all duration-200 focus-within:border-[var(--text-primary)] focus-within:ring-4 focus-within:ring-[var(--bg-grey)]">
+                  <HiOutlineMail className="mr-3 text-xl text-[var(--text-secondary)] transition-colors group-focus-within:text-[var(--text-primary)]" />
 
                   <Field
                     id="email"
                     name="email"
                     type="email"
                     placeholder="john@example.com"
-                    className="h-full w-full bg-transparent outline-none placeholder:text-zinc-400"
+                    className="h-full w-full bg-transparent outline-none placeholder:text-[var(--text-secondary)]"
                   />
                 </div>
 
-                <ErrorMessage name="email" component="p" className="mt-2 text-sm text-red-500" />
+                <ErrorMessage
+                  name="email"
+                  component="p"
+                  className="mt-2 text-sm text-red-500 dark:text-red-400"
+                />
               </div>
             </div>
 
@@ -147,7 +164,10 @@ const RegisterPage = () => {
 
               <div className="relative">
                 <div ref={hintRef} className="mb-2 relative flex items-center justify-between">
-                  <label htmlFor="password" className="block text-sm font-medium text-zinc-700">
+                  <label
+                    htmlFor="password"
+                    className="block text-sm font-medium text-[var(--text-secondary)]"
+                  >
                     Password
                   </label>
                   <button
@@ -155,68 +175,73 @@ const RegisterPage = () => {
                     onClick={() => setShowPasswordHint(!showPasswordHint)}
                     className="flex items-center gap-1.5 opacity-50 transition hover:opacity-100 focus:outline-none"
                   >
-                    <HiOutlineInformationCircle size={16} className="text-zinc-500" />
-                    <span className="text-xs text-zinc-500">Password requirements</span>
+                    <HiOutlineInformationCircle
+                      size={16}
+                      className="text-[var(--text-secondary)]"
+                    />
+                    <span className="text-xs text-[var(--text-secondary)]">
+                      Password requirements
+                    </span>
                   </button>
 
                   {/* Password Hint Tooltip */}
                   <div
-                    className={`absolute right-0 top-[calc(100%+0.5rem)] z-20 w-max max-w-[calc(100vw-2rem)] rounded-2xl border border-zinc-200 bg-zinc-50 p-4 shadow-xl transition-all duration-200 ${
+                    className={`absolute right-0 top-[calc(100%+0.5rem)] z-20 w-max max-w-[calc(100vw-2rem)] rounded-2xl border border-[var(--bg-grey)] bg-[var(--bg-primary)] p-4 shadow-xl transition-all duration-200 ${
                       showPasswordHint
                         ? 'translate-y-0 opacity-100 visible'
                         : '-translate-y-2 opacity-0 invisible'
                     }`}
                   >
-                    <h4 className="mb-2 text-sm font-semibold text-zinc-800">
+                    <h4 className="mb-2 text-sm font-semibold text-[var(--text-primary)]">
                       Password Requirements
                     </h4>
 
                     <ul className="space-y-2 text-sm">
                       <li
-                        className={`flex items-center gap-1.5 ${values.password.length >= 8 ? 'text-green-600' : 'text-zinc-500'}`}
+                        className={`flex items-center gap-1.5 ${values.password.length >= 8 ? 'text-[var(--bg-green)]' : 'text-[var(--text-secondary)]'}`}
                       >
                         {values.password.length >= 8 ? (
-                          <HiOutlineCheckCircle className="text-green-500" size={16} />
+                          <HiOutlineCheckCircle className="text-[var(--bg-green)]" size={16} />
                         ) : (
                           <span className="w-4 text-center">•</span>
                         )}
                         <span>Minimum 8 characters</span>
                       </li>
                       <li
-                        className={`flex items-center gap-1.5 ${/[A-Z]/.test(values.password) ? 'text-green-600' : 'text-zinc-500'}`}
+                        className={`flex items-center gap-1.5 ${/[A-Z]/.test(values.password) ? 'text-[var(--bg-green)]' : 'text-[var(--text-secondary)]'}`}
                       >
                         {/[A-Z]/.test(values.password) ? (
-                          <HiOutlineCheckCircle className="text-green-500" size={16} />
+                          <HiOutlineCheckCircle className="text-[var(--bg-green)]" size={16} />
                         ) : (
                           <span className="w-4 text-center">•</span>
                         )}
                         <span>One uppercase letter</span>
                       </li>
                       <li
-                        className={`flex items-center gap-1.5 ${/[a-z]/.test(values.password) ? 'text-green-600' : 'text-zinc-500'}`}
+                        className={`flex items-center gap-1.5 ${/[a-z]/.test(values.password) ? 'text-[var(--bg-green)]' : 'text-[var(--text-secondary)]'}`}
                       >
                         {/[a-z]/.test(values.password) ? (
-                          <HiOutlineCheckCircle className="text-green-500" size={16} />
+                          <HiOutlineCheckCircle className="text-[var(--bg-green)]" size={16} />
                         ) : (
                           <span className="w-4 text-center">•</span>
                         )}
                         <span>One lowercase letter</span>
                       </li>
                       <li
-                        className={`flex items-center gap-1.5 ${/[0-9]/.test(values.password) ? 'text-green-600' : 'text-zinc-500'}`}
+                        className={`flex items-center gap-1.5 ${/[0-9]/.test(values.password) ? 'text-[var(--bg-green)]' : 'text-[var(--text-secondary)]'}`}
                       >
                         {/[0-9]/.test(values.password) ? (
-                          <HiOutlineCheckCircle className="text-green-500" size={16} />
+                          <HiOutlineCheckCircle className="text-[var(--bg-green)]" size={16} />
                         ) : (
                           <span className="w-4 text-center">•</span>
                         )}
                         <span>One number</span>
                       </li>
                       <li
-                        className={`flex items-center gap-1.5 ${/[^A-Za-z0-9]/.test(values.password) ? 'text-green-600' : 'text-zinc-500'}`}
+                        className={`flex items-center gap-1.5 ${/[^A-Za-z0-9]/.test(values.password) ? 'text-[var(--bg-green)]' : 'text-[var(--text-secondary)]'}`}
                       >
                         {/[^A-Za-z0-9]/.test(values.password) ? (
-                          <HiOutlineCheckCircle className="text-green-500" size={16} />
+                          <HiOutlineCheckCircle className="text-[var(--bg-green)]" size={16} />
                         ) : (
                           <span className="w-4 text-center">•</span>
                         )}
@@ -226,27 +251,31 @@ const RegisterPage = () => {
                   </div>
                 </div>
 
-                <div className="group flex h-14 items-center rounded-2xl border border-zinc-300 bg-white px-4 transition-all duration-200 focus-within:border-black focus-within:ring-4 focus-within:ring-zinc-200">
-                  <HiOutlineLockClosed className="mr-3 text-xl text-zinc-400 transition-colors group-focus-within:text-black" />
+                <div className="group flex h-14 items-center rounded-2xl border border-[var(--bg-grey)] bg-[var(--bg-tertiary)] px-4 transition-all duration-200 focus-within:border-[var(--text-primary)] focus-within:ring-4 focus-within:ring-[var(--bg-grey)]">
+                  <HiOutlineLockClosed className="mr-3 text-xl text-[var(--text-secondary)] transition-colors group-focus-within:text-[var(--text-primary)]" />
 
                   <Field
                     id="password"
                     name="password"
                     type={showPassword ? 'text' : 'password'}
                     placeholder="Create password"
-                    className="h-full w-full bg-transparent outline-none placeholder:text-zinc-400"
+                    className="h-full w-full bg-transparent outline-none placeholder:text-[var(--text-secondary)]"
                   />
 
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="text-zinc-400 transition hover:text-zinc-700"
+                    className="text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]"
                   >
                     {showPassword ? <HiOutlineEyeSlash size={22} /> : <HiOutlineEye size={22} />}
                   </button>
                 </div>
 
-                <ErrorMessage name="password" component="p" className="mt-2 text-sm text-red-500" />
+                <ErrorMessage
+                  name="password"
+                  component="p"
+                  className="mt-2 text-sm text-red-500 dark:text-red-400"
+                />
               </div>
 
               {/* Confirm Password */}
@@ -254,26 +283,26 @@ const RegisterPage = () => {
               <div>
                 <label
                   htmlFor="confirmPassword"
-                  className="mb-2 block text-sm font-medium text-zinc-700"
+                  className="mb-2 block text-sm font-medium text-[var(--text-secondary)]"
                 >
                   Confirm Password
                 </label>
 
-                <div className="group flex h-14 items-center rounded-2xl border border-zinc-300 bg-white px-4 transition-all duration-200 focus-within:border-black focus-within:ring-4 focus-within:ring-zinc-200">
-                  <HiOutlineLockClosed className="mr-3 text-xl text-zinc-400 transition-colors group-focus-within:text-black" />
+                <div className="group flex h-14 items-center rounded-2xl border border-[var(--bg-grey)] bg-[var(--bg-tertiary)] px-4 transition-all duration-200 focus-within:border-[var(--text-primary)] focus-within:ring-4 focus-within:ring-[var(--bg-grey)]">
+                  <HiOutlineLockClosed className="mr-3 text-xl text-[var(--text-secondary)] transition-colors group-focus-within:text-[var(--text-primary)]" />
 
                   <Field
                     id="confirmPassword"
                     name="confirmPassword"
                     type={showConfirmPassword ? 'text' : 'password'}
                     placeholder="Confirm password"
-                    className="h-full w-full bg-transparent outline-none placeholder:text-zinc-400"
+                    className="h-full w-full bg-transparent outline-none placeholder:text-[var(--text-secondary)]"
                   />
 
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="text-zinc-400 transition hover:text-zinc-700"
+                    className="text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]"
                   >
                     {showConfirmPassword ? (
                       <HiOutlineEyeSlash size={22} />
@@ -286,7 +315,7 @@ const RegisterPage = () => {
                 <ErrorMessage
                   name="confirmPassword"
                   component="p"
-                  className="mt-2 text-sm text-red-500"
+                  className="mt-2 text-sm text-red-500 dark:text-red-400"
                 />
               </div>
             </div>
@@ -296,7 +325,7 @@ const RegisterPage = () => {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="group flex h-14 w-full items-center justify-center rounded-2xl bg-zinc-900 text-base font-semibold text-white shadow-lg transition-all duration-300 hover:-translate-y-0.5 hover:bg-black hover:shadow-xl active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
+              className="group flex h-14 w-full items-center justify-center rounded-2xl bg-[var(--bg-secondary)] text-base font-semibold text-white shadow-lg transition-all duration-300 hover:-translate-y-0.5 hover:opacity-90 hover:shadow-xl active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isSubmitting ? (
                 <>

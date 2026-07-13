@@ -12,3 +12,10 @@ export interface Coordinates {
   lat: number | string;
   lng: number | string;
 }
+
+export interface VenuePinsBBox {
+  swLng: number;
+  swLat: number;
+  neLng: number;
+  neLat: number;
+}

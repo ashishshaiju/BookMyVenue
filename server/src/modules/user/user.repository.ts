@@ -8,6 +8,11 @@ export async function findUserById(userId: string): Promise<IUser | null> {
   return UserModel.findById(userId).select('-password').exec();
 }
 
+export async function findUserEmailById(userId: string): Promise<string | null> {
+  const user = await UserModel.findById(userId).select('email').lean().exec();
+  return (user as { email?: string } | null)?.email ?? null;
+}
+
 export async function findActiveUserById(id: string): Promise<IUser | null> {
   return UserModel.findOne({ _id: id, active: true, deleted: false }).exec();
 }
@@ -54,6 +59,32 @@ export async function updateUserPassword(
     { _id: userId },
     { $set: { password: passwordHash, passwordChangedAt: new Date() } },
     { session }
+  ).exec();
+}
+
+export async function findActiveUserByUsernameExcludingId(
+  username: string,
+  excludeUserId: string
+): Promise<IUser | null> {
+  return UserModel.findOne({
+    username,
+    _id: { $ne: excludeUserId },
+    deleted: false,
+  }).exec();
+}
+
+export async function updateUserProfile(
+  userId: string,
+  data: { username?: string; profilePicture?: string; profilePicturePublicId?: string }
+): Promise<IUser | null> {
+  return UserModel.findByIdAndUpdate(userId, { $set: data }, { new: true }).exec();
+}
+
+export async function clearUserProfilePicture(userId: string): Promise<IUser | null> {
+  return UserModel.findByIdAndUpdate(
+    userId,
+    { $unset: { profilePicture: '', profilePicturePublicId: '' } },
+    { new: true }
   ).exec();
 }
 
@@ -173,14 +204,21 @@ export async function banUser(userId: string, adminId: string, banReason: string
 }
 
 export async function unbanUser(userId: string): Promise<IUser> {
+  // Using $unset for legacy fields, and $set for actual schema fields
   const user = await UserModel.findByIdAndUpdate(
     userId,
     {
-      banReason: null,
-      bannedBy: null,
-      bannedAt: null,
+      $unset: {
+        banReason: 1,
+        bannedBy: 1,
+        bannedAt: 1,
+      },
+      $set: {
+        isBanned: false,
+        active: true,
+      }
     },
-    { new: true }
+    { new: true, strict: false }
   ).exec();
 
   if (!user) {

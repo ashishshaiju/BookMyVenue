@@ -4,6 +4,8 @@ import type { VenueStatusEnum, VenueFields } from '../../constants/venue.constan
 
 export type VenueStatus = (typeof VenueStatusEnum)[number];
 
+export type PlainVenue = Omit<IVenue, keyof Document> & { _id: IVenue['_id'] };
+
 export type VenueKey = (typeof VenueFields)[number];
 
 export interface IGeoPoint {

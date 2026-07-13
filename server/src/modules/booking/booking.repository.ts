@@ -1,10 +1,10 @@
 import { Types, type ClientSession } from 'mongoose';
 import { buildPaginationMeta } from '../../utils/paginationUtils';
 import { BookingStatus, type BookingStatusType } from '../../constants/booking.constants';
-import { LockModel } from './lock.model';
-import { BookingModel } from './booking.model';
-import { FailedBookingModel } from './failedBooking.model';
-import { ProcessedWebhookModel } from './processedWebhook.model';
+import { LockModel } from './models/lock.model';
+import { BookingModel } from './models/booking.model';
+import { FailedBookingModel } from './models/failedBooking.model';
+import { ProcessedWebhookModel } from './models/processedWebhook.model';
 import { VenueModel } from '../venue/venue.model';
 import type { IVenue, IRefundRule } from '../venue/venue.types';
 import type { IBooking } from './booking.types';
@@ -404,9 +404,27 @@ export async function findLockById(lockId: string, userId: string): Promise<ILoc
   return LockModel.findOne({ _id: new Types.ObjectId(lockId), userId: new Types.ObjectId(userId) }).lean();
 }
 
-export async function deleteLocksByConditions(deleteConditions: Record<string, unknown>[]): Promise<unknown> {
+export async function findLockByIdRaw(lockId: string): Promise<ILock | null> {
+  return LockModel.findById(lockId).lean();
+}
+
+export async function deleteLockById(lockId: string): Promise<void> {
+  await LockModel.deleteOne({ _id: new Types.ObjectId(lockId) });
+}
+
+export async function createLock(
+  data: Partial<ILock>[],
+  session?: ClientSession
+): Promise<ILock[]> {
+  return LockModel.create(data, { session });
+}
+
+export async function deleteLocksByConditions(
+  deleteConditions: Record<string, unknown>[],
+  session?: ClientSession
+): Promise<unknown> {
   if (deleteConditions.length > 0) {
-    return LockModel.deleteMany({ $or: deleteConditions });
+    return LockModel.deleteMany({ $or: deleteConditions }, { session });
   }
   return null;
 }

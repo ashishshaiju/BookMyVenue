@@ -4,7 +4,7 @@ import { FiCalendar, FiClock, FiMapPin, FiSearch, FiChevronRight } from 'react-i
 import { useMyBookings } from '@/hooks/useMyBookings';
 import ReviewModal from '@/components/common/ReviewModal';
 import * as reviewService from '@/services/reviewService';
-import { showSuccess, showError } from '@/utils/toast';
+import { useToast } from '@/hooks/useToast';
 
 import type { BookingCardDTO } from '@/types/booking.types';
 
@@ -25,10 +25,11 @@ const MyBookings = () => {
 
   const { data, isLoading, isError, refetch } = useMyBookings();
   const bookingsData = useMemo(() => data?.data?.bookings || DEFAULT_BOOKINGS, [data]);
+  const { success, error } = useToast();
 
   const handleReviewSubmit = async (rating: number, comment: string) => {
     if (!reviewModal.booking) {
-      showError('Booking not found');
+      error('Booking not found');
       return;
     }
 
@@ -37,13 +38,13 @@ const MyBookings = () => {
         rating,
         comment: comment || undefined,
       });
-      showSuccess('Review submitted successfully!');
+      success('Review submitted successfully!');
       setReviewModal({ open: false, booking: null });
       refetch();
-    } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : 'Failed to submit review';
-      showError(errorMsg);
-      throw error;
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Failed to submit review';
+      error(errorMsg);
+      throw err;
     }
   };
 
@@ -186,7 +187,9 @@ const MyBookings = () => {
           renderSkeleton()
         ) : isError ? (
           <div className="text-center py-20 bg-[var(--bg-tertiary)] rounded-3xl border border-[var(--bg-grey)]">
-            <p className="text-red-500 font-medium">Failed to load bookings. Please try again.</p>
+            <p className="text-red-500 dark:text-red-400 font-medium">
+              Failed to load bookings. Please try again.
+            </p>
           </div>
         ) : filteredBookings.length === 0 ? (
           <div className="text-center py-24 bg-[var(--bg-tertiary)] rounded-3xl border border-[var(--bg-grey)]">
@@ -224,7 +227,7 @@ const MyBookings = () => {
                     alt={booking.venueName}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
-                  <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-gray-800 shadow-sm">
+                  <div className="absolute top-4 left-4 bg-[var(--bg-tertiary)]/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-[var(--text-primary)] shadow-sm">
                     {booking.bookingRef}
                   </div>
                   {activeTab === 'cancelled' && (

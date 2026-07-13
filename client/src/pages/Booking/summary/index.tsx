@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router';
+import { motion } from 'framer-motion';
 import { useLockTimer } from '@/hooks/useLockTimer';
 import { useApiMutation } from '@/hooks/useApi';
-import { API_ENDPOINTS } from '@/constants';
-import { showError } from '@/utils/toast';
+import { API_ENDPOINTS, RAZORPAY_KEY_ID } from '@/constants';
+import { useToast } from '@/hooks/useToast';
 import { axiosInstance } from '@/config/axios';
 import { FiClock, FiCalendar, FiMapPin, FiUsers, FiInfo, FiCheckCircle } from 'react-icons/fi';
 import { MdOutlineMeetingRoom } from 'react-icons/md';
@@ -63,7 +64,10 @@ const loadRazorpayScript = () => {
 const BookingCheckout = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { error: showError } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isTimerVisible, setIsTimerVisible] = useState(true);
+  const timerBannerRef = useRef<HTMLDivElement>(null);
 
   // Form State
   const [guestCount, setGuestCount] = useState<string>('');
@@ -89,15 +93,27 @@ const BookingCheckout = () => {
 
   useEffect(() => {
     if (!state?.lockData) {
-      showError('Booking session not found. Please try again.');
+      error('Booking session not found. Please try again.');
       navigate(-1);
     }
   }, [state, navigate]);
 
+  // IntersectionObserver to detect when the timer banner leaves the viewport
+  useEffect(() => {
+    const el = timerBannerRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setIsTimerVisible(entry.isIntersecting),
+      { threshold: 0 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   const { lockId, expiresAt, amountToPay } = state?.lockData || {};
 
   const handleExpire = () => {
-    showError('Your session has expired. Please select the slot again.');
+    error('Your session has expired. Please select the slot again.');
     navigate(-1);
   };
 
@@ -119,13 +135,13 @@ const BookingCheckout = () => {
         const res = await loadRazorpayScript();
 
         if (!res) {
-          showError('Failed to load Razorpay SDK. Please check your connection.');
+          error('Failed to load Razorpay SDK. Please check your connection.');
           setIsProcessing(false);
           return;
         }
 
         const options = {
-          key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+          key: RAZORPAY_KEY_ID,
           amount,
           currency,
           order_id: orderId,
@@ -221,8 +237,11 @@ const BookingCheckout = () => {
   return (
     <div className="min-h-screen bg-[var(--bg-primary)] pt-24 pb-12 px-4">
       <div className="max-w-7xl mx-auto">
-        {/* Timer Banner for mobile */}
-        <div className="md:hidden mb-6 bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-900/50 p-4 rounded-2xl flex items-center justify-between shadow-sm">
+        {/* Inline Timer Banner — mobile only */}
+        <div
+          ref={timerBannerRef}
+          className="md:hidden mb-6 bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-900/50 p-4 rounded-2xl flex items-center justify-between shadow-sm"
+        >
           <div className="flex items-center gap-3">
             <FiClock className="text-orange-600 text-xl animate-pulse" />
             <span className="text-orange-800 dark:text-orange-400 font-medium">
@@ -233,6 +252,28 @@ const BookingCheckout = () => {
             {formattedTime}
           </span>
         </div>
+
+        {/* Floating Pill */}
+        <motion.div
+          className="md:hidden fixed top-20 left-1/2 -translate-x-1/2 z-50
+                     flex items-center gap-2 px-4 py-2 rounded-full
+                     bg-orange-50/10 dark:bg-orange-950/10
+                     border border-orange-300/30 dark:border-orange-700/30
+                     backdrop-blur-sm shadow-sm"
+          animate={{
+            opacity: isTimerVisible ? 0 : 1,
+            scale: isTimerVisible ? 0.6 : 1,
+            y: isTimerVisible ? -10 : 0,
+          }}
+          initial={false}
+          style={{ pointerEvents: isTimerVisible ? 'none' : 'auto' }}
+          transition={{ type: 'spring', stiffness: 480, damping: 32, mass: 0.6 }}
+        >
+          <FiClock className="text-orange-500 text-sm animate-pulse" />
+          <span className="text-orange-600 dark:text-orange-400 font-mono text-sm font-bold">
+            {formattedTime}
+          </span>
+        </motion.div>
 
         <div className="flex flex-col md:flex-row gap-8">
           {/* Left Panel: 70% Width */}
@@ -459,7 +500,7 @@ const BookingCheckout = () => {
                   type="submit"
                   form="checkout-form"
                   disabled={isProcessing || isExpired}
-                  className="w-full py-4 rounded-xl bg-[var(--bg-green)] text-white font-bold text-lg hover:bg-green-600 transition-all shadow-md hover:shadow-lg disabled:bg-gray-400 disabled:cursor-not-allowed flex justify-center items-center"
+                  className="w-full py-4 rounded-xl bg-[var(--bg-green)] text-white font-bold text-lg hover:bg-green-600 transition-all shadow-md hover:shadow-lg disabled:bg-[var(--bg-grey)] disabled:cursor-not-allowed flex justify-center items-center"
                 >
                   {isProcessing ? (
                     <span className="flex items-center gap-2">

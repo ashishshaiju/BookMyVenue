@@ -75,20 +75,22 @@ export default function WishlistPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+      <div className="min-h-screen flex items-center justify-center bg-[var(--bg-primary)]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--bg-green)]"></div>
       </div>
     );
   }
 
   if (!venues.length) {
     return (
-      <div className="min-h-screen bg-gray-50 py-12 mt-24">
+      <div className="min-h-screen bg-[var(--bg-primary)] py-12 mt-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <Heart className="mx-auto h-12 w-12 text-gray-400" />
-            <h1 className="mt-4 text-2xl font-bold text-gray-900">Your wishlist is empty</h1>
-            <p className="mt-2 text-gray-600">
+            <Heart className="mx-auto h-12 w-12 text-[var(--text-secondary)]" />
+            <h1 className="mt-4 text-2xl font-bold text-[var(--text-primary)]">
+              Your wishlist is empty
+            </h1>
+            <p className="mt-2 text-[var(--text-secondary)]">
               Start adding venues to your wishlist to save them for later
             </p>
             <Button onClick={() => navigate('/explore')} className="mt-6">
@@ -101,12 +103,12 @@ export default function WishlistPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 mt-24">
+    <div className="min-h-screen bg-[var(--bg-primary)] py-12 mt-24">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">My Wishlist</h1>
-          <p className="mt-2 text-gray-600">
+          <h1 className="text-3xl font-bold text-[var(--text-primary)]">My Wishlist</h1>
+          <p className="mt-2 text-[var(--text-secondary)]">
             {pagination?.total} venue{pagination?.total !== 1 ? 's' : ''} saved
           </p>
         </div>
@@ -116,11 +118,11 @@ export default function WishlistPage() {
           {venues.map((venue) => (
             <div
               key={venue._id}
-              className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow overflow-hidden cursor-pointer"
+              className="bg-[var(--bg-tertiary)] rounded-lg shadow-md hover:shadow-lg transition-shadow overflow-hidden cursor-pointer"
               onClick={() => handleViewVenue(venue._id)}
             >
               {/* Image */}
-              <div className="relative h-48 bg-gray-200 overflow-hidden">
+              <div className="relative h-48 bg-[var(--bg-grey)] overflow-hidden">
                 {venue.coverImage && venue.coverImage.startsWith('https://') ? (
                   <img
                     src={venue.coverImage}
@@ -128,36 +130,45 @@ export default function WishlistPage() {
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-gray-300 to-gray-400" />
+                  <div className="w-full h-full bg-[var(--bg-grey)]" />
                 )}
                 <button
                   onClick={(e) => handleRemoveWishlist(venue._id, e)}
-                  className="absolute top-3 right-3 p-2 bg-white/80 hover:bg-white rounded-full transition z-10"
+                  className="absolute top-3 right-3 p-2 bg-[var(--bg-tertiary)]/80 hover:bg-[var(--bg-tertiary)] rounded-full transition z-10"
                   title="Remove from wishlist"
                 >
-                  <Heart size={20} className="fill-red-500 text-red-500" />
+                  <Heart
+                    size={20}
+                    className="fill-red-500 text-red-500 dark:fill-red-400 dark:text-red-400"
+                  />
                 </button>
               </div>
 
               {/* Content */}
               <div className="p-4">
-                <h3 className="text-lg font-semibold text-gray-900 truncate">{venue.name}</h3>
-                <p className="text-sm text-gray-600 mt-1">
+                <h3 className="text-lg font-semibold text-[var(--text-primary)] truncate">
+                  {venue.name}
+                </h3>
+                <p className="text-sm text-[var(--text-secondary)] mt-1">
                   {venue.city}
                   {venue.district && `, ${venue.district}`}
                 </p>
 
                 {/* Rating */}
                 <div className="flex items-center mt-3 gap-2">
-                  <span className="text-sm font-medium text-gray-900">
+                  <span className="text-sm font-medium text-[var(--text-primary)]">
                     ⭐ {(venue.avgRating || 0).toFixed(1)}
                   </span>
-                  <span className="text-xs text-gray-500">({venue.reviewCount || 0} reviews)</span>
+                  <span className="text-xs text-[var(--text-secondary)]">
+                    ({venue.reviewCount || 0} reviews)
+                  </span>
                 </div>
 
                 {/* Capacity */}
                 {venue.maxCapacity && (
-                  <p className="text-xs text-gray-500 mt-2">Capacity: {venue.maxCapacity} guests</p>
+                  <p className="text-xs text-[var(--text-secondary)] mt-2">
+                    Capacity: {venue.maxCapacity} guests
+                  </p>
                 )}
               </div>
             </div>
@@ -175,7 +186,7 @@ export default function WishlistPage() {
               Previous
             </Button>
 
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-[var(--text-secondary)]">
               Page {pagination.page} of {pagination.totalPages}
             </div>
 

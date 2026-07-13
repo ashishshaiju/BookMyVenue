@@ -58,3 +58,10 @@ export const changePasswordSchema = z.object({
     )
     .max(100),
 });
+
+export const sessionIdParamSchema = z.object({
+  sessionId: z
+    .string()
+    .trim()
+    .regex(/^[a-f\d]{24}$/i, 'Invalid session ID'),
+});

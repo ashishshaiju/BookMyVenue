@@ -1,5 +1,5 @@
 import type { Request, Response } from 'express';
-import { VenueModel } from '../venue/venue.model';
+import { findVenueById } from '../venue/venue.repository';
 import { fetchActiveConflicts } from '../booking/booking.repository';
 import { generateAvailability, getBookableDates } from './availability.workflow';
 import { ResponseUtil } from '../../utils/responseUtils';
@@ -19,7 +19,7 @@ export const getVenueAvailability = async (req: Request, res: Response): Promise
     const { id } = validated.params as VenueIdParamDTO;
     const { date } = validated.query as AvailabilityQueryDTO;
 
-    const venue = await VenueModel.findById(id).lean();
+    const venue = await findVenueById(id);
     if (!venue) {
        ResponseUtil.notFound(res, 'Venue not found');
       return;

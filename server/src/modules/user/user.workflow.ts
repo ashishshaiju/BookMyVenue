@@ -1,6 +1,6 @@
 import * as repo from './user.repository';
 import * as service from './user.service';
-import { EmailTaskModel } from '../../models/email-task.model';
+import { enqueueEmailTask } from '../../services/email.repository';
 import { EmailIntent, EmailTaskStatus } from '../../constants/email.constants';
 
 export async function resetUserPasswordWorkflow(userId: string): Promise<boolean> {
@@ -13,14 +13,13 @@ export async function resetUserPasswordWorkflow(userId: string): Promise<boolean
 
   await repo.updateUserPassword(userId, hashedPassword);
 
-  await EmailTaskModel.create({
-    recipient: user.email,
-    intent: EmailIntent.ADMIN_PASSWORD_RESET,
-    subject: `Password Reset – ${user.username}`,
-    status: EmailTaskStatus.PENDING,
-    retryAfter: new Date(),
-    metadata: { newPassword, username: user.username }
-  });
+  await enqueueEmailTask(
+    user.email,
+    EmailIntent.ADMIN_PASSWORD_RESET,
+    `Password Reset – ${user.username}`,
+    EmailTaskStatus.PENDING,
+    { newPassword, username: user.username }
+  );
 
   return true;
 }

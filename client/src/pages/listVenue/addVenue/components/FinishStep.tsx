@@ -15,7 +15,7 @@ type FinishStepValues = {
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
-const err = 'text-red-500 text-sm mt-1';
+const err = 'text-red-500 dark:text-red-400 text-sm mt-1';
 
 const FinishStep = () => {
   const [previewImages, setPreviewImages] = useState<string[]>([]);
@@ -116,7 +116,7 @@ const FinishStep = () => {
                       newFiles.splice(index, 1);
                       setFieldValue('venuePhotos', newFiles);
                     }}
-                    className="absolute top-2 right-2 bg-white w-8 h-8 rounded-full shadow flex items-center justify-center text-red-500"
+                    className="absolute top-2 right-2 bg-[var(--bg-tertiary)] w-8 h-8 rounded-full shadow flex items-center justify-center text-red-500 dark:text-red-400"
                   >
                     ✕
                   </button>
@@ -233,7 +233,7 @@ const FinishStep = () => {
                             <button
                               type="button"
                               onClick={() => remove(index)}
-                              className="text-red-500 mt-4"
+                              className="text-red-500 dark:text-red-400 mt-4"
                             >
                               Remove Rule
                             </button>

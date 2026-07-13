@@ -10,6 +10,8 @@ export interface IUser extends Document {
   deleted: boolean;
   passwordChangedAt?: Date | null;
   isBanned: boolean;
+  profilePicture?: string;
+  profilePicturePublicId?: string;
 }
 
 const UserSchema = new Schema<IUser>(
@@ -21,6 +23,8 @@ const UserSchema = new Schema<IUser>(
     deleted: { type: Boolean, default: false },
     passwordChangedAt: { type: Date, default: null },
     isBanned: { type: Boolean, default: false, index: true },
+    profilePicture: { type: String },
+    profilePicturePublicId: { type: String },
   },
   { timestamps: true }
 );

@@ -685,6 +685,26 @@ router
  *         description: Venue not found
  *       409:
  *         description: Only approved venues can be featured
+ *   delete:
+ *     tags: [Venues]
+ *     summary: Unfeature a venue (admin only)
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Venue removed from featured list
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Admin role required
+ *       404:
+ *         description: Venue not found
  */
 router
   .route('/:id/feature')

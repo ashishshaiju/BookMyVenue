@@ -134,9 +134,7 @@ export const moderateReview = async (req: Request, res: Response): Promise<void>
 export const getOwnerVenueReviews = async (req: Request, res: Response): Promise<void> => {
   try {
     const venueId = Array.isArray(req.params.venueId) ? req.params.venueId[0] : req.params.venueId;
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 10;
-    const skip = (page - 1) * limit;
+    const { page, limit, skip } = req.pagination ?? { page: 1, limit: 10, skip: 0, sort: '' };
 
     const result = await service.getOwnerVenueReviews(venueId, { page, limit, skip, sort: '' });
     ResponseUtil.paginated(res, 'Venue reviews retrieved', result.reviews, result.pagination, 'reviews');

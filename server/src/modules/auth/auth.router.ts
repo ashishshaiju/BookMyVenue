@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import * as controller from './auth.controller';
 import * as authValidator from './auth.validator';
-import { validateBody } from '../../middlewares/validation.middleware';
+import { validateBody, validateParams } from '../../middlewares/validation.middleware';
 import { verifyAccessToken, verifyRefreshToken } from '../../middlewares/auth.middleware';
 import rateLimit from 'express-rate-limit';
 
@@ -234,6 +234,87 @@ router
   .patch(
     verifyAccessToken,
     controller.changePassword
+  );
+
+/**
+ * @openapi
+ * /auth/sessions:
+ *   get:
+ *     tags: [Auth]
+ *     summary: List the authenticated user's active sessions/devices
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: Array of active sessions, each flagged with isCurrent
+ *       401:
+ *         description: Not authenticated
+ */
+router.route('/sessions').get(verifyAccessToken, verifyRefreshToken, controller.listSessions);
+
+/**
+ * @openapi
+ * /auth/sessions/logout-others:
+ *   post:
+ *     tags: [Auth]
+ *     summary: Sign out every other active session/device
+ *     description: |
+ *       Blocked with a 403 if the current session is less than 48 hours old and
+ *       any other active session predates it — prevents a newly-added device
+ *       from locking out established devices.
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: Other sessions signed out successfully
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Current device is too new to sign out older devices
+ */
+router
+  .route('/sessions/logout-others')
+  .post(verifyAccessToken, verifyRefreshToken, controller.revokeAllOtherSessions);
+
+/**
+ * @openapi
+ * /auth/sessions/{sessionId}:
+ *   delete:
+ *     tags: [Auth]
+ *     summary: Sign out one specific session/device
+ *     description: |
+ *       Blocked with a 403 if the current session is less than 48 hours old and
+ *       the target session predates it.
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: sessionId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Device signed out successfully
+ *       400:
+ *         description: Cannot revoke the current session this way
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Current device is too new to sign out older devices
+ *       404:
+ *         description: Session not found
+ */
+router
+  .route('/sessions/:sessionId')
+  .delete(
+    verifyAccessToken,
+    verifyRefreshToken,
+    validateParams(authValidator.sessionIdParamSchema),
+    controller.revokeSession
   );
 
 export { router as authRouter };

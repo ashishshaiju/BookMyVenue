@@ -50,9 +50,9 @@ type BookingStepValues = {
   };
 };
 
-const err = 'text-red-500 text-sm mt-1';
+const err = 'text-red-500 dark:text-red-400 text-sm mt-1';
 const inputCls =
-  'w-full rounded-xl border border-[var(--bg-grey)] px-4 py-3 outline-none focus:border-[var(--bg-green)] bg-white';
+  'w-full rounded-xl border border-[var(--bg-grey)] px-4 py-3 outline-none focus:border-[var(--bg-green)] bg-[var(--bg-tertiary)]';
 
 const BookingStep = () => {
   const { values } = useFormikContext<BookingStepValues>();
@@ -186,7 +186,7 @@ const BookingStep = () => {
                                 <button
                                   type="button"
                                   onClick={() => remove(index)}
-                                  className="text-red-500 mt-4 cursor-pointer"
+                                  className="text-red-500 dark:text-red-400 mt-4 cursor-pointer"
                                 >
                                   Remove Package
                                 </button>
@@ -396,7 +396,7 @@ const BookingStep = () => {
                                     <button
                                       type="button"
                                       onClick={() => remove(index)}
-                                      className="text-red-500 mt-4 cursor-pointer"
+                                      className="text-red-500 dark:text-red-400 mt-4 cursor-pointer"
                                     >
                                       Remove Rule
                                     </button>
@@ -476,7 +476,7 @@ const BookingStep = () => {
                                   <button
                                     type="button"
                                     onClick={() => remove(index)}
-                                    className="text-red-500 mt-4 cursor-pointer"
+                                    className="text-red-500 dark:text-red-400 mt-4 cursor-pointer"
                                   >
                                     Remove Block
                                   </button>

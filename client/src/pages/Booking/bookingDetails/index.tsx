@@ -21,6 +21,8 @@ const BookingDetails = () => {
 
   const { data, isLoading, isError } = useBookingById(bookingRefId);
   const booking = data?.data;
+  const uiStatus = booking?.uiStatus ?? 'unknown';
+  const statusLabel = uiStatus === 'unknown' ? 'Unknown' : uiStatus.toUpperCase();
 
   const renderSkeleton = () => (
     <div className="animate-pulse space-y-8">
@@ -65,13 +67,11 @@ const BookingDetails = () => {
     );
   }
 
-  const isCancelable =
-    booking.uiStatus === 'upcoming' && booking.cancellationPolicy !== 'Non-refundable';
+  const isCancelable = uiStatus === 'upcoming' && booking.cancellationPolicy !== 'Non-refundable';
 
   let cancelTooltip = '';
-  if (booking.uiStatus === 'completed')
-    cancelTooltip = 'Cancellation is not available for past bookings';
-  else if (booking.uiStatus === 'cancelled') cancelTooltip = 'This booking is already cancelled';
+  if (uiStatus === 'completed') cancelTooltip = 'Cancellation is not available for past bookings';
+  else if (uiStatus === 'cancelled') cancelTooltip = 'This booking is already cancelled';
   else if (booking.cancellationPolicy === 'Non-refundable')
     cancelTooltip = 'This venue has a non-refundable policy';
   else if (booking.cancellationRefundPct === 0) cancelTooltip = 'Cancellation window has passed';
@@ -101,14 +101,14 @@ const BookingDetails = () => {
               </span>
               <span
                 className={`px-3 py-1 rounded-full text-xs font-bold ${
-                  booking.uiStatus === 'upcoming'
-                    ? 'bg-orange-100 text-orange-700 border border-orange-200'
-                    : booking.uiStatus === 'completed'
-                      ? 'bg-green-100 text-green-700 border border-green-200'
-                      : 'bg-red-100 text-red-700 border border-red-200'
+                  uiStatus === 'upcoming'
+                    ? 'bg-orange-100 text-orange-700 border border-orange-200 dark:bg-orange-950/30 dark:text-orange-400 dark:border-orange-900/50'
+                    : uiStatus === 'completed'
+                      ? 'bg-green-100 text-green-700 border border-green-200 dark:bg-green-950/30 dark:text-green-400 dark:border-green-900/50'
+                      : 'bg-red-100 text-red-700 border border-red-200 dark:bg-red-950/30 dark:text-red-400 dark:border-red-900/50'
                 }`}
               >
-                {booking.uiStatus.toUpperCase()}
+                {statusLabel}
               </span>
             </div>
             <h1 className="text-3xl font-extrabold text-[var(--text-primary)]">
@@ -126,12 +126,12 @@ const BookingDetails = () => {
                   isCancelable && booking.cancellationRefundPct! > 0 && setIsCancelModalOpen(true)
                 }
                 disabled={!isCancelable || booking.cancellationRefundPct === 0}
-                className="w-full md:w-auto px-6 py-3 rounded-xl font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 dark:bg-red-950/20 dark:border-red-900/30"
+                className="w-full md:w-auto px-6 py-3 rounded-xl font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed bg-red-50 text-red-600 hover:bg-red-500/10 border border-red-200 dark:bg-red-950/20 dark:text-red-400 dark:border-red-900/30"
               >
                 Cancel Booking
               </button>
               {(!isCancelable || booking.cancellationRefundPct === 0) && (
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max px-3 py-1.5 bg-gray-800 text-white text-xs rounded shadow-lg opacity-0 group-hover:opacity-100 transition pointer-events-none z-10 hidden md:block">
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max px-3 py-1.5 bg-[var(--bg-secondary)] text-white text-xs rounded shadow-lg opacity-0 group-hover:opacity-100 transition pointer-events-none z-10 hidden md:block">
                   {cancelTooltip || 'Cancellation window passed'}
                 </div>
               )}

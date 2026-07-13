@@ -1,7 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
 import { useFormikContext } from 'formik';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
 import type { GeoSearchResult } from '../types/geo.types';
 import { axiosInstance } from '../config/axios';
 
@@ -149,17 +147,17 @@ export function PlaceAutocomplete({
     <div className="relative w-full">
       <div className="flex gap-2">
         <div className="flex-1 relative">
-          <Input
+          <input
             type="text"
             value={input}
             onChange={handleInputChange}
             onFocus={() => input.length >= 2 && setIsOpen(true)}
             placeholder={placeholder}
-            className="w-full"
+            className="w-full bg-[var(--bg-primary)] border border-[var(--bg-grey)] rounded-xl px-4 py-3 text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] focus:ring-2 focus:ring-[var(--bg-green)] focus:border-transparent transition-all outline-none"
           />
           {isLoading && (
             <div className="absolute right-3 top-1/2 -translate-y-1/2">
-              <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-blue-600" />
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-[var(--bg-grey)] border-t-[var(--bg-green)]" />
             </div>
           )}
           {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
@@ -167,17 +165,19 @@ export function PlaceAutocomplete({
           {isOpen && results.length > 0 && (
             <div
               ref={dropdownRef}
-              className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-md shadow-lg z-50 max-h-60 overflow-y-auto"
+              className="absolute top-full left-0 right-0 mt-1 bg-[var(--bg-tertiary)] border border-[var(--bg-grey)] rounded-xl shadow-lg z-50 max-h-60 overflow-y-auto"
             >
               {results.map((result, index) => (
                 <button
                   key={`${result.lng}-${result.lat}-${index}`}
                   onClick={() => handleSelectPlace(result)}
-                  className="w-full text-left px-3 py-2 hover:bg-gray-100 border-b border-gray-100 last:border-b-0 transition-colors"
+                  className="w-full text-left px-4 py-2.5 hover:bg-[var(--bg-grey)]/30 border-b border-[var(--bg-grey)] last:border-b-0 transition-colors"
                 >
-                  <div className="text-sm font-medium text-gray-900">{result.displayName}</div>
+                  <div className="text-sm font-medium text-[var(--text-primary)]">
+                    {result.displayName}
+                  </div>
                   {(result.city || result.district || result.postcode) && (
-                    <div className="text-xs text-gray-500">
+                    <div className="text-xs text-[var(--text-secondary)] mt-0.5">
                       {[result.city, result.district, result.postcode].filter(Boolean).join(', ')}
                     </div>
                   )}
@@ -188,9 +188,14 @@ export function PlaceAutocomplete({
         </div>
 
         {input && (
-          <Button type="button" variant="outline" onClick={handleClear} title="Clear search">
+          <button
+            type="button"
+            onClick={handleClear}
+            title="Clear search"
+            className="px-4 py-3 rounded-xl border border-[var(--bg-grey)] text-sm font-medium text-[var(--text-secondary)] hover:bg-[var(--bg-grey)]/30 transition-colors"
+          >
             Clear
-          </Button>
+          </button>
         )}
       </div>
 

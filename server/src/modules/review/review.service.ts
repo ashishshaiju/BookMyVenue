@@ -13,6 +13,14 @@ export async function submitReview(userId: string, venueId: string, dto: { ratin
     throw new ValidationError('Must provide either a rating or a comment');
   }
 
+  if (dto.comment?.trim()) {
+    const { isBannedForScope } = await import('../moderation/bannedUser.service');
+    const isBanned = await isBannedForScope(userId, 'commenting', venueId);
+    if (isBanned) {
+      throw new ConflictError('You are currently banned from commenting.');
+    }
+  }
+
   if (dto.rating && (!Number.isInteger(dto.rating) || dto.rating < 1 || dto.rating > 5)) {
     throw new ValidationError('Rating must be an integer between 1 and 5');
   }
@@ -52,6 +60,13 @@ export async function addComment(userId: string, venueId: string, comment: strin
   if (!comment.trim()) {
     throw new ValidationError('Comment cannot be empty');
   }
+
+  const { isBannedForScope } = await import('../moderation/bannedUser.service');
+  const isBanned = await isBannedForScope(userId, 'commenting', venueId);
+  if (isBanned) {
+    throw new ConflictError('You are currently banned from commenting.');
+  }
+
   return repo.createComment(userId, venueId, comment.trim());
 }
 
@@ -77,6 +92,14 @@ export async function updateReview(userId: string, reviewId: string, dto: Update
     const isEditable = await isReviewEditableByOwner(reviewId, userId);
     if (!isEditable) {
       throw new ValidationError('Review can only be edited within 30 days of creation');
+    }
+
+    if (dto.comment?.trim()) {
+      const { isBannedForScope } = await import('../moderation/bannedUser.service');
+      const isBanned = await isBannedForScope(userId, 'commenting', review.venueId.toString());
+      if (isBanned) {
+        throw new ConflictError('You are currently banned from commenting.');
+      }
     }
   }
 
@@ -197,6 +220,16 @@ export async function moderateReview(
     await recomputeVenueRating(updated.venueId.toString());
   }
 
+  // Log activity
+  if (dto.action === 'remove' || dto.action === 'restore' || dto.action === 'approve_hide') {
+    const { logModerationAction } = await import('../moderation/moderationActivity.service');
+    const actionType = dto.action === 'restore' ? 'restore_review' : 'remove_review';
+    await logModerationAction(moderatorId, actionType, reviewId, 'review', dto.reason, { 
+      venueId: updated.venueId.toString(), 
+      userId: updated.userId.toString() 
+    });
+  }
+
   return updated;
 }
 
@@ -235,6 +268,18 @@ export async function replyToReview(
   reviewId: string,
   text: string
 ): Promise<IReviewModel> {
+  const review = await repo.findReviewById(reviewId);
+  if (!review) throw new NotFoundError('Review not found');
+  
+  const { isBannedForScope } = await import('../moderation/bannedUser.service');
+  const venue = await VenueModel.findById(venueId);
+  if (venue) {
+    const isBanned = await isBannedForScope(venue.ownerUserId.toString(), 'commenting', venueId);
+    if (isBanned) {
+      throw new ConflictError('You are currently banned from replying to reviews.');
+    }
+  }
+
   const updated = await repo.addOwnerReply(reviewId, venueId, text);
   if (!updated) {
     throw new NotFoundError('Review not found');

@@ -52,7 +52,10 @@ const ForgotPasswordPage = () => {
       footer={
         <>
           Remember your password?
-          <Link to="/login" className="ml-2 font-semibold text-zinc-900 hover:underline">
+          <Link
+            to="/login"
+            className="ml-2 font-semibold text-[var(--text-primary)] hover:underline"
+          >
             Sign In
           </Link>
         </>
@@ -67,12 +70,15 @@ const ForgotPasswordPage = () => {
       >
         <Form className="space-y-6">
           <div>
-            <label htmlFor="email" className="mb-2 block text-sm font-medium text-zinc-700">
+            <label
+              htmlFor="email"
+              className="mb-2 block text-sm font-medium text-[var(--text-secondary)]"
+            >
               Email Address
             </label>
 
-            <div className="group flex h-14 items-center rounded-2xl border border-zinc-300 bg-white px-4 transition-all duration-200 focus-within:border-black focus-within:ring-4 focus-within:ring-zinc-200">
-              <HiOutlineMail className="mr-3 text-xl text-zinc-400 transition-colors group-focus-within:text-black" />
+            <div className="group flex h-14 items-center rounded-2xl border border-[var(--bg-grey)] bg-[var(--bg-tertiary)] px-4 transition-all duration-200 focus-within:border-[var(--text-primary)] focus-within:ring-4 focus-within:ring-[var(--bg-grey)]">
+              <HiOutlineMail className="mr-3 text-xl text-[var(--text-secondary)] transition-colors group-focus-within:text-[var(--text-primary)]" />
 
               <Field
                 id="email"
@@ -80,16 +86,20 @@ const ForgotPasswordPage = () => {
                 type="email"
                 placeholder="john@example.com"
                 disabled={loading}
-                className="h-full w-full bg-transparent outline-none placeholder:text-zinc-400"
+                className="h-full w-full bg-transparent outline-none placeholder:text-[var(--text-secondary)]"
               />
             </div>
 
-            <ErrorMessage name="email" component="p" className="mt-2 text-sm text-red-500" />
+            <ErrorMessage
+              name="email"
+              component="p"
+              className="mt-2 text-sm text-red-500 dark:text-red-400"
+            />
           </div>
           <button
             type="submit"
             disabled={loading}
-            className="group flex h-14 w-full items-center justify-center rounded-2xl bg-zinc-900 text-base font-semibold text-white shadow-lg transition-all duration-300 hover:-translate-y-0.5 hover:bg-black hover:shadow-xl active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
+            className="group flex h-14 w-full items-center justify-center rounded-2xl bg-[var(--bg-secondary)] text-base font-semibold text-white shadow-lg transition-all duration-300 hover:-translate-y-0.5 hover:opacity-90 hover:shadow-xl active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {loading ? (
               <>

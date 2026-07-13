@@ -1,13 +1,12 @@
+import { useState } from "react";
 
-import { useState } from 'react';
-
-import { useApiQuery } from '../../hooks/useApi';
-import { useModal } from '../../hooks/useModal';
-import { BookingDetailPanel } from '../../components/common/panels/BookingDetailPanel';
-import { QUERY_KEYS } from '../../config/queryKeys';
-import { API_ENDPOINTS } from '../../constants';
-import { DataTable } from '../../components/ui/data-table';
-import { Badge } from '../../components/ui/badge';
+import { useApiQuery } from "../../hooks/useApi";
+import { useModal } from "../../hooks/useModal";
+import { BookingDetailPanel } from "../../components/common/panels/BookingDetailPanel";
+import { QUERY_KEYS } from "../../config/queryKeys";
+import { API_ENDPOINTS } from "../../constants";
+import { DataTable } from "../../components/ui/data-table";
+import { Badge } from "../../components/ui/badge";
 
 // Types
 interface BookerInfo {
@@ -22,7 +21,7 @@ interface Booking {
   venue: { name: string };
   bookerInfo: BookerInfo;
   date: string;
-  status: 'PENDING' | 'CONFIRMED' | 'CANCELLED' | 'REFUNDED';
+  status: "PENDING" | "CONFIRMED" | "CANCELLED" | "REFUNDED";
   price: number;
   createdAt: string;
 }
@@ -32,11 +31,14 @@ interface BookingsResponse {
   pagination: { totalPages: number; currentPage: number };
 }
 
-const STATUS_VARIANT: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
-  CONFIRMED: 'default',
-  PENDING: 'secondary',
-  CANCELLED: 'destructive',
-  REFUNDED: 'outline',
+const STATUS_VARIANT: Record<
+  string,
+  "default" | "secondary" | "destructive" | "outline"
+> = {
+  CONFIRMED: "default",
+  PENDING: "secondary",
+  CANCELLED: "destructive",
+  REFUNDED: "outline",
 };
 
 // Component
@@ -44,29 +46,29 @@ export default function BookingsPage() {
   const [page, setPage] = useState(1);
   const { openModal } = useModal();
 
-  const params = new URLSearchParams({ page: String(page), limit: '10' });
+  const params = new URLSearchParams({ page: String(page), limit: "10" });
 
   const { data, isLoading } = useApiQuery<BookingsResponse>(
     [...QUERY_KEYS.ADMIN_BOOKINGS, page],
-    { method: 'GET', url: `${API_ENDPOINTS.ADMIN_BOOKINGS}?${params}` },
+    { method: "GET", url: `${API_ENDPOINTS.ADMIN_BOOKINGS}?${params}` },
   );
 
   const columns = [
     {
-      accessorKey: '_id',
-      header: 'Reference',
+      accessorKey: "_id",
+      header: "Reference",
       cell: ({ row }: { row: { original: Booking } }) => {
         const id: string = row.original._id;
         return (
-          <span 
+          <span
             className="font-mono text-sm font-medium cursor-pointer text-primary hover:underline"
             onClick={() => {
               openModal({
                 title: `Booking Details`,
-                size: 'xl',
+                size: "xl",
                 component: BookingDetailPanel,
                 data: row.original,
-                actions: []
+                actions: [],
               });
             }}
           >
@@ -76,52 +78,54 @@ export default function BookingsPage() {
       },
     },
     {
-      accessorKey: 'venue',
-      header: 'Venue',
+      accessorKey: "venue",
+      header: "Venue",
       cell: ({ row }: { row: { original: Booking } }) => (
-        <span className="font-medium">{row.original.venue?.name ?? '—'}</span>
+        <span className="font-medium">{row.original.venue?.name ?? "—"}</span>
       ),
     },
     {
-      accessorKey: 'bookerInfo',
-      header: 'Booked By',
+      accessorKey: "bookerInfo",
+      header: "Booked By",
       cell: ({ row }: { row: { original: Booking } }) => {
         const b: BookerInfo = row.original.bookerInfo ?? {};
         return (
           <div>
-            <p className="font-medium text-sm">{b.name ?? '—'}</p>
+            <p className="font-medium text-sm">{b.name ?? "—"}</p>
             <p className="text-xs text-muted-foreground">{b.email}</p>
           </div>
         );
       },
     },
     {
-      accessorKey: 'date',
-      header: 'Event Date',
-      cell: ({ row }: { row: { original: Booking } }) => new Date(row.original.date).toLocaleDateString(),
+      accessorKey: "date",
+      header: "Event Date",
+      cell: ({ row }: { row: { original: Booking } }) =>
+        new Date(row.original.date).toLocaleDateString(),
     },
     {
-      accessorKey: 'status',
-      header: 'Status',
+      accessorKey: "status",
+      header: "Status",
       cell: ({ row }: { row: { original: Booking } }) => (
-        <Badge variant={STATUS_VARIANT[row.original.status] ?? 'outline'}>
+        <Badge variant={STATUS_VARIANT[row.original.status] ?? "outline"}>
           {row.original.status}
         </Badge>
       ),
     },
     {
-      accessorKey: 'price',
-      header: 'Amount',
+      accessorKey: "price",
+      header: "Amount",
       cell: ({ row }: { row: { original: Booking } }) => (
         <span className="font-semibold text-green-600">
-          ₹{(row.original.price as number).toLocaleString('en-IN')}
+          ₹{(row.original.price as number).toLocaleString("en-IN")}
         </span>
       ),
     },
     {
-      accessorKey: 'createdAt',
-      header: 'Booked On',
-      cell: ({ row }: { row: { original: Booking } }) => new Date(row.original.createdAt).toLocaleDateString(),
+      accessorKey: "createdAt",
+      header: "Booked On",
+      cell: ({ row }: { row: { original: Booking } }) =>
+        new Date(row.original.createdAt).toLocaleDateString(),
     },
   ];
 

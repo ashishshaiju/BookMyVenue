@@ -1,13 +1,13 @@
-import { useApiQuery, useApiMutation } from '@/hooks/useApi';
-import { API_ENDPOINTS } from '@/constants';
-import { QUERY_KEYS } from '@/config/queryKeys';
-import { useQueryClient } from '@tanstack/react-query';
-import toast from 'react-hot-toast';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Loader2, AlertCircle, XCircle } from 'lucide-react';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { differenceInDays, differenceInHours } from 'date-fns';
+import { useApiQuery, useApiMutation } from "@/hooks/useApi";
+import { API_ENDPOINTS } from "@/constants";
+import { QUERY_KEYS } from "@/config/queryKeys";
+import { useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/useToast";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Loader2, AlertCircle, XCircle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { differenceInDays, differenceInHours } from "date-fns";
 
 interface Venue {
   _id: string;
@@ -19,43 +19,50 @@ interface Venue {
 }
 
 const getTimeLeft = (expiresAt?: string | null) => {
-  if (!expiresAt) return 'Indefinite';
+  if (!expiresAt) return "Indefinite";
   const now = new Date();
   const expiryDate = new Date(expiresAt);
-  if (expiryDate < now) return 'Expired';
-  
+  if (expiryDate < now) return "Expired";
+
   const daysLeft = differenceInDays(expiryDate, now);
   if (daysLeft > 0) return `${daysLeft} days left`;
-  
+
   const hoursLeft = differenceInHours(expiryDate, now);
   return `${hoursLeft} hours left`;
 };
 
 export const FeaturedVenuesPanel = () => {
   const queryClient = useQueryClient();
+  const { success, error } = useToast();
 
-  const { data: venues, isLoading, isError, error } = useApiQuery<Venue[]>(
-    [...QUERY_KEYS.ADMIN_VENUES, 'featured'],
-    { method: 'GET', url: API_ENDPOINTS.FEATURED_VENUES }
-  );
+  const {
+    data: venues,
+    isLoading,
+    isError,
+    error,
+  } = useApiQuery<Venue[]>([...QUERY_KEYS.ADMIN_VENUES, "featured"], {
+    method: "GET",
+    url: API_ENDPOINTS.FEATURED_VENUES,
+  });
 
   const unfeatureMutation = useApiMutation<unknown, { id: string }>(
     (vars) => ({
-      method: 'DELETE',
+      method: "DELETE",
       url: `${API_ENDPOINTS.VENUES}/${vars.id}/feature`,
     }),
     {
       onSuccess: () => {
-        toast.success('Venue removed from featured list');
-        queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.ADMIN_VENUES, 'featured'] });
-        // Also invalidate the main list in case it's shown there
+        success("Venue removed from featured list");
+        queryClient.invalidateQueries({
+          queryKey: [...QUERY_KEYS.ADMIN_VENUES, "featured"],
+        });
         queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ADMIN_VENUES });
       },
       onError: (e: Error) => {
-        const err = e as import('axios').AxiosError<{ message: string }>;
-        toast.error(err.response?.data?.message ?? 'Failed to un-feature venue');
+        const err = e as import("axios").AxiosError<{ message: string }>;
+        error(err.response?.data?.message ?? "Failed to un-feature venue");
       },
-    }
+    },
   );
 
   if (isLoading) {
@@ -74,7 +81,9 @@ export const FeaturedVenuesPanel = () => {
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Error</AlertTitle>
           <AlertDescription>
-            {error instanceof Error ? error.message : 'Failed to load featured venues'}
+            {error instanceof Error
+              ? error.message
+              : "Failed to load featured venues"}
           </AlertDescription>
         </Alert>
       </div>
@@ -89,7 +98,8 @@ export const FeaturedVenuesPanel = () => {
         </div>
         <h3 className="text-lg font-semibold mb-1">No Featured Venues</h3>
         <p className="text-sm text-muted-foreground">
-          You haven't featured any venues yet. You can feature venues from the main venues table.
+          You haven't featured any venues yet. You can feature venues from the
+          main venues table.
         </p>
       </div>
     );
@@ -100,8 +110,8 @@ export const FeaturedVenuesPanel = () => {
       <div className="grid gap-3">
         {venues.map((venue) => {
           const timeLeft = getTimeLeft(venue.featuredExpiresAt);
-          const isExpired = timeLeft === 'Expired';
-          
+          const isExpired = timeLeft === "Expired";
+
           return (
             <div
               key={venue._id}
@@ -110,18 +120,32 @@ export const FeaturedVenuesPanel = () => {
               <div>
                 <h4 className="font-semibold text-base">{venue.name}</h4>
                 <div className="flex items-center gap-2 mt-1">
-                  <span className="text-sm text-muted-foreground">{venue.city}</span>
+                  <span className="text-sm text-muted-foreground">
+                    {venue.city}
+                  </span>
                   <span className="text-muted-foreground text-xs">•</span>
-                  <span className="text-sm capitalize text-muted-foreground">{venue.venueType}</span>
+                  <span className="text-sm capitalize text-muted-foreground">
+                    {venue.venueType}
+                  </span>
                 </div>
               </div>
-              
+
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
-                  <Badge variant="secondary" className="bg-amber-500 dark:text-white">
+                  <Badge
+                    variant="secondary"
+                    className="bg-amber-500 dark:text-white"
+                  >
                     Featured
                   </Badge>
-                  <Badge variant="outline" className={isExpired ? 'text-destructive border-destructive' : 'text-muted-foreground'}>
+                  <Badge
+                    variant="outline"
+                    className={
+                      isExpired
+                        ? "text-destructive border-destructive"
+                        : "text-muted-foreground"
+                    }
+                  >
                     {timeLeft}
                   </Badge>
                 </div>

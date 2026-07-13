@@ -1,14 +1,14 @@
 import * as repo from './wishlist.repository';
 import type { PaginationParams, PaginatedResponse } from '../../types/pagination.types';
 import type { IVenue } from '../venue/venue.types';
-import { VenueModel } from '../venue/venue.model';
+import { venueExists, findVenuesByIds } from '../venue/venue.repository';
 import { NotFoundError } from '../../utils/errors';
 import type { WishlistResponse, WishlistStatusResponse } from './wishlist.types';
 
 export async function toggleWishlist(userId: string, venueId: string): Promise<WishlistResponse> {
   // Verify venue exists
-  const venue = await VenueModel.exists({ _id: venueId, deleted: false }).exec();
-  if (!venue) {
+  const venueExistsFlag = await venueExists(venueId);
+  if (!venueExistsFlag) {
     throw new NotFoundError('Venue not found');
   }
 
@@ -32,13 +32,10 @@ export async function syncWishlist(
 ): Promise<WishlistStatusResponse> {
   if (!venueIds.length) return {};
 
-  const existingVenues = await VenueModel.find({ _id: { $in: venueIds }, deleted: false })
-    .select('_id')
-    .lean()
-    .exec();
-  const validVenueIds = existingVenues.map((v) => v._id.toString());
+  const existingVenues = await findVenuesByIds(venueIds);
+  const validVenueIds = existingVenues.map((v: { _id: { toString(): string } }) => v._id.toString());
 
-  await Promise.all(validVenueIds.map((venueId) => repo.addToWishlist(userId, venueId)));
+  await Promise.all(validVenueIds.map((venueId: string) => repo.addToWishlist(userId, venueId)));
 
   return getWishlistStatus(userId, venueIds);
 }

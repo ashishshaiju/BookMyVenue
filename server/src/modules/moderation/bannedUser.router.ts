@@ -108,4 +108,30 @@ router.get(
   controller.getUserBans
 );
 
+/**
+ * @openapi
+ * /moderation/bans/user/{userId}/lift-all:
+ *   post:
+ *     tags: [Moderation]
+ *     summary: Lift all active bans for a user
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: All active bans lifted successfully
+ */
+router.post(
+  '/user/:userId/lift-all',
+  verifyAccessToken,
+  requireRole('admin'),
+  validateParams(userIdSchema),
+  controller.liftAllBansForUser
+);
+
 export default router;

@@ -37,6 +37,27 @@ export async function createBan(
   return banDoc;
 }
 
+export async function liftAllBansForUser(userId: string, liftedBy: string): Promise<number> {
+  const result = await BannedUserModel.updateMany(
+    { userId: toObjectId(userId), status: 'active' },
+    {
+      $set: {
+        status: 'lifted',
+        liftedBy: toObjectId(liftedBy),
+        liftedAt: new Date(),
+      },
+    }
+  ).exec();
+
+  // Restore user to active/unbanned since all bans are lifted
+  await UserModel.findByIdAndUpdate(toObjectId(userId), {
+    isBanned: false,
+    active: true,
+  }).exec();
+
+  return result.modifiedCount;
+}
+
 export async function liftBan(banRecordId: string, liftedBy: string): Promise<IBannedUser | null> {
   const updated = await BannedUserModel.findByIdAndUpdate(
     toObjectId(banRecordId),

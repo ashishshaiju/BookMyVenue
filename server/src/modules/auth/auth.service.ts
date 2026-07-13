@@ -6,7 +6,7 @@ import { AuthConstants, TokenRevocationReason } from '../../constants/auth.const
 import * as authRepo from './auth.repository';
 import * as userRepo from '../user/user.repository';
 import type * as authScheme from './auth.validator';
-import { AppError, NotFoundError } from '../../utils/errors';
+import { AppError, NotFoundError, ForbiddenError } from '../../utils/errors';
 import { logError, logWarn, logInfo } from '../../utils/logger';
 import { runInTransaction } from '../../utils/dbUtils';
 import mongoose from 'mongoose';
@@ -203,6 +203,100 @@ export async function rotateRefreshToken(
     accessToken: newAccessToken,
     refreshToken: newRefreshTokenStr,
   };
+}
+
+export interface SessionSummary {
+  id: string;
+  ipAddress: string;
+  userAgent: string;
+  lastLogin: Date;
+  createdAt: Date;
+  isCurrent: boolean;
+}
+
+export async function listSessions(
+  userId: string,
+  currentRootTokenId: mongoose.Types.ObjectId
+): Promise<SessionSummary[]> {
+  const sessions = await authRepo.getActiveSessionsForUser(userId);
+
+  return sessions.map((s) => ({
+    id: s._id.toString(),
+    ipAddress: s.ipAddress,
+    userAgent: s.userAgent,
+    lastLogin: s.lastLogin,
+    createdAt: s.createdAt,
+    isCurrent: s.rootTokenId.equals(currentRootTokenId),
+  }));
+}
+
+function assertCanRevokeOlderSessions(
+  currentSession: { createdAt: Date },
+  targetCreatedAts: Date[]
+): void {
+  const currentAgeMs = Date.now() - currentSession.createdAt.getTime();
+  const hasOlderTarget = targetCreatedAts.some((createdAt) => createdAt < currentSession.createdAt);
+
+  if (currentAgeMs < AuthConstants.NEW_SESSION_REVOKE_LOCK_MS && hasOlderTarget) {
+    throw new ForbiddenError(
+      'This device is too new to sign out older devices. This unlocks 48 hours after you sign in here.'
+    );
+  }
+}
+
+export async function revokeSession(
+  userId: string,
+  currentRootTokenId: mongoose.Types.ObjectId,
+  targetSessionId: string
+): Promise<void> {
+  const currentSession = await authRepo.findSessionByRootTokenId(currentRootTokenId);
+  if (!currentSession) {
+    throw new UnauthorizedError('Current session not found');
+  }
+
+  if (currentSession._id.toString() === targetSessionId) {
+    throw new BadRequestError('Use logout to sign out of this device');
+  }
+
+  const targetSession = await authRepo.findActiveSessionByIdForUser(targetSessionId, userId);
+  if (!targetSession) {
+    throw new NotFoundError('Session not found');
+  }
+
+  assertCanRevokeOlderSessions(currentSession, [targetSession.createdAt]);
+
+  await runInTransaction(async (session) => {
+    await authRepo.revokeTokenFamily(targetSession.rootTokenId, TokenRevocationReason.USER_REVOKED, session);
+    await authRepo.deactivateSessionById(targetSession._id, userId, session);
+  });
+}
+
+export async function revokeAllOtherSessions(
+  userId: string,
+  currentRootTokenId: mongoose.Types.ObjectId
+): Promise<{ revokedCount: number }> {
+  const currentSession = await authRepo.findSessionByRootTokenId(currentRootTokenId);
+  if (!currentSession) {
+    throw new UnauthorizedError('Current session not found');
+  }
+
+  const otherSessions = (await authRepo.getActiveSessionsForUser(userId)).filter(
+    (s) => !s._id.equals(currentSession._id)
+  );
+
+  assertCanRevokeOlderSessions(
+    currentSession,
+    otherSessions.map((s) => s.createdAt)
+  );
+
+  await runInTransaction(async (session) => {
+    for (const s of otherSessions) {
+      await authRepo.revokeTokenFamily(s.rootTokenId, TokenRevocationReason.USER_REVOKED, session);
+      await authRepo.deactivateSessionById(s._id, userId, session);
+    }
+  });
+
+  return { revokedCount: otherSessions.length };
 }
 
 export async function logoutUser(userId: string, storedToken?: StoredToken): Promise<void> {

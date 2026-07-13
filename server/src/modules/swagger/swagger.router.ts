@@ -38,9 +38,15 @@ function basicAuth(req: Request, res: Response, next: NextFunction): void {
   const [user, ...rest] = decoded.split(':');
   const pass = rest.join(':');
 
-  // Use timing-safe comparison to prevent timing attacks
-  const userMatch = crypto.timingSafeEqual(Buffer.from(user), Buffer.from(swaggerConfig.user)).valueOf();
-  const passMatch = crypto.timingSafeEqual(Buffer.from(pass), Buffer.from(swaggerConfig.pass)).valueOf();
+  // Hash both sides to a fixed-length digest before comparing.
+  // crypto.timingSafeEqual throws a RangeError when buffer lengths differ,
+  // which happens on virtually every wrong-password attempt. HMAC-SHA256
+  // normalises both operands to 32 bytes while preserving timing safety.
+  const HMAC_KEY = Buffer.from('swagger-basic-auth-comparison-key');
+  const hash = (s: string) => crypto.createHmac('sha256', HMAC_KEY).update(s).digest();
+
+  const userMatch = crypto.timingSafeEqual(hash(user), hash(swaggerConfig.user));
+  const passMatch = crypto.timingSafeEqual(hash(pass), hash(swaggerConfig.pass));
 
   if (!userMatch || !passMatch) {
     res.setHeader('WWW-Authenticate', 'Basic realm="Swagger UI"');

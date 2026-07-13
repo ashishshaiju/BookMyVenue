@@ -1,9 +1,19 @@
 import { Router } from 'express';
+import rateLimit from 'express-rate-limit';
 import * as controller from './user.controller';
 import { verifyAccessToken } from '../../middlewares/auth.middleware';
 import { requireRole } from '../../middlewares/rbac.middleware';
+import { validateBody } from '../../middlewares/validation.middleware';
+import { paginationMiddleware } from '../../middlewares/pagination.middleware';
+import * as validator from './user.validator';
 
 const router: Router = Router();
+
+const uploadSignatureLimiter = rateLimit({
+  windowMs: 30 * 60 * 1000,
+  max: 10,
+  message: 'Too many upload requests, please try again later',
+});
 
 /**
  * @openapi
@@ -39,6 +49,79 @@ router.route('/profile').get(verifyAccessToken, controller.getProfile);
 
 /**
  * @openapi
+ * /user/profile:
+ *   patch:
+ *     tags: [User]
+ *     summary: Update the authenticated user's own profile (username and/or profile picture)
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               username:
+ *                 type: string
+ *               profilePicture:
+ *                 type: string
+ *               profilePicturePublicId:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Profile updated successfully
+ *       400:
+ *         description: Validation error
+ *       401:
+ *         description: Not authenticated
+ *       409:
+ *         description: Username already taken
+ */
+router
+  .route('/profile')
+  .patch(verifyAccessToken, validateBody(validator.updateProfileSchema), controller.updateProfile);
+
+/**
+ * @openapi
+ * /user/profile/upload-signature:
+ *   get:
+ *     tags: [User]
+ *     summary: Get a Cloudinary upload signature for a profile picture upload
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Cloudinary signature and upload parameters
+ *       401:
+ *         description: Not authenticated
+ *       429:
+ *         description: Too many upload signature requests
+ */
+router
+  .route('/profile/upload-signature')
+  .get(verifyAccessToken, uploadSignatureLimiter, controller.getAvatarUploadSignature);
+
+/**
+ * @openapi
+ * /user/profile/picture:
+ *   delete:
+ *     tags: [User]
+ *     summary: Remove the authenticated user's profile picture
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Profile picture removed successfully
+ *       400:
+ *         description: No profile picture to remove
+ *       401:
+ *         description: Not authenticated
+ */
+router.route('/profile/picture').delete(verifyAccessToken, controller.deleteProfilePicture);
+
+/**
+ * @openapi
  * /user/all:
  *   get:
  *     tags: [User]
@@ -62,6 +145,7 @@ router.route('/profile').get(verifyAccessToken, controller.getProfile);
 router.route('/all').get(
   verifyAccessToken,
   requireRole('admin'),
+  paginationMiddleware(),
   controller.getAllUsers
 );
 

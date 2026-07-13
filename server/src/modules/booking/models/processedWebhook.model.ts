@@ -1,5 +1,5 @@
 import mongoose, { Schema } from 'mongoose';
-import type { IProcessedWebhook } from './booking.types';
+import type { IProcessedWebhook } from '../booking.types';
 
 const ProcessedWebhookSchema = new Schema<IProcessedWebhook>(
   {

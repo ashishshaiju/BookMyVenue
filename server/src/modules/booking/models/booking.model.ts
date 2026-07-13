@@ -1,6 +1,6 @@
 import mongoose, { Schema } from 'mongoose';
-import type { IBooking } from './booking.types';
-import { BookingStatus } from '../../constants/booking.constants';
+import type { IBooking } from '../booking.types';
+import { BookingStatus } from '../../../constants/booking.constants';
 
 const BookingSchema = new Schema<IBooking>(
   {

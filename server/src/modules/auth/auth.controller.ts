@@ -128,3 +128,56 @@ export const changePassword = async (req: Request, res: Response): Promise<void>
     handleError(res, e, 'changePassword');
   }
 };
+
+export const listSessions = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.userId;
+    const rootTokenId = req.token?.stored.rootTokenId;
+
+    if (!userId || !rootTokenId) {
+      ResponseUtil.unauthorized(res, 'Unauthorized');
+      return;
+    }
+
+    const sessions = await service.listSessions(userId, rootTokenId);
+    ResponseUtil.success(res, 'Sessions retrieved successfully', sessions);
+  } catch (e) {
+    handleError(res, e, 'listSessions');
+  }
+};
+
+export const revokeSession = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.userId;
+    const rootTokenId = req.token?.stored.rootTokenId;
+
+    if (!userId || !rootTokenId) {
+      ResponseUtil.unauthorized(res, 'Unauthorized');
+      return;
+    }
+
+    const { sessionId } = req.validated?.params as z.infer<typeof authScheme.sessionIdParamSchema>;
+    await service.revokeSession(userId, rootTokenId, sessionId);
+
+    ResponseUtil.success(res, 'Device signed out successfully');
+  } catch (e) {
+    handleError(res, e, 'revokeSession');
+  }
+};
+
+export const revokeAllOtherSessions = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.userId;
+    const rootTokenId = req.token?.stored.rootTokenId;
+
+    if (!userId || !rootTokenId) {
+      ResponseUtil.unauthorized(res, 'Unauthorized');
+      return;
+    }
+
+    const result = await service.revokeAllOtherSessions(userId, rootTokenId);
+    ResponseUtil.success(res, 'Other devices signed out successfully', result);
+  } catch (e) {
+    handleError(res, e, 'revokeAllOtherSessions');
+  }
+};

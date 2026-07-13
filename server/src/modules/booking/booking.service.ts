@@ -1,4 +1,4 @@
-import { Types } from 'mongoose';
+import type { Types } from 'mongoose';
 import { BookingStatus, type BookingStatusType } from '../../constants/booking.constants';
 import { logError, logInfo, logWarn } from '../../utils/logger';
 import { issueRefund } from '../../services/razorpay.service';
@@ -7,22 +7,22 @@ import {
   createBooking,
   createFailedBooking,
   findAllBookings,
+  findLockByIdRaw,
+  deleteLockById,
+  fetchMyBookings,
+  fetchBookingById,
+  fetchUserBookingByRefIdOrId,
+  fetchBookingByPaymentReference,
   type AggregatedBooking,
 } from './booking.repository';
 import type { PaginationParams, PaginatedResponse } from '../../types/pagination.types';
-import { LockModel } from './lock.model';
 import { minutesToTimeString } from '../../utils/timeUtils';
-import { EmailTaskModel } from '../../models/email-task.model';
 import { EmailIntent, EmailTaskStatus, type EmailIntentType } from '../../constants/email.constants';
-import { UserModel } from '../user/user.models';
-import { VenueModel } from '../venue/venue.model';
 import type { ILock } from './lock.types';
-
-export interface RazorpayWebhookNotes {
-  lockId?: string;
-  venueId?: string;
-  userId?: string;
-}
+import type { RazorpayWebhookNotes } from './booking.types';
+import { findUserEmailById } from '../user/user.repository';
+import { findVenueNameAndOwner } from '../venue/venue.repository';
+import { enqueueEmailTask } from '../../services/email.repository';
 
 async function enqueueEmail(
   intent: EmailIntentType,
@@ -31,18 +31,7 @@ async function enqueueEmail(
   metadata: Record<string, string>
 ): Promise<void> {
   try {
-    await EmailTaskModel.create({
-      intent,
-      recipient,
-      subject,
-      metadata,
-      status: EmailTaskStatus.PENDING,
-      workerId: null,
-      lockedAt: null,
-      retryAfter: new Date(),
-      retries: 0,
-      lastError: null,
-    });
+    await enqueueEmailTask(recipient, intent, subject, EmailTaskStatus.PENDING, metadata);
   } catch (err) {
     logError('Failed to enqueue email task', {
       module: 'booking.service.ts/enqueueEmail',
@@ -55,8 +44,7 @@ async function enqueueEmail(
 
 async function resolveCustomerEmail(userId: string): Promise<string | null> {
   try {
-    const user = await UserModel.findById(userId).select('email').lean();
-    return (user as { email?: string } | null)?.email ?? null;
+    return await findUserEmailById(userId);
   } catch {
     return null;
   }
@@ -66,18 +54,14 @@ async function resolveVenueInfo(
   venueId: string
 ): Promise<{ venueName: string; ownerEmail: string | null } | null> {
   try {
-    const venue = await VenueModel.findById(venueId).select('name ownerUserId').lean() as
-      | { name: string; ownerUserId: Types.ObjectId }
-      | null;
+    const venue = await findVenueNameAndOwner(venueId);
     if (!venue) return null;
 
-    const owner = await UserModel.findById(venue.ownerUserId).select('email').lean() as
-      | { email?: string }
-      | null;
+    const ownerEmail = await findUserEmailById(venue.ownerUserId.toString());
 
     return {
       venueName: venue.name,
-      ownerEmail: owner?.email ?? null,
+      ownerEmail: ownerEmail,
     };
   } catch {
     return null;
@@ -133,7 +117,7 @@ export async function processCapturedPayment(
 
   let lock: (ILock & { _id: Types.ObjectId }) | null;
   try {
-    lock = await LockModel.findById(lockId).lean();
+    lock = await findLockByIdRaw(lockId);
   } catch (err) {
     logError('Failed to query LockModel in webhook service', {
       module: 'booking.service.ts/processCapturedPayment',
@@ -198,20 +182,23 @@ export async function processCapturedPayment(
             error: (refundErr as Error).message,
           });
         }
-        await LockModel.deleteOne({ _id: new Types.ObjectId(lockId) }).catch(() => undefined);
+        if (notes.lockId) {
+          await deleteLockById(notes.lockId).catch(() => undefined);
+        }
         return { success: false, error: 'Slot already booked; refund issued' };
       }
       logError('CRITICAL: Failed to create booking in Scenario A', {
         module: 'booking.service.ts/processCapturedPayment',
-        lockId,
-        paymentId,
-        error: error.message,
+        eventId: paymentId,
+        error: (err as Error).message,
       });
       return { success: false, error: 'Booking creation failed' };
     }
 
     try {
-      await LockModel.deleteOne({ _id: new Types.ObjectId(lockId) });
+      if (notes.lockId) {
+        await deleteLockById(notes.lockId);
+      }
     } catch (err) {
       logWarn('Failed to delete lock after booking creation', {
         module: 'booking.service.ts/processCapturedPayment',
@@ -319,4 +306,16 @@ export async function getAllBookings(
   filters?: { status?: BookingStatusType; venueId?: string }
 ): Promise<PaginatedResponse<AggregatedBooking, 'bookings'>> {
   return findAllBookings(paginationParams, filters);
+}
+
+export async function getMyBookings(userId: string) {
+  return fetchMyBookings(userId);
+}
+
+export async function getBookingById(bookingId: string, userId: string) {
+  return fetchBookingById(bookingId, userId);
+}
+
+export async function getBookingByPaymentReference(paymentId: string) {
+  return fetchBookingByPaymentReference(paymentId);
 }

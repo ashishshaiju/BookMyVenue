@@ -33,7 +33,7 @@ const NotFound = () => {
         </Button>
         <Button
           onClick={() => navigate('/')}
-          className="w-full sm:w-auto px-6 py-5 rounded-xl bg-[var(--bg-green)] text-white font-semibold flex items-center justify-center gap-2 hover:bg-green-700 shadow-lg hover:shadow-xl transition-all cursor-pointer"
+          className="w-full sm:w-auto px-6 py-5 rounded-xl bg-[var(--bg-green)] text-white font-semibold flex items-center justify-center gap-2 hover:bg-[var(--bg-green)]/90 shadow-lg hover:shadow-xl transition-all cursor-pointer"
         >
           <FiHome className="text-lg" /> Return Home
         </Button>

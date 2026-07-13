@@ -1,14 +1,13 @@
+import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useToast } from "../../hooks/useToast";
 
-import { useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
-import toast from 'react-hot-toast';
-
-import { useApiQuery, useApiMutation } from '../../hooks/useApi';
-import { QUERY_KEYS } from '../../config/queryKeys';
-import { API_ENDPOINTS } from '../../constants';
-import { DataTable } from '../../components/ui/data-table';
-import { Badge } from '../../components/ui/badge';
-import { Button } from '../../components/ui/button';
+import { useApiQuery, useApiMutation } from "../../hooks/useApi";
+import { QUERY_KEYS } from "../../config/queryKeys";
+import { API_ENDPOINTS } from "../../constants";
+import { DataTable } from "../../components/ui/data-table";
+import { Badge } from "../../components/ui/badge";
+import { Button } from "../../components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -16,9 +15,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '../../components/ui/dialog';
-import { Input } from '../../components/ui/input';
-import { Label } from '../../components/ui/label';
+} from "../../components/ui/dialog";
+import { Input } from "../../components/ui/input";
+import { Label } from "../../components/ui/label";
 
 interface Admin {
   [key: string]: unknown;
@@ -36,61 +35,64 @@ interface AdminsResponse {
 
 export default function TeamPage() {
   const queryClient = useQueryClient();
+  const { success, error } = useToast();
   const [page, setPage] = useState(1);
 
   const [promoteOpen, setPromoteOpen] = useState(false);
-  const [promoteEmail, setPromoteEmail] = useState('');
+  const [promoteEmail, setPromoteEmail] = useState("");
 
-  const invalidate = () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SUPER_ADMINS });
+  const invalidate = () =>
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SUPER_ADMINS });
 
-  const params = new URLSearchParams({ page: String(page), limit: '10' });
+  const params = new URLSearchParams({ page: String(page), limit: "10" });
 
   const { data, isLoading } = useApiQuery<AdminsResponse>(
     [...QUERY_KEYS.SUPER_ADMINS, page],
-    { method: 'GET', url: `${API_ENDPOINTS.RBAC_ADMINS}?${params}` },
+    { method: "GET", url: `${API_ENDPOINTS.RBAC_ADMINS}?${params}` },
   );
 
   const promoteMutation = useApiMutation<unknown, { email: string }>(
     (vars) => ({
-      method: 'POST',
+      method: "POST",
       url: API_ENDPOINTS.RBAC_PROMOTE,
       data: { email: vars.email },
     }),
     {
       onSuccess: () => {
-        toast.success('User promoted to admin');
+        success("User promoted to admin");
         invalidate();
         setPromoteOpen(false);
-        setPromoteEmail('');
+        setPromoteEmail("");
       },
       onError: (e: Error) => {
-        const err = e as import("axios").AxiosError<{message: string}>;
-        toast.error(err.response?.data?.message ?? 'Failed to promote user');
+        const err = e as import("axios").AxiosError<{ message: string }>;
+        error(err.response?.data?.message ?? "Failed to promote user");
       },
     },
   );
 
   const demoteMutation = useApiMutation<unknown, { userId: string }>(
     (vars) => ({
-      method: 'POST',
+      method: "POST",
       url: API_ENDPOINTS.RBAC_DEMOTE,
       data: { userId: vars.userId },
     }),
     {
       onSuccess: () => {
-        toast.success('Admin access revoked');
+        success("Admin access revoked");
         invalidate();
       },
       onError: (e: Error) => {
-        const err = e as import("axios").AxiosError<{message: string}>;
-        toast.error(err.response?.data?.message ?? 'Failed to revoke access');
+        const err = e as import("axios").AxiosError<{ message: string }>;
+        error(err.response?.data?.message ?? "Failed to revoke access");
       },
     },
   );
 
-  // Handlers 
+  // Handlers
   const handlePromote = () => {
-    if (!promoteEmail.trim()) return toast.error('Please enter an email address');
+    if (!promoteEmail.trim())
+      return error("Please enter an email address");
     promoteMutation.mutate({ email: promoteEmail.trim() });
   };
 
@@ -102,36 +104,39 @@ export default function TeamPage() {
   // Columns
   const columns = [
     {
-      accessorKey: 'username',
-      header: 'Name',
+      accessorKey: "username",
+      header: "Name",
       cell: ({ row }: { row: { original: Admin } }) => (
         <span className="font-medium">{row.original.username}</span>
       ),
     },
     {
-      accessorKey: 'email',
-      header: 'Email',
+      accessorKey: "email",
+      header: "Email",
       cell: ({ row }: { row: { original: Admin } }) => (
-        <span className="text-muted-foreground text-sm">{row.original.email}</span>
+        <span className="text-muted-foreground text-sm">
+          {row.original.email}
+        </span>
       ),
     },
     {
-      accessorKey: 'active',
-      header: 'Status',
+      accessorKey: "active",
+      header: "Status",
       cell: ({ row }: { row: { original: Admin } }) => (
-        <Badge variant={row.original.active ? 'default' : 'secondary'}>
-          {row.original.active ? 'Active' : 'Inactive'}
+        <Badge variant={row.original.active ? "default" : "secondary"}>
+          {row.original.active ? "Active" : "Inactive"}
         </Badge>
       ),
     },
     {
-      accessorKey: 'createdAt',
-      header: 'Member Since',
-      cell: ({ row }: { row: { original: Admin } }) => new Date(row.original.createdAt).toLocaleDateString(),
+      accessorKey: "createdAt",
+      header: "Member Since",
+      cell: ({ row }: { row: { original: Admin } }) =>
+        new Date(row.original.createdAt).toLocaleDateString(),
     },
     {
-      id: 'actions',
-      header: '',
+      id: "actions",
+      header: "",
       cell: ({ row }: { row: { original: Admin } }) => {
         const admin = row.original as Admin;
         return (
@@ -148,7 +153,7 @@ export default function TeamPage() {
     },
   ];
 
-  // Render 
+  // Render
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -159,7 +164,9 @@ export default function TeamPage() {
             Manage platform administrators. Super Admin only.
           </p>
         </div>
-        <Button onClick={() => setPromoteOpen(true)}>Promote User to Admin</Button>
+        <Button onClick={() => setPromoteOpen(true)}>
+          Promote User to Admin
+        </Button>
       </div>
 
       {/* Table */}
@@ -179,8 +186,8 @@ export default function TeamPage() {
           <DialogHeader>
             <DialogTitle>Promote User to Admin</DialogTitle>
             <DialogDescription>
-              Enter the email of an existing registered user to grant them administrator
-              privileges.
+              Enter the email of an existing registered user to grant them
+              administrator privileges.
             </DialogDescription>
           </DialogHeader>
           <div className="py-4 space-y-2">
@@ -191,7 +198,7 @@ export default function TeamPage() {
               value={promoteEmail}
               onChange={(e) => setPromoteEmail(e.target.value)}
               placeholder="user@example.com"
-              onKeyDown={(e) => e.key === 'Enter' && handlePromote()}
+              onKeyDown={(e) => e.key === "Enter" && handlePromote()}
             />
           </div>
           <DialogFooter>
@@ -199,7 +206,7 @@ export default function TeamPage() {
               variant="outline"
               onClick={() => {
                 setPromoteOpen(false);
-                setPromoteEmail('');
+                setPromoteEmail("");
               }}
             >
               Cancel
@@ -208,7 +215,7 @@ export default function TeamPage() {
               disabled={!promoteEmail.trim() || promoteMutation.isPending}
               onClick={handlePromote}
             >
-              {promoteMutation.isPending ? 'Promoting…' : 'Promote User'}
+              {promoteMutation.isPending ? "Promoting…" : "Promote User"}
             </Button>
           </DialogFooter>
         </DialogContent>

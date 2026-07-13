@@ -1,12 +1,11 @@
 import type { Request, Response } from 'express';
+import type { z } from 'zod';
 import { ResponseUtil } from '../../utils/responseUtils';
 import * as service from './user.service';
 import * as workflow from './user.workflow';
 import { handleError } from '../../utils/errors';
-
-interface BanUserRequest {
-  banReason: string;
-}
+import type { updateProfileSchema } from './user.validator';
+import type { BanUserRequest } from './user.types';
 
 export const getProfile = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -24,13 +23,63 @@ export const getProfile = async (req: Request, res: Response): Promise<void> => 
   }
 };
 
+export const updateProfile = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.userId;
+    if (!userId) {
+      ResponseUtil.unauthorized(res, 'Unauthorized');
+      return;
+    }
+
+    const dto = req.validated?.body as z.infer<typeof updateProfileSchema>;
+    const profile = await service.updateProfile(userId, dto);
+    ResponseUtil.success(res, 'Profile updated successfully', profile);
+  } catch (e) {
+    handleError(res, e, 'updateProfile');
+  }
+};
+
+export const deleteProfilePicture = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.userId;
+    if (!userId) {
+      ResponseUtil.unauthorized(res, 'Unauthorized');
+      return;
+    }
+
+    const profile = await service.deleteProfilePicture(userId);
+    ResponseUtil.success(res, 'Profile picture removed successfully', profile);
+  } catch (e) {
+    handleError(res, e, 'deleteProfilePicture');
+  }
+};
+
+export const getAvatarUploadSignature = (req: Request, res: Response): void => {
+  try {
+    const userId = req.user?.userId;
+    if (!userId) {
+      ResponseUtil.unauthorized(res, 'Unauthorized');
+      return;
+    }
+
+    const signed = service.getAvatarUploadSignature(userId);
+    if (!signed) {
+      ResponseUtil.internalServerError(res, 'Image upload not configured');
+      return;
+    }
+
+    ResponseUtil.success(res, 'Signature generated', signed);
+  } catch (e) {
+    handleError(res, e, 'getAvatarUploadSignature');
+  }
+};
+
 export const getAllUsers = async (req: Request, res: Response): Promise<void> => {
   try {
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 10;
+    const paginationParams = req.pagination ?? { page: 1, limit: 10, skip: 0, sort: '-createdAt' };
     const role = req.query.role as string | undefined;
 
-    const result = await service.getAllUsers({ page, limit, skip: (page - 1) * limit, sort: '-createdAt' }, { role });
+    const result = await service.getAllUsers(paginationParams, { role });
     ResponseUtil.success(res, 'Users retrieved successfully', result);
   } catch (e) {
     handleError(res, e, 'getAllUsers');

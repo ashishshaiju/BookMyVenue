@@ -1,5 +1,5 @@
 import { Types } from 'mongoose';
-import { SlotMutexModel } from '../modules/booking/slotMutex.model';
+import { SlotMutexModel } from '../modules/booking/models/slotMutex.model';
 
 const ACQUIRE_RETRY_ATTEMPTS = 5;
 const ACQUIRE_RETRY_DELAY_MS = 200;

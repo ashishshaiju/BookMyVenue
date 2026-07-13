@@ -1,9 +1,8 @@
 import type { z } from 'zod';
-import type { Document } from 'mongoose';
 import type { Request, Response } from 'express';
 import { ResponseUtil } from '../../utils/responseUtils';
 import * as service from './venue.service';
-import * as wishlistRepo from '../wishlist/wishlist.repository';
+import * as wishlistService from '../wishlist/wishlist.service';
 import type {
   createVenueSchema,
   updateVenueSchema,
@@ -14,15 +13,10 @@ import type {
   publicVenueFiltersSchema,
   featureVenueSchema,
 } from './venue.validator';
-import type { IVenue } from './venue.types';
+import type { PlainVenue } from './venue.types';
 import { handleError } from '../../utils/errors';
-import { v2 as cloudinary } from 'cloudinary';
+import { signUploadParams } from '../../utils/cloudinarySign';
 import { PERMISSIONS } from '../../constants/permissions';
-
-// Plain-object shape of an IVenue after `.toObject()` — retains `_id` and all
-// data fields but drops Document's instance methods (save, populate, etc.),
-// which a `.toObject()` result never actually has at runtime.
-type PlainVenue = Omit<IVenue, keyof Document> & { _id: IVenue['_id'] };
 
 // Helpers
 function isCallerPrivileged(req: Request): boolean {
@@ -43,26 +37,13 @@ export const getUploadSignature = (req: Request, res: Response): void => {
     const userId = req.user?.userId;
     if (!userId) { ResponseUtil.unauthorized(res, 'Unauthorized'); return; }
 
-    const apiSecret = process.env.CLOUDINARY_API_SECRET;
-    const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
-    const apiKey = process.env.CLOUDINARY_API_KEY;
-    const uploadPreset = process.env.CLOUDINARY_UPLOAD_PRESET;
-
-    if (!apiSecret || !cloudName || !apiKey || !uploadPreset) {
+    const signed = signUploadParams(`bookmyvenue/venues/${userId}`);
+    if (!signed) {
       ResponseUtil.internalServerError(res, 'Image upload not configured');
       return;
     }
 
-    const timestamp = Math.round(Date.now() / 1000);
-    const folder = `bookmyvenue/venues/${userId}`;
-
-    const paramsToSign = { folder, timestamp, upload_preset: uploadPreset };
-
-    const signature = cloudinary.utils.api_sign_request(paramsToSign, apiSecret);
-
-    ResponseUtil.success(res, 'Signature generated', {
-      signature, timestamp, cloudName, apiKey, folder, uploadPreset,
-    });
+    ResponseUtil.success(res, 'Signature generated', signed);
   } catch (e) {
     handleError(res, e, 'getUploadSignature');
   }
@@ -78,13 +59,13 @@ export const getPaginatedActiveVenues = async (req: Request, res: Response): Pro
     let finalVenues: (PlainVenue & { wishlisted?: boolean })[];
     if (req.user?.userId) {
       const venueIds = venuesData.venues.map((v) => v._id.toString());
-      const wishlistedIds = await wishlistRepo.getWishlistedVenueIds(req.user.userId, venueIds);
+      const wishlistedStatuses = await wishlistService.getWishlistStatus(req.user.userId, venueIds);
       finalVenues = venuesData.venues.map((venue) => ({
         ...(venue.toObject() as PlainVenue),
-        wishlisted: wishlistedIds.has(venue._id.toString()),
+        wishlisted: wishlistedStatuses[venue._id.toString()] ?? false,
       }));
     } else {
-      // For unauthenticated users, client will use localStorage
+
       finalVenues = venuesData.venues.map((venue) => ({
         ...(venue.toObject() as PlainVenue),
         wishlisted: false,
@@ -197,7 +178,8 @@ export const getVenueById = async (req: Request, res: Response): Promise<void> =
     };
 
     if (req.user?.userId) {
-      venueWithWishlist.wishlisted = await wishlistRepo.isWishlisted(req.user.userId, id);
+      const statuses = await wishlistService.getWishlistStatus(req.user.userId, [id]);
+      venueWithWishlist.wishlisted = statuses[id] ?? false;
     }
 
     ResponseUtil.success(res, 'Venue retrieved successfully', venueWithWishlist);
@@ -360,15 +342,15 @@ export const getFeaturedVenues = async (req: Request, res: Response): Promise<vo
     let finalVenues: (PlainVenue & { wishlisted?: boolean; featuredExpiresAt?: Date | null })[] = venues;
     if (req.user?.userId) {
       const venueIds = venues.map((v) => v._id.toString());
-      const wishlistedIds = await wishlistRepo.getWishlistedVenueIds(req.user.userId, venueIds);
+      const wishlistedStatuses = await wishlistService.getWishlistStatus(req.user.userId, venueIds);
       finalVenues = venues.map((venue) => ({
-        ...(venue.toObject() as PlainVenue),
-        wishlisted: wishlistedIds.has(venue._id.toString()),
+        ...venue,
+        wishlisted: wishlistedStatuses[venue._id.toString()] ?? false,
         featuredExpiresAt: venue.featuredExpiresAt,
       }));
     } else {
       finalVenues = venues.map((venue) => ({
-        ...(venue.toObject() as PlainVenue),
+        ...venue,
         wishlisted: false,
         featuredExpiresAt: venue.featuredExpiresAt,
       }));

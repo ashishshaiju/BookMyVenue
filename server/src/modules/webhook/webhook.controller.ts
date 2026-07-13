@@ -2,25 +2,7 @@ import type { Request, Response } from 'express';
 import { logError, logWarn } from '../../utils/logger';
 import { verifyWebhookSignature } from '../../services/razorpay.service';
 import { processCapturedPayment } from '../booking/booking.service';
-import type { RazorpayWebhookNotes } from '../booking/booking.service';
-
-interface RazorpayPaymentEntity {
-  id: string;
-  order_id: string;
-  amount: number;
-  currency: string;
-  method?: string;
-  notes: RazorpayWebhookNotes;
-}
-
-interface RazorpayWebhookPayload {
-  event: string;
-  payload?: {
-    payment?: {
-      entity?: RazorpayPaymentEntity;
-    };
-  };
-}
+import type { RazorpayWebhookPayload } from './webhook.types';
 
 // Handles incoming Razorpay webhook events
 export const handleRazorpayWebhook = async (req: Request, res: Response): Promise<void> => {

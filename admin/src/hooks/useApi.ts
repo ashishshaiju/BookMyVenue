@@ -32,16 +32,19 @@ export function useApiQuery<T = unknown>(
 
 // Generic mutation hook
 export function useApiMutation<T = unknown, TVariables = unknown>(
-  configOrBuilder: AxiosRequestConfig | ((variables: TVariables) => AxiosRequestConfig),
-  options?: Omit<UseMutationOptions<T, Error, TVariables>, 'mutationFn'>,
+  configOrBuilder:
+    | AxiosRequestConfig
+    | ((variables: TVariables) => AxiosRequestConfig),
+  options?: Omit<UseMutationOptions<T, Error, TVariables>, "mutationFn">,
 ) {
   return useMutation<T, Error, TVariables>({
     mutationFn: async (variables: TVariables) => {
-      // If a function is passed, use it to build the config (URL, method, data). 
+      // If a function is passed, use it to build the config (URL, method, data).
       // Otherwise, fall back to the old behavior of merging the variables into the data property.
-      const config = typeof configOrBuilder === 'function' 
-        ? configOrBuilder(variables) 
-        : { ...configOrBuilder, data: variables };
+      const config =
+        typeof configOrBuilder === "function"
+          ? configOrBuilder(variables)
+          : { ...configOrBuilder, data: variables };
 
       const response = await axiosInstance(config);
       return response.data?.data ?? response.data;

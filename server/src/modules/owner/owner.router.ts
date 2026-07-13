@@ -3,6 +3,7 @@ import { verifyAccessToken } from '../../middlewares/auth.middleware';
 import { requirePermission } from '../../middlewares/rbac.middleware';
 import { ownerTenantMiddleware } from '../../middlewares/ownerTenant.middleware';
 import { validateBody, validateParams } from '../../middlewares/validation.middleware';
+import { paginationMiddleware } from '../../middlewares/pagination.middleware';
 import { PERMISSIONS as P } from '../../constants/permissions';
 import * as controller from './owner.controller';
 import * as validator from './owner.validator';
@@ -160,6 +161,7 @@ router.get(
   requirePermission(P.bookings.read),
   validateParams(validator.analyticsParamsSchema),
   ownerTenantMiddleware,
+  paginationMiddleware(),
   controller.getVenueBookings
 );
 
@@ -282,6 +284,7 @@ router.get(
   requirePermission(P.reviews.read),
   validateParams(validator.analyticsParamsSchema),
   ownerTenantMiddleware,
+  paginationMiddleware(),
   controller.getVenueReviews
 );
 

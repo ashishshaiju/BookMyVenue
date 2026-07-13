@@ -9,7 +9,7 @@ interface CacheEntry<T> {
 
 class LRUCache<T> {
   private map = new Map<string, CacheEntry<T>>();
-  private ttl: number; // milliseconds
+  private ttl: number; // ms
   private maxSize: number;
 
   constructor(ttl: number = 5 * 60 * 1000, maxSize = 100) {
@@ -59,7 +59,7 @@ class LRUCache<T> {
 class TokenBucket {
   private tokens = 1;
   private maxTokens = 1;
-  private refillRate = 1000; // milliseconds per token
+  private refillRate = 1000; // ms per token
   private lastRefillTime: number = Date.now();
 
   takeToken(): boolean {
@@ -88,10 +88,18 @@ const nominatimCache = new LRUCache<GeoSearchResult[]>(5 * 60 * 1000, 100); // 5
 const tokenBucket = new TokenBucket();
 
 const NOMINATIM_BASE_URL = 'https://nominatim.openstreetmap.org/search';
-const USER_AGENT = 'BookMyVenue/1.0 (+https://github.com/bookmyvenue/bookmyvenue)';
+const USER_AGENT = 'BookMyVenue/1.0 (+https://github.com/ashishshaiju/bookmyvenue)';
+
+const KERALA_VIEWBOX = '74.8,12.9,77.5,7.9';
+const RESULT_LIMIT = 5;
+const RAW_RESULT_LIMIT = 12;
 
 function normalizeQuery(query: string): string {
   return query.trim().toLowerCase();
+}
+
+function scopeQueryToKerala(query: string): string {
+  return normalizeQuery(query).includes('kerala') ? query : `${query}, Kerala, India`;
 }
 
 function parseNominatimResult(item: NominatimResponse): GeoSearchResult {
@@ -133,11 +141,13 @@ export async function searchPlace(query: string): Promise<GeoSearchResult[]> {
 
   try {
     const url = new URL(NOMINATIM_BASE_URL);
-    url.searchParams.set('q', query);
+    url.searchParams.set('q', scopeQueryToKerala(query));
     url.searchParams.set('format', 'jsonv2');
     url.searchParams.set('countrycodes', 'in');
     url.searchParams.set('addressdetails', '1');
-    url.searchParams.set('limit', '5');
+    url.searchParams.set('limit', String(RAW_RESULT_LIMIT));
+    url.searchParams.set('viewbox', KERALA_VIEWBOX);
+    url.searchParams.set('bounded', '1');
 
     const response = await fetch(url.toString(), {
       method: 'GET',
@@ -151,7 +161,10 @@ export async function searchPlace(query: string): Promise<GeoSearchResult[]> {
     }
 
     const data = (await response.json()) as NominatimResponse[];
-    const results = data.map(parseNominatimResult);
+    const results = data
+      .filter((item) => (item.address.state ?? '').toLowerCase() === 'kerala')
+      .slice(0, RESULT_LIMIT)
+      .map(parseNominatimResult);
 
     // Cache the results
     nominatimCache.set(normalizedQuery, results);

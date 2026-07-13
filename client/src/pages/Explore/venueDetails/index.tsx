@@ -4,7 +4,6 @@ import { FiMapPin, FiUsers } from 'react-icons/fi';
 import { MdOutlineMeetingRoom } from 'react-icons/md';
 import { GiTable } from 'react-icons/gi';
 import { FiArrowRight, FiCalendar } from 'react-icons/fi';
-import toast from 'react-hot-toast';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import {
   TbBuildingEstate,
@@ -16,6 +15,7 @@ import {
 import { useApiQuery, useApiMutation } from '@/hooks/useApi';
 import { useVenueReviews } from '@/hooks/useVenueReviews';
 import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/useToast';
 import { API_ENDPOINTS } from '@/constants';
 import type { VenueDetail } from '@/types/venue.types';
 import type { Slot } from '@/types/booking.types';
@@ -25,13 +25,13 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import ReviewModal from '@/components/common/ReviewModal';
 import { parseTimeToMinutes, toLocalDateString } from '@/utils/timeUtils';
-import { showError, showInfo } from '@/utils/toast';
 import type { AxiosError } from 'axios';
 
 const VenueDetails = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { success, error: showError, info: showInfo } = useToast();
 
   const [selectedSlots, setSelectedSlots] = useState<Slot[]>([]);
   const [selectedDate, setSelectedDate] = useState<string>('');
@@ -226,13 +226,13 @@ const VenueDetails = () => {
     },
     {
       onSuccess: () => {
-        toast.success('Review submitted successfully');
+        success('Review submitted successfully');
         setShowReviewModal(false);
         fetchReviews(id || '');
       },
-      onError: (error: Error) => {
-        const axiosErr = error as AxiosError<{ message: string }>;
-        toast.error(axiosErr?.response?.data?.message || 'Failed to submit review');
+      onError: (err: Error) => {
+        const axiosErr = err as AxiosError<{ message: string }>;
+        showError(axiosErr?.response?.data?.message || 'Failed to submit review');
       },
     }
   );
@@ -264,23 +264,17 @@ const VenueDetails = () => {
   };
 
   const handlePrevImage = () => {
-    const allImages = venue?.coverImage
-      ? [venue.coverImage, ...(venue.galleryImages || [])]
-      : [];
+    const allImages = venue?.coverImage ? [venue.coverImage, ...(venue.galleryImages || [])] : [];
     setCurrentImageIndex((prev) => (prev === 0 ? allImages.length - 1 : prev - 1));
   };
 
   const handleNextImage = () => {
-    const allImages = venue?.coverImage
-      ? [venue.coverImage, ...(venue.galleryImages || [])]
-      : [];
+    const allImages = venue?.coverImage ? [venue.coverImage, ...(venue.galleryImages || [])] : [];
     setCurrentImageIndex((prev) => (prev === allImages.length - 1 ? 0 : prev + 1));
   };
 
   const renderGalleryModal = () => {
-    const allImages = venue?.coverImage
-      ? [venue.coverImage, ...(venue.galleryImages || [])]
-      : [];
+    const allImages = venue?.coverImage ? [venue.coverImage, ...(venue.galleryImages || [])] : [];
 
     if (allImages.length === 0) return null;
 
@@ -403,7 +397,7 @@ const VenueDetails = () => {
         >
           {isCalendarLoading ? (
             <div className="flex justify-center items-center h-[320px] bg-[var(--bg-tertiary)] border border-[var(--bg-grey)] rounded-2xl">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--bg-green)]"></div>
             </div>
           ) : (
             <div className="bg-[var(--bg-tertiary)] border border-[var(--bg-grey)] rounded-2xl p-2 flex justify-center shadow-inner">
@@ -448,10 +442,10 @@ const VenueDetails = () => {
 
         {/* Selected Date Pill */}
         {!calendarVisible && selectedDate && (
-          <div className="mt-3 rounded-2xl border border-emerald-500/20 bg-emerald-500/5 px-4 py-3 flex items-center justify-between">
+          <div className="mt-3 rounded-2xl border border-[var(--bg-green)]/25 bg-[var(--bg-green)]/10 px-4 py-3 flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-                <FiCalendar className="text-emerald-600" />
+              <div className="w-8 h-8 rounded-lg bg-[var(--bg-green)]/10 flex items-center justify-center">
+                <FiCalendar className="text-[var(--bg-green)]" />
               </div>
               <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--text-secondary)]">
                 Date
@@ -474,14 +468,14 @@ const VenueDetails = () => {
           <h3 className="font-bold text-[var(--text-primary)] text-sm uppercase tracking-wider">
             Available Slots
           </h3>
-          <span className="text-[10px] px-2 py-0.5 bg-emerald-500/10 dark:bg-emerald-500/5 text-[var(--bg-green)] border border-emerald-500/15 rounded-full font-bold">
+          <span className="text-[10px] px-2 py-0.5 bg-[var(--bg-green)]/10 text-[var(--bg-green)] border border-[var(--bg-green)]/20 rounded-full font-bold">
             {venue?.bookingType === 'fixedBooking' ? 'Fixed' : 'Flexible'}
           </span>
         </div>
 
         {isSlotsLoading ? (
           <div className="mt-8 flex flex-col items-center justify-center gap-3">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--bg-green)]"></div>
             <p className="text-xs text-[var(--text-secondary)] font-medium animate-pulse">
               Calculating availability...
             </p>
@@ -509,7 +503,7 @@ const VenueDetails = () => {
                           isSelected && slot.isAvailable
                             ? 'border-[var(--bg-green)] bg-gradient-to-br from-emerald-500/10 to-teal-500/10 ring-1 ring-[var(--bg-green)]'
                             : slot.isAvailable
-                              ? 'bg-[var(--bg-primary)] border-[var(--bg-grey)] hover:border-emerald-500/40 hover:shadow-md hover:-translate-y-[2px]'
+                              ? 'bg-[var(--bg-primary)] border-[var(--bg-grey)] hover:border-[var(--bg-green)]/40 hover:shadow-md hover:-translate-y-[2px]'
                               : ''
                         }
                       `}
@@ -519,7 +513,7 @@ const VenueDetails = () => {
                           <h4 className="font-bold text-[var(--text-primary)] text-sm sm:text-[15px]">
                             {slot.startTime} → {slot.endTime}
                             {!slot.isAvailable && (
-                              <span className="text-rose-600 text-[10px] ml-1 uppercase">
+                              <span className="text-rose-600 dark:text-rose-400 text-[10px] ml-1 uppercase">
                                 {slot.reason ? `(${slot.reason})` : '(Booked)'}
                               </span>
                             )}
@@ -622,7 +616,7 @@ const VenueDetails = () => {
                         {review.user.userName}
                       </p>
                       {review.user.isVerified && (
-                        <span className="px-1.5 py-0.5 bg-green-100 text-green-800 text-[10px] font-semibold rounded-full shrink-0">
+                        <span className="px-1.5 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400 text-[10px] font-semibold rounded-full shrink-0">
                           Verified Customer
                         </span>
                       )}
@@ -633,7 +627,7 @@ const VenueDetails = () => {
                           {[...Array(5)].map((_, i) => (
                             <span
                               key={i}
-                              className={`text-sm ${i < (review.rating || 0) ? 'text-yellow-500' : 'text-gray-300'}`}
+                              className={`text-sm ${i < (review.rating || 0) ? 'text-yellow-500 dark:text-yellow-400' : 'text-gray-300 dark:text-gray-600'}`}
                             >
                               ★
                             </span>
@@ -671,7 +665,7 @@ const VenueDetails = () => {
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between gap-2">
-                            <span className="px-1.5 py-0.5 bg-blue-100 text-blue-800 text-[10px] font-semibold rounded-full">
+                            <span className="px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400 text-[10px] font-semibold rounded-full">
                               Owner
                             </span>
                             <span className="text-xs text-[var(--text-secondary)] shrink-0">
@@ -703,7 +697,7 @@ const VenueDetails = () => {
                   className={`px-3 py-1.5 text-sm font-semibold rounded-lg transition-colors ${
                     pagination.page === i + 1
                       ? 'bg-[var(--bg-green)] text-white'
-                      : 'bg-[var(--bg-grey)] text-[var(--text-secondary)] hover:bg-[var(--text-primary)]'
+                      : 'bg-[var(--bg-grey)] text-[var(--text-secondary)] hover:bg-[var(--bg-grey)]/30'
                   }`}
                 >
                   {i + 1}
@@ -741,7 +735,7 @@ const VenueDetails = () => {
     return (
       <div className="flex flex-col items-center justify-center min-h-[70vh] px-4">
         <div className="bg-[var(--bg-tertiary)] border border-[var(--bg-grey)] rounded-3xl p-10 max-w-md w-full text-center shadow-lg">
-          <div className="w-20 h-20 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
+          <div className="w-20 h-20 bg-red-100 dark:bg-red-950/30 text-red-500 dark:text-red-400 rounded-full flex items-center justify-center mx-auto mb-6">
             <TbBuildingOff size={40} />
           </div>
           <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-3">Venue Not Found</h2>
@@ -757,7 +751,7 @@ const VenueDetails = () => {
             </button>
             <Link
               to="/explore"
-              className="px-6 py-3 rounded-xl bg-[var(--bg-green)] font-semibold text-white hover:bg-green-600 transition"
+              className="px-6 py-3 rounded-xl bg-[var(--bg-green)] font-semibold text-white hover:opacity-90 transition"
             >
               ← Go to Explore
             </Link>
@@ -831,7 +825,7 @@ const VenueDetails = () => {
                   {venue.city}, {venue.district}
                 </p>
                 <div className="w-1.5 h-1.5 rounded-full bg-[var(--bg-grey)] hidden sm:block"></div>
-                <span className="px-3 py-1 bg-emerald-500/10 dark:bg-emerald-500/5 text-[var(--bg-green)] border border-emerald-500/15 text-xs font-semibold rounded-full capitalize">
+                <span className="px-3 py-1 bg-[var(--bg-green)]/10 text-[var(--bg-green)] border border-[var(--bg-green)]/20 text-xs font-semibold rounded-full capitalize">
                   {venue.venueType}
                 </span>
               </div>
@@ -897,7 +891,7 @@ const VenueDetails = () => {
             <div className="bg-[var(--bg-tertiary)] border border-[var(--bg-grey)] rounded-3xl p-5 sm:p-4 sm:p-5 lg:p-6 lg:p-5 sm:p-6 lg:p-8 mb-10 shadow-sm hover:shadow-md transition-all duration-300">
               <h2 className="text-2xl font-black text-[var(--text-primary)] mb-5 flex items-center gap-2">
                 <span>About Venue</span>
-                <span className="w-8 h-[2px] bg-emerald-500"></span>
+                <span className="w-8 h-[2px] bg-[var(--bg-green)]"></span>
               </h2>
               <div className="relative">
                 <p
@@ -920,19 +914,19 @@ const VenueDetails = () => {
               <div className="mb-10">
                 <h2 className="text-2xl font-black text-[var(--text-primary)] mb-5 flex items-center gap-2">
                   <span>Amenities</span>
-                  <span className="w-8 h-[2px] bg-emerald-500"></span>
+                  <span className="w-8 h-[2px] bg-[var(--bg-green)]"></span>
                 </h2>
                 <div className="flex flex-wrap gap-3">
                   {amenities.slice(0, 8).map((item, index) => (
                     <div
                       key={index}
-                      className="px-5 py-3 rounded-2xl bg-emerald-500/5 dark:bg-emerald-500/10 text-[var(--bg-green)] border border-emerald-500/15 font-semibold text-sm shadow-sm hover:scale-[1.03] hover:bg-emerald-500/10 transition duration-200"
+                      className="px-5 py-3 rounded-2xl bg-[var(--bg-green)]/10 text-[var(--bg-green)] border border-[var(--bg-green)]/20 font-semibold text-sm shadow-sm hover:scale-[1.03] hover:bg-[var(--bg-green)]/10 transition duration-200"
                     >
                       {item}
                     </div>
                   ))}
                   {amenities.length > 8 && (
-                    <button className="px-5 py-3 rounded-2xl bg-[var(--bg-green)] text-white font-semibold text-sm cursor-pointer shadow-md hover:bg-green-600 transition hover:scale-[1.03] active:scale-95">
+                    <button className="px-5 py-3 rounded-2xl bg-[var(--bg-green)] text-white font-semibold text-sm cursor-pointer shadow-md hover:opacity-90 transition hover:scale-[1.03] active:scale-95">
                       +{amenities.length - 8} More
                     </button>
                   )}
@@ -943,12 +937,12 @@ const VenueDetails = () => {
             <div className="mb-10">
               <h2 className="text-2xl font-black text-[var(--text-primary)] mb-6 flex items-center gap-2">
                 <span>Venue Details</span>
-                <span className="w-8 h-[2px] bg-emerald-500"></span>
+                <span className="w-8 h-[2px] bg-[var(--bg-green)]"></span>
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="bg-[var(--bg-tertiary)] border border-[var(--bg-grey)] rounded-3xl p-4 sm:p-5 lg:p-4 sm:p-5 lg:p-6 shadow-sm hover:shadow-md hover:border-emerald-500/20 transition-all duration-300 group">
+                <div className="bg-[var(--bg-tertiary)] border border-[var(--bg-grey)] rounded-3xl p-4 sm:p-5 lg:p-4 sm:p-5 lg:p-6 shadow-sm hover:shadow-md hover:border-[var(--bg-green)]/25 transition-all duration-300 group">
                   <div className="flex items-center gap-4">
-                    <div className="bg-emerald-500/10 dark:bg-emerald-500/5 p-3.5 rounded-2xl group-hover:scale-110 transition duration-300">
+                    <div className="bg-[var(--bg-green)]/10 p-3.5 rounded-2xl group-hover:scale-110 transition duration-300">
                       <MdOutlineMeetingRoom className="text-[var(--bg-green)] text-2xl" />
                     </div>
                     <div>
@@ -963,9 +957,9 @@ const VenueDetails = () => {
                 </div>
 
                 {venue.maxCapacity && (
-                  <div className="bg-[var(--bg-tertiary)] border border-[var(--bg-grey)] rounded-3xl p-4 sm:p-5 lg:p-6 shadow-sm hover:shadow-md hover:border-emerald-500/20 transition-all duration-300 group">
+                  <div className="bg-[var(--bg-tertiary)] border border-[var(--bg-grey)] rounded-3xl p-4 sm:p-5 lg:p-6 shadow-sm hover:shadow-md hover:border-[var(--bg-green)]/25 transition-all duration-300 group">
                     <div className="flex items-center gap-4">
-                      <div className="bg-emerald-500/10 dark:bg-emerald-500/5 p-3.5 rounded-2xl group-hover:scale-110 transition duration-300">
+                      <div className="bg-[var(--bg-green)]/10 p-3.5 rounded-2xl group-hover:scale-110 transition duration-300">
                         <FiUsers className="text-[var(--bg-green)] text-2xl" />
                       </div>
                       <div>
@@ -981,9 +975,9 @@ const VenueDetails = () => {
                 )}
 
                 {venue.spaceAttributes && venue.spaceAttributes.length > 0 && (
-                  <div className="bg-[var(--bg-tertiary)] border border-[var(--bg-grey)] rounded-3xl p-4 sm:p-5 lg:p-6 shadow-sm hover:shadow-md hover:border-emerald-500/20 transition-all duration-300 group">
+                  <div className="bg-[var(--bg-tertiary)] border border-[var(--bg-grey)] rounded-3xl p-4 sm:p-5 lg:p-6 shadow-sm hover:shadow-md hover:border-[var(--bg-green)]/25 transition-all duration-300 group">
                     <div className="flex items-center gap-4">
-                      <div className="bg-emerald-500/10 dark:bg-emerald-500/5 p-3.5 rounded-2xl group-hover:scale-110 transition duration-300">
+                      <div className="bg-[var(--bg-green)]/10 p-3.5 rounded-2xl group-hover:scale-110 transition duration-300">
                         <TbBuildingEstate className="text-[var(--bg-green)] text-2xl" />
                       </div>
                       <div>
@@ -999,9 +993,9 @@ const VenueDetails = () => {
                 )}
 
                 {venue.seatingConfigurations && venue.seatingConfigurations.length > 0 && (
-                  <div className="bg-[var(--bg-tertiary)] border border-[var(--bg-grey)] rounded-3xl p-4 sm:p-5 lg:p-6 shadow-sm hover:shadow-md hover:border-emerald-500/20 transition-all duration-300 group">
+                  <div className="bg-[var(--bg-tertiary)] border border-[var(--bg-grey)] rounded-3xl p-4 sm:p-5 lg:p-6 shadow-sm hover:shadow-md hover:border-[var(--bg-green)]/25 transition-all duration-300 group">
                     <div className="flex items-center gap-4">
-                      <div className="bg-emerald-500/10 dark:bg-emerald-500/5 p-3.5 rounded-2xl group-hover:scale-110 transition duration-300">
+                      <div className="bg-[var(--bg-green)]/10 p-3.5 rounded-2xl group-hover:scale-110 transition duration-300">
                         <GiTable className="text-[var(--bg-green)] text-2xl" />
                       </div>
                       <div>
@@ -1020,7 +1014,7 @@ const VenueDetails = () => {
 
             <div className="bg-[var(--bg-tertiary)] border border-[var(--bg-grey)] rounded-3xl p-5 sm:p-6 lg:p-8 shadow-sm hover:shadow-md transition-all duration-300">
               <div className="flex items-center gap-4 mb-6">
-                <div className="bg-emerald-500/10 dark:bg-emerald-500/5 p-3.5 rounded-2xl">
+                <div className="bg-[var(--bg-green)]/10 p-3.5 rounded-2xl">
                   <FiMapPin className="text-[var(--bg-green)] text-2xl" />
                 </div>
                 <div>
@@ -1053,7 +1047,7 @@ const VenueDetails = () => {
                     href={venue.googleMapsUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-emerald-500/10 text-[var(--bg-green)] border border-emerald-500/20 font-semibold text-sm hover:bg-emerald-500/20 transition"
+                    className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-[var(--bg-green)]/10 text-[var(--bg-green)] border border-[var(--bg-green)]/25 font-semibold text-sm hover:bg-[var(--bg-green)]/20 transition"
                   >
                     <FiMapPin className="text-base" />
                     Open in Google Maps
@@ -1064,7 +1058,7 @@ const VenueDetails = () => {
             {/* Cancellation & Refund Policy */}
             <div className="bg-[var(--bg-tertiary)] border border-[var(--bg-grey)] rounded-3xl p-5 sm:p-6 lg:p-8 shadow-sm hover:shadow-md transition-all duration-300 mt-8">
               <div className="flex items-center gap-4 mb-6">
-                <div className="bg-emerald-500/10 dark:bg-emerald-500/5 p-3.5 rounded-2xl">
+                <div className="bg-[var(--bg-green)]/10 p-3.5 rounded-2xl">
                   <TbReceiptRefund className="text-[var(--bg-green)] text-2xl" />
                 </div>
                 <div>
@@ -1096,8 +1090,8 @@ const VenueDetails = () => {
 
               {venue.cancellation?.policy === 'refundable' &&
                 venue.cancellation?.refundType === 'fullRefund' && (
-                  <div className="bg-emerald-500/5 dark:bg-emerald-500/10 border border-emerald-500/15 rounded-2xl p-5 flex items-start gap-4 shadow-sm">
-                    <div className="bg-emerald-500/10 p-2.5 rounded-xl text-[var(--bg-green)] shrink-0">
+                  <div className="bg-[var(--bg-green)]/10 border border-[var(--bg-green)]/20 rounded-2xl p-5 flex items-start gap-4 shadow-sm">
+                    <div className="bg-[var(--bg-green)]/10 p-2.5 rounded-xl text-[var(--bg-green)] shrink-0">
                       <TbShieldCheck size={24} />
                     </div>
                     <div>
@@ -1172,7 +1166,7 @@ const VenueDetails = () => {
             </div>
 
             {/* Mobile Reviews Section (Inline Expandable) */}
-            <div className="lg:hidden bg-[var(--bg-tertiary)] border border-[var(--bg-grey)] rounded-3xl p-4 sm:p-5 shadow-sm hover:shadow-md hover:border-emerald-500/20 transition-all duration-300 mt-8 mb-10 overflow-hidden">
+            <div className="lg:hidden bg-[var(--bg-tertiary)] border border-[var(--bg-grey)] rounded-3xl p-4 sm:p-5 shadow-sm hover:shadow-md hover:border-[var(--bg-green)]/25 transition-all duration-300 mt-8 mb-10 overflow-hidden">
               <div
                 className="flex items-center justify-between group cursor-pointer active:scale-[0.99]"
                 onClick={() => setIsReviewsExpanded(!isReviewsExpanded)}
@@ -1190,7 +1184,7 @@ const VenueDetails = () => {
                     </span>
                   </div>
                 </div>
-                <div className="bg-[var(--bg-grey)]/40 text-[var(--text-primary)] px-4 py-2 rounded-full group-hover:bg-emerald-500/10 group-hover:text-[var(--bg-green)] transition-colors font-bold text-sm">
+                <div className="bg-[var(--bg-grey)]/40 text-[var(--text-primary)] px-4 py-2 rounded-full group-hover:bg-[var(--bg-green)]/10 group-hover:text-[var(--bg-green)] transition-colors font-bold text-sm">
                   {isReviewsExpanded ? 'Hide' : 'View all'}
                 </div>
               </div>
@@ -1202,7 +1196,7 @@ const VenueDetails = () => {
                     {user && (
                       <Button
                         onClick={() => setShowReviewModal(true)}
-                        className="bg-[var(--bg-green)] text-white hover:bg-green-600 font-semibold px-4 py-2 rounded-lg text-xs"
+                        className="bg-[var(--bg-green)] text-white hover:opacity-90 font-semibold px-4 py-2 rounded-lg text-xs"
                       >
                         Add Review
                       </Button>
@@ -1235,7 +1229,7 @@ const VenueDetails = () => {
                 {user && (
                   <Button
                     onClick={() => setShowReviewModal(true)}
-                    className="bg-[var(--bg-green)] text-white hover:bg-green-600 font-semibold px-4 py-2 rounded-lg"
+                    className="bg-[var(--bg-green)] text-white hover:opacity-90 font-semibold px-4 py-2 rounded-lg"
                   >
                     Add Review
                   </Button>
@@ -1263,9 +1257,9 @@ const VenueDetails = () => {
       >
         <Dialog open={bookingOpen} onOpenChange={setBookingOpen}>
           <DialogTrigger asChild>
-            <button className="flex items-center gap-4 rounded-full px-5 py-3 bg-white/80 dark:bg-neutral-900/80 backdrop-blur-xl border border-white/20 shadow-[0_15px_40px_rgba(0,0,0,.18)] transition-all duration-500 hover:scale-[1.03] active:scale-95">
+            <button className="flex items-center gap-4 rounded-full px-5 py-3 bg-[var(--bg-tertiary)]/80 backdrop-blur-xl border border-[var(--bg-grey)]/40 shadow-[0_15px_40px_rgba(0,0,0,.18)] transition-all duration-500 hover:scale-[1.03] active:scale-95">
               <div className="text-left">
-                <p className="text-[10px] uppercase text-gray-500">
+                <p className="text-[10px] uppercase text-[var(--text-secondary)]">
                   {selectedSlots.length ? 'Total' : 'Starting'}
                 </p>
 

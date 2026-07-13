@@ -212,3 +212,25 @@ export interface PaginatedVenuesResponse {
   venues: PublicVenue[];
   pagination: PaginationMeta;
 }
+
+export interface MyVenuesResponse {
+  count: number;
+  venues: MyVenue[];
+}
+
+export interface VenuePin {
+  _id: string;
+  name: string;
+  location: {
+    coordinates: [number, number]; // [lng, lat]
+  };
+  coverImage: string;
+  avgRating: number;
+}
+
+export interface VenuePinsBBox {
+  swLng: number;
+  swLat: number;
+  neLng: number;
+  neLat: number;
+}

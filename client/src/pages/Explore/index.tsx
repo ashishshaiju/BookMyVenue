@@ -442,7 +442,7 @@ const ExplorePage = () => {
                 </div>
               )}
               {isError ? (
-                <div className="flex flex-col items-center justify-center py-20 text-red-500 bg-red-50 dark:bg-red-950/20 rounded-3xl border border-red-100 dark:border-red-900">
+                <div className="flex flex-col items-center justify-center py-20 text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-950/20 rounded-3xl border border-red-100 dark:border-red-900">
                   <AlertCircle className="w-12 h-12 mb-4" />
                   <p className="text-lg font-medium">Failed to load venues.</p>
                   <p className="text-sm opacity-80">
@@ -509,7 +509,7 @@ const ExplorePage = () => {
             {/* Infinite Scroll Loader */}
             {isFetchingNextPage && (
               <div className="mt-8 flex justify-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--bg-green)]"></div>
               </div>
             )}
           </div>

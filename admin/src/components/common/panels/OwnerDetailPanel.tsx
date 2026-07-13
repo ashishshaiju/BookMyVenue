@@ -1,13 +1,30 @@
-import { Badge } from '../../ui/badge';
-import { Card } from '../../ui/card';
-import { User, Mail, Phone, Calendar, Store, ShieldCheck } from 'lucide-react';
+import { Badge } from "../../ui/badge";
+import { Card } from "../../ui/card";
+import { User, Mail, Phone, Calendar, Store, ShieldCheck } from "lucide-react";
 
 interface OwnerData {
-  username?: string; name?: string; email?: string; phone?: string; active?: boolean; _id?: string; role?: string; createdAt?: string; updatedAt?: string;
-  venues?: { name?: string; city?: string; address?: string; status?: string }[];
+  username?: string;
+  name?: string;
+  email?: string;
+  phone?: string;
+  active?: boolean;
+  _id?: string;
+  role?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  venues?: {
+    name?: string;
+    city?: string;
+    address?: string;
+    status?: string;
+  }[];
   [key: string]: unknown;
 }
-export function OwnerDetailPanel({ data: rawData }: { data: Record<string, unknown> }) {
+export function OwnerDetailPanel({
+  data: rawData,
+}: {
+  data: Record<string, unknown>;
+}) {
   const data = rawData as unknown as OwnerData;
   if (!data) return null;
 
@@ -19,7 +36,9 @@ export function OwnerDetailPanel({ data: rawData }: { data: Record<string, unkno
           <Store className="w-10 h-10 text-blue-500" />
         </div>
         <div className="flex-1 space-y-1">
-          <h2 className="text-2xl font-bold text-foreground">{data.username || data.name}</h2>
+          <h2 className="text-2xl font-bold text-foreground">
+            {data.username || data.name}
+          </h2>
           <div className="flex items-center gap-3 text-muted-foreground flex-wrap">
             <span className="flex items-center gap-1">
               <Mail className="w-4 h-4" /> {data.email}
@@ -32,8 +51,11 @@ export function OwnerDetailPanel({ data: rawData }: { data: Record<string, unkno
           </div>
         </div>
         <div className="flex flex-col items-end gap-2 shrink-0">
-          <Badge variant={data.active ? 'default' : 'destructive'} className="text-sm px-3 py-1">
-            {data.active ? 'Active Owner' : 'Inactive Account'}
+          <Badge
+            variant={data.active ? "default" : "destructive"}
+            className="text-sm px-3 py-1"
+          >
+            {data.active ? "Active Owner" : "Inactive Account"}
           </Badge>
           <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
             <ShieldCheck className="w-3 h-3 text-green-500" /> Verified Partner
@@ -54,18 +76,31 @@ export function OwnerDetailPanel({ data: rawData }: { data: Record<string, unkno
               </Badge>
             )}
           </div>
-          
+
           <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
             {data.venues && data.venues.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {data.venues.map((venue, idx) => (
-                  <div key={idx} className="flex items-center justify-between p-3 rounded-lg border border-border/50 bg-background/30 hover:bg-background/80 transition-colors">
+                  <div
+                    key={idx}
+                    className="flex items-center justify-between p-3 rounded-lg border border-border/50 bg-background/30 hover:bg-background/80 transition-colors"
+                  >
                     <div className="truncate pr-2">
-                      <span className="font-medium text-foreground block truncate">{venue.name}</span>
-                      <span className="text-xs text-muted-foreground block truncate">{venue.city || venue.address}</span>
+                      <span className="font-medium text-foreground block truncate">
+                        {venue.name}
+                      </span>
+                      <span className="text-xs text-muted-foreground block truncate">
+                        {venue.city || venue.address}
+                      </span>
                     </div>
-                    <Badge 
-                      variant={venue.status === 'Approved' ? 'default' : venue.status === 'Rejected' ? 'destructive' : 'secondary'}
+                    <Badge
+                      variant={
+                        venue.status === "Approved"
+                          ? "default"
+                          : venue.status === "Rejected"
+                            ? "destructive"
+                            : "secondary"
+                      }
                       className="shrink-0"
                     >
                       {venue.status}
@@ -91,15 +126,19 @@ export function OwnerDetailPanel({ data: rawData }: { data: Record<string, unkno
           </h3>
           <div className="grid grid-cols-2 gap-y-4">
             <div>
-              <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-1">User ID</span>
+              <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-1">
+                User ID
+              </span>
               <span className="font-mono text-xs bg-accent/50 px-2 py-1 rounded select-all">
                 {data._id}
               </span>
             </div>
             <div>
-              <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-1">Role Type</span>
+              <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-1">
+                Role Type
+              </span>
               <Badge variant="outline" className="capitalize">
-                {data.role || 'Owner'}
+                {data.role || "Owner"}
               </Badge>
             </div>
           </div>
@@ -112,15 +151,23 @@ export function OwnerDetailPanel({ data: rawData }: { data: Record<string, unkno
           </h3>
           <div className="grid grid-cols-2 gap-y-4">
             <div>
-              <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-1">Joined Date</span>
+              <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-1">
+                Joined Date
+              </span>
               <span className="font-medium text-foreground">
-                {data.createdAt ? new Date(data.createdAt).toLocaleDateString() : 'N/A'}
+                {data.createdAt
+                  ? new Date(data.createdAt).toLocaleDateString()
+                  : "N/A"}
               </span>
             </div>
             <div>
-              <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-1">Last Updated</span>
+              <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-1">
+                Last Updated
+              </span>
               <span className="font-medium text-foreground">
-                {data.updatedAt ? new Date(data.updatedAt).toLocaleDateString() : 'N/A'}
+                {data.updatedAt
+                  ? new Date(data.updatedAt).toLocaleDateString()
+                  : "N/A"}
               </span>
             </div>
           </div>

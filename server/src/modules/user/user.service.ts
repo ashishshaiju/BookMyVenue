@@ -1,16 +1,30 @@
 import crypto from 'crypto';
+import { v2 as cloudinary } from 'cloudinary';
 import * as repo from './user.repository';
-import { NotFoundError, ForbiddenError } from '../../utils/errors';
+import { NotFoundError, ForbiddenError, ConflictError, ValidationError } from '../../utils/errors';
 import type { IUser } from './user.models';
 import { getUserRole } from '../../services/roles.service';
 import type { PaginatedResponse, PaginationParams } from '../../types/pagination.types';
+import { signUploadParams, type CloudinarySignature } from '../../utils/cloudinarySign';
+import { logError } from '../../utils/logger';
 
-export async function getProfile(userId: string): Promise<{
+interface ProfileDto {
   _id: string;
   name: string;
   email: string;
-  role?: string;
-}> {
+  profilePicture?: string;
+}
+
+function toProfileDto(user: IUser): ProfileDto {
+  return {
+    _id: user._id.toString(),
+    name: user.username,
+    email: user.email,
+    profilePicture: user.profilePicture,
+  };
+}
+
+export async function getProfile(userId: string): Promise<ProfileDto & { role?: string }> {
   const user = await repo.findUserById(userId);
 
   if (!user) {
@@ -19,12 +33,108 @@ export async function getProfile(userId: string): Promise<{
 
   const roleInfo = await getUserRole(userId);
 
-  return {
-    _id: user._id.toString(),
-    name: user.username,
-    email: user.email,
-    role: roleInfo?.roleName,
-  };
+  return { ...toProfileDto(user), role: roleInfo?.roleName };
+}
+
+export async function updateProfile(
+  userId: string,
+  dto: { username?: string; profilePicturePublicId?: string }
+): Promise<ProfileDto> {
+  const existingUser = await repo.findUserById(userId);
+  if (!existingUser) {
+    throw new NotFoundError('User not found');
+  }
+
+  if (dto.username && dto.username !== existingUser.username) {
+    const usernameTaken = await repo.findActiveUserByUsernameExcludingId(dto.username, userId);
+    if (usernameTaken) {
+      throw new ConflictError('Username is already taken');
+    }
+  }
+
+  const updateData: { username?: string; profilePicture?: string; profilePicturePublicId?: string } =
+    {};
+  if (dto.username) {
+    updateData.username = dto.username;
+  }
+
+  if (dto.profilePicturePublicId) {
+    const ownFolderPrefix = `bookmyvenue/users/${userId}/`;
+    if (!dto.profilePicturePublicId.startsWith(ownFolderPrefix)) {
+      throw new ForbiddenError('Profile picture must be one you uploaded');
+    }
+
+    let verifiedUrl: string;
+    try {
+      const resource = (await cloudinary.api.resource(dto.profilePicturePublicId)) as {
+        secure_url: string;
+      };
+      verifiedUrl = resource.secure_url;
+    } catch {
+      throw new ValidationError('Could not verify the uploaded profile picture');
+    }
+
+    if (
+      existingUser.profilePicturePublicId &&
+      existingUser.profilePicturePublicId !== dto.profilePicturePublicId
+    ) {
+      try {
+        await cloudinary.uploader.destroy(existingUser.profilePicturePublicId);
+      } catch (e) {
+        const error = e as Error;
+        logError('Failed to delete old profile picture from Cloudinary', {
+          module: 'user.service.ts/updateProfile',
+          userId,
+          publicId: existingUser.profilePicturePublicId,
+          error: error.message,
+        });
+      }
+    }
+
+    updateData.profilePicture = verifiedUrl;
+    updateData.profilePicturePublicId = dto.profilePicturePublicId;
+  }
+
+  const updated = await repo.updateUserProfile(userId, updateData);
+  if (!updated) {
+    throw new NotFoundError('User not found');
+  }
+
+  return toProfileDto(updated);
+}
+
+export async function deleteProfilePicture(userId: string): Promise<ProfileDto> {
+  const existingUser = await repo.findUserById(userId);
+  if (!existingUser) {
+    throw new NotFoundError('User not found');
+  }
+
+  if (!existingUser.profilePicturePublicId) {
+    throw new ValidationError('No profile picture to remove');
+  }
+
+  try {
+    await cloudinary.uploader.destroy(existingUser.profilePicturePublicId);
+  } catch (e) {
+    const error = e as Error;
+    logError('Failed to delete profile picture from Cloudinary', {
+      module: 'user.service.ts/deleteProfilePicture',
+      userId,
+      publicId: existingUser.profilePicturePublicId,
+      error: error.message,
+    });
+  }
+
+  const updated = await repo.clearUserProfilePicture(userId);
+  if (!updated) {
+    throw new NotFoundError('User not found');
+  }
+
+  return toProfileDto(updated);
+}
+
+export function getAvatarUploadSignature(userId: string): CloudinarySignature | null {
+  return signUploadParams(`bookmyvenue/users/${userId}`);
 }
 
 export async function getAllUsers(
@@ -72,6 +182,10 @@ export async function unbanUser(userId: string): Promise<IUser> {
   if (!user) {
     throw new NotFoundError('User not found');
   }
+
+  // Also lift any BannedUsers records to keep systems in sync
+  const bannedUserRepo = await import('../moderation/bannedUser.repository');
+  await bannedUserRepo.liftAllBansForUser(userId, userId); // using userId as a dummy liftedBy
 
   return repo.unbanUser(userId);
 }

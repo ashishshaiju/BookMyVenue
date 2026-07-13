@@ -33,14 +33,20 @@ export async function findActiveVenues(): Promise<IVenue[]> {
 }
 
 // Get lightweight venue pins for map view
-export async function findVenuePinsInBounds(
-  bbox?: {
-    swLng: number;
-    swLat: number;
-    neLng: number;
-    neLat: number;
-  }
-): Promise<{ _id: string; name: string; location: { coordinates: [number, number] }; coverImage: string; avgRating: number }[]> {
+export async function findVenuePinsInBounds(bbox?: {
+  swLng: number;
+  swLat: number;
+  neLng: number;
+  neLat: number;
+}): Promise<
+  {
+    _id: string;
+    name: string;
+    location: { coordinates: [number, number] };
+    coverImage: string;
+    avgRating: number;
+  }[]
+> {
   const query: Record<string, unknown> = {
     status: 'Approved',
     active: true,
@@ -52,7 +58,10 @@ export async function findVenuePinsInBounds(
   if (bbox) {
     query.location = {
       $geoWithin: {
-        $box: [[bbox.swLng, bbox.swLat], [bbox.neLng, bbox.neLat]],
+        $box: [
+          [bbox.swLng, bbox.swLat],
+          [bbox.neLng, bbox.neLat],
+        ],
       },
     };
   }
@@ -60,7 +69,15 @@ export async function findVenuePinsInBounds(
   return VenueModel.find(query)
     .select('_id name location coverImage avgRating')
     .lean()
-    .exec() as unknown as Promise<{ _id: string; name: string; location: { coordinates: [number, number] }; coverImage: string; avgRating: number }[]>;
+    .exec() as unknown as Promise<
+    {
+      _id: string;
+      name: string;
+      location: { coordinates: [number, number] };
+      coverImage: string;
+      avgRating: number;
+    }[]
+  >;
 }
 
 export async function findPaginatedActiveVenues(
@@ -206,6 +223,22 @@ export async function existsByOwnerAndName(
   return count > 0;
 }
 
+export async function findVenueNameAndOwner(venueId: string): Promise<{ name: string; ownerUserId: mongoose.Types.ObjectId } | null> {
+  return VenueModel.findById(venueId).select('name ownerUserId').lean().exec();
+}
+
+export async function venueExists(venueId: string): Promise<boolean> {
+  const exists = await VenueModel.exists({ _id: venueId, deleted: false }).exec();
+  return exists != null;
+}
+
+export async function findVenuesByIds(venueIds: string[]): Promise<{ _id: mongoose.Types.ObjectId }[]> {
+  return VenueModel.find({ _id: { $in: venueIds }, deleted: false })
+    .select('_id')
+    .lean()
+    .exec();
+}
+
 export async function findMyVenuesProjected(
   ownerUserId: string
 ): Promise<
@@ -251,9 +284,9 @@ export async function findPendingVenues(): Promise<IVenue[]> {
 }
 
 // Admin
-export async function findAllVenues(filters: AdminVenueFilters): Promise<
-  PaginatedResponse<IVenue, 'venues'>
-> {
+export async function findAllVenues(
+  filters: AdminVenueFilters
+): Promise<PaginatedResponse<IVenue, 'venues'>> {
   const { status, city, page, limit } = filters;
   const skip = (page - 1) * limit;
 
@@ -268,7 +301,7 @@ export async function findAllVenues(filters: AdminVenueFilters): Promise<
 
   return {
     venues,
-    pagination: buildPaginationMeta(totalCount, { page, limit, skip, sort: '-createdAt' })
+    pagination: buildPaginationMeta(totalCount, { page, limit, skip, sort: '-createdAt' }),
   };
 }
 
@@ -351,9 +384,12 @@ export async function updateVenueStatus(
   }).exec();
 }
 
-export async function upsertFeaturedVenue(venueId: string, durationDays: number | null): Promise<void> {
+export async function upsertFeaturedVenue(
+  venueId: string,
+  durationDays: number | null
+): Promise<void> {
   const expiresAt = durationDays ? new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000) : null;
-  
+
   await FeaturedVenueModel.findOneAndUpdate(
     { venueId: toObjectId(venueId) },
     { $set: { expiresAt } },
@@ -361,12 +397,14 @@ export async function upsertFeaturedVenue(venueId: string, durationDays: number 
   ).exec();
 }
 
-export async function getFeaturedVenues(): Promise<(IVenue & { featuredExpiresAt?: Date | null })[]> {
+export async function getFeaturedVenues(): Promise<
+  (IVenue & { featuredExpiresAt?: Date | null })[]
+> {
   const featured = await FeaturedVenueModel.find()
     .populate<{ venueId: IVenue }>('venueId')
     .lean()
     .exec();
-    
+
   return featured
     .filter((f) => Boolean(f.venueId))
     .map((f) => ({

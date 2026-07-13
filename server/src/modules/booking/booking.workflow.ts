@@ -4,7 +4,7 @@ import { runInTransaction } from '../../utils/dbUtils';
 import { acquireSlotMutex, releaseSlotMutex } from '../../utils/mutex';
 import { checkOverlap } from '../../utils/timeUtils';
 import { logInfo, logWarn, logError } from '../../utils/logger';
-import { LockModel } from './lock.model';
+
 import * as repo from './booking.repository';
 import {
   validateDateForVenue,
@@ -13,9 +13,9 @@ import {
   assertPriceWithinTolerance
 } from './booking.validator';
 import { issueRefund, createOrder } from '../../services/razorpay.service';
-import { EmailTaskModel } from '../../models/email-task.model';
 import { EmailIntent, EmailTaskStatus } from '../../constants/email.constants';
-import { UserModel } from '../user/user.models';
+import { enqueueEmailTask } from '../../services/email.repository';
+import { findUserEmailById } from '../user/user.repository';
 import { BookingStatus } from '../../constants/booking.constants';
 
 const LOCK_TTL_SECONDS = 600;
@@ -80,9 +80,9 @@ export async function blockSlotWorkflow(
       if (sessionTokenHash) {
         deleteConditions.push({ sessionTokenHash });
       }
-      await LockModel.deleteMany({ $or: deleteConditions }, { session });
+      await repo.deleteLocksByConditions([{ userId: new Types.ObjectId(userId) }, ...(sessionTokenHash ? [{ sessionTokenHash }] : [])], session);
 
-      const [newLock] = await LockModel.create(
+      const [newLock] = await repo.createLock(
         [
           {
             venueId: new Types.ObjectId(venueId),
@@ -95,7 +95,7 @@ export async function blockSlotWorkflow(
             createdAt: new Date(),
           },
         ],
-        { session }
+        session
       );
       return newLock;
     });
@@ -248,8 +248,7 @@ export async function cancelBookingWorkflow(userId: string, bookingId: string, r
   }
 
   try {
-    const user = await UserModel.findById(userId).select('email').lean();
-    const customerEmail = (user as { email?: string } | null)?.email;
+    const customerEmail = await findUserEmailById(userId);
 
     if (customerEmail) {
       const venueName = bookingDetails.venueName as string;
@@ -257,20 +256,19 @@ export async function cancelBookingWorkflow(userId: string, bookingId: string, r
       const timeRange = bookingDetails.timeRange as string;
       const bookingRef = bookingDetails.bookingRef as string;
       
-      await EmailTaskModel.create({
-        recipient: customerEmail,
-        intent: EmailIntent.ACCOUNT_NOTIFICATION,
-        subject: `Booking Cancelled – ${venueName}`,
-        status: EmailTaskStatus.PENDING,
-        retryAfter: new Date(),
-        metadata: {
+      await enqueueEmailTask(
+        customerEmail,
+        EmailIntent.ACCOUNT_NOTIFICATION,
+        `Booking Cancelled – ${venueName}`,
+        EmailTaskStatus.PENDING,
+        {
           bookingRef,
           venueName,
           date,
           timeRange,
           refundAmount: (refundAmountPaise / 100).toString(),
         }
-      });
+      );
     }
   } catch (emailErr) {
     logWarn('Failed to queue cancellation email', {

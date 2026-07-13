@@ -86,7 +86,7 @@ const SlotPreviewPanel: React.FC<SlotPreviewPanelProps> = ({
   const bookingTypeLabel = bookingType === 'fixedBooking' ? 'Fixed Package' : 'Flexible Booking';
 
   return (
-    <div className="mt-26 h-fit max-h-[80vh] lg:max-h-full flex flex-col bg-gradient-to-b from-white via-white to-gray-50/50 backdrop-blur-md rounded-3xl p-6 space-y-6">
+    <div className="mt-26 h-fit max-h-[80vh] lg:max-h-full flex flex-col bg-gradient-to-b from-[var(--bg-tertiary)] via-[var(--bg-tertiary)] to-[var(--bg-grey)]/30 backdrop-blur-md rounded-3xl p-6 space-y-6">
       {/* Booking Type Badge */}
       <div className="flex justify-between items-center shrink-0">
         <h3 className="text-lg font-semibold text-[var(--text-primary)]">Preview</h3>
@@ -112,7 +112,7 @@ const SlotPreviewPanel: React.FC<SlotPreviewPanelProps> = ({
       {/* Selected Date Pill */}
       {displayDate && (
         <div className="flex items-center justify-center gap-2 shrink-0">
-          <div className="px-4 py-2 rounded-2xl border border-green-900 text-green-900 text-sm font-medium">
+          <div className="px-4 py-2 rounded-2xl border border-[var(--bg-green)] text-[var(--bg-green)] text-sm font-medium">
             {displayDate}
           </div>
         </div>
@@ -138,7 +138,7 @@ const SlotPreviewPanel: React.FC<SlotPreviewPanelProps> = ({
                 disabled={!slot.isAvailable}
                 className={`w-full p-3 rounded-2xl text-sm font-medium transition-all duration-200 text-left shrink-0 ${
                   slot.isAvailable
-                    ? 'border-2 border-[var(--bg-green)] bg-white text-[var(--text-primary)] cursor-pointer hover:shadow-md'
+                    ? 'border-2 border-[var(--bg-green)] bg-[var(--bg-tertiary)] text-[var(--text-primary)] cursor-pointer hover:shadow-md'
                     : 'border-2 border-[var(--bg-grey)] bg-[var(--bg-grey)] text-[var(--text-secondary)] opacity-40 cursor-not-allowed'
                 }`}
                 title={slot.reason || ''}

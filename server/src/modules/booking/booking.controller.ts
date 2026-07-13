@@ -3,7 +3,7 @@ import { Types } from 'mongoose';
 import { ResponseUtil } from '../../utils/responseUtils';
 import { logError } from '../../utils/logger';
 import * as workflow from './booking.workflow';
-import { fetchMyBookings, fetchBookingById, fetchBookingByPaymentReference, findAllBookings } from './booking.repository';
+import * as service from './booking.service';
 import type { BookingStatusType } from '../../constants/booking.constants';
 import { verifyPaymentSignature } from '../../services/razorpay.service';
 import { getUserReviewedBookings } from '../review/review.service';
@@ -141,7 +141,7 @@ export const verifyPayment = async (req: Request, res: Response): Promise<void> 
       return;
     }
 
-    const booking = await fetchBookingByPaymentReference(paymentId);
+    const booking = await service.getBookingByPaymentReference(paymentId);
     if (booking) {
       const bookingRef = `BMV-${booking._id.toString().slice(-6).toUpperCase()}`;
       ResponseUtil.success(res, 'Payment verified successfully', { _id: booking._id.toString(), bookingRef });
@@ -185,7 +185,7 @@ export const getMyBookings = async (req: Request, res: Response): Promise<void> 
     }
 
     const [bookingsResult, reviewedBookingIds] = await Promise.all([
-      fetchMyBookings(userId),
+      service.getMyBookings(userId),
       getUserReviewedBookings(userId),
     ]);
 
@@ -227,7 +227,7 @@ export const getBookingById = async (req: Request, res: Response): Promise<void>
       return;
     }
 
-    const booking = await fetchBookingById(bookingId, userId);
+    const booking = await service.getBookingById(bookingId, userId);
     if (!booking) {
       ResponseUtil.notFound(res, 'Booking not found');
       return;
@@ -285,7 +285,7 @@ export const getAllBookings = async (req: Request, res: Response): Promise<void>
   try {
     const { status, venueId } = req.validated?.query as AdminBookingFiltersDTO;
     const paginationParams = req.pagination ?? { page: 1, limit: 10, skip: 0, sort: '' };
-    const result = await findAllBookings(paginationParams, {
+    const result = await service.getAllBookings(paginationParams, {
       status: status as BookingStatusType | undefined,
       venueId
     });

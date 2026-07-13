@@ -17,5 +17,11 @@ export async function requireOwnVenue(venueId: string, userId: string): Promise<
 
   assertVenueOwner(venue, userId);
 
+  const { isBannedForScope } = await import('../moderation/bannedUser.service');
+  const isBanned = await isBannedForScope(userId, 'owner_dashboard', venueId);
+  if (isBanned) {
+    throw new ForbiddenError('You are currently banned from accessing the owner dashboard for this venue.');
+  }
+
   return venue;
 }
