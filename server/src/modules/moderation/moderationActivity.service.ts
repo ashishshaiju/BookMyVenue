@@ -1,5 +1,6 @@
-import { ModerationActivityModel, type ModerationActionType } from './moderationActivity.model';
+import { ModerationActivityModel, type ModerationActionType, type ModerationLogLean } from './moderationActivity.model';
 import type mongoose from 'mongoose';
+import { logError } from '../../utils/logger';
 
 export async function logModerationAction(
   adminId: string | mongoose.Types.ObjectId,
@@ -7,7 +8,7 @@ export async function logModerationAction(
   targetId: string,
   targetType: 'user' | 'venue' | 'review',
   reason?: string,
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
 ): Promise<void> {
   try {
     await ModerationActivityModel.create({
@@ -20,11 +21,14 @@ export async function logModerationAction(
     });
   } catch (error) {
     // Log the error but don't fail the primary moderation action
-    console.error('Failed to log moderation activity:', error);
+    logError('Failed to log moderation activity', {
+      module: 'moderationActivity.service',
+      error: error instanceof Error ? error.message : String(error),
+    });
   }
 }
 
-export async function getModerationLogs(page: number, limit: number): Promise<{ logs: any[]; total: number }> {
+export async function getModerationLogs(page: number, limit: number): Promise<{ logs: ModerationLogLean[]; total: number }> {
   const skip = (page - 1) * limit;
   
   const [logs, total] = await Promise.all([
@@ -34,7 +38,7 @@ export async function getModerationLogs(page: number, limit: number): Promise<{ 
       .limit(limit)
       .populate('adminId', 'username email')
       .lean()
-      .exec(),
+      .exec() as unknown as Promise<ModerationLogLean[]>,
     ModerationActivityModel.countDocuments()
   ]);
 

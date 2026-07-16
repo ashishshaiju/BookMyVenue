@@ -229,7 +229,7 @@ export async function findVenueNameAndOwner(venueId: string): Promise<{ name: st
 
 export async function venueExists(venueId: string): Promise<boolean> {
   const exists = await VenueModel.exists({ _id: venueId, deleted: false }).exec();
-  return exists != null;
+  return exists !== null;
 }
 
 export async function findVenuesByIds(venueIds: string[]): Promise<{ _id: mongoose.Types.ObjectId }[]> {

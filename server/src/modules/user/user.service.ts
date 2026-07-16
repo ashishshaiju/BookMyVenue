@@ -184,7 +184,7 @@ export async function unbanUser(userId: string): Promise<IUser> {
   }
 
   // Also lift any BannedUsers records to keep systems in sync
-  const bannedUserRepo = await import('../moderation/bannedUser.repository');
+  const bannedUserRepo = await import('../moderation/bannedUser.repository.js');
   await bannedUserRepo.liftAllBansForUser(userId, userId); // using userId as a dummy liftedBy
 
   return repo.unbanUser(userId);

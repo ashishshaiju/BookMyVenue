@@ -50,7 +50,7 @@ export async function getModerationSummary(): Promise<ModerationSummary> {
       name: v.name,
       suspensionReason: v.suspensionReason,
       ownerUserId: v.ownerUserId.toString(),
-      suspendedAt: v.updatedAt || v.createdAt,
+      suspendedAt: v.updatedAt ?? v.createdAt,
       createdAt: v.createdAt,
     })),
     bannedUsers: bannedUsers.map((u) => ({
@@ -60,7 +60,7 @@ export async function getModerationSummary(): Promise<ModerationSummary> {
       email: u.userId.email,
       scope: u.scope,
       banReason: u.reason,
-      bannedBy: u.bannedBy?.username || u.bannedBy?._id?.toString(),
+      bannedBy: u.bannedBy?.username ?? u.bannedBy?._id.toString(),
       bannedAt: u.bannedAt,
       expiresAt: u.expiresAt,
       venueId: u.venueId?.toString(),

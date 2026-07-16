@@ -1,4 +1,4 @@
-import type { Document } from 'mongoose';
+import type { Document, Types } from 'mongoose';
 import mongoose, { Schema } from 'mongoose';
 
 export type ModerationActionType = 'ban_user' | 'unban_user' | 'suspend_venue' | 'unsuspend_venue' | 'remove_review' | 'restore_review';
@@ -9,7 +9,7 @@ export interface IModerationActivity extends Document {
   targetId: string; // The ID of the user, venue, or review
   targetType: 'user' | 'venue' | 'review';
   reason?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   createdAt: Date;
 }
 
@@ -32,3 +32,14 @@ ModerationActivitySchema.index({ action: 1 });
 ModerationActivitySchema.index({ targetId: 1, targetType: 1 });
 
 export const ModerationActivityModel = mongoose.model<IModerationActivity>('ModerationActivity', ModerationActivitySchema, 'ModerationActivities');
+
+export interface ModerationLogLean {
+  _id: Types.ObjectId;
+  adminId: { _id: Types.ObjectId; username: string; email: string };
+  action: ModerationActionType;
+  targetId: string;
+  targetType: 'user' | 'venue' | 'review';
+  reason?: string;
+  metadata?: Record<string, unknown>;
+  createdAt: Date;
+}

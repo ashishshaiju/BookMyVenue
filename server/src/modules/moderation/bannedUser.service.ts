@@ -46,7 +46,7 @@ export async function banUser(
   const ban = await repo.createBan(userId, scope, reason, adminId, options);
   
   // Log activity
-  const { logModerationAction } = await import('./moderationActivity.service');
+  const { logModerationAction } = await import('./moderationActivity.service.js');
   await logModerationAction(adminId, 'ban_user', userId, 'user', reason, { scope, ...options });
 
   return ban;
@@ -59,7 +59,7 @@ export async function liftBan(adminId: string, banRecordId: string): Promise<IBa
   }
 
   // Log activity
-  const { logModerationAction } = await import('./moderationActivity.service');
+  const { logModerationAction } = await import('./moderationActivity.service.js');
   await logModerationAction(adminId, 'unban_user', updated.userId.toString(), 'user', undefined, { banRecordId });
 
   return updated;
@@ -75,7 +75,7 @@ export async function liftAllBansForUser(adminId: string, userId: string): Promi
   
   if (count > 0) {
     // Log activity
-    const { logModerationAction } = await import('./moderationActivity.service');
+    const { logModerationAction } = await import('./moderationActivity.service.js');
     await logModerationAction(adminId, 'unban_user', userId, 'user', undefined, { count });
   }
   

@@ -1,6 +1,5 @@
 import { ReviewModel } from '../review/review.model';
 import { VenueModel } from '../venue/venue.model';
-import { UserModel } from '../user/user.models';
 import { BannedUserModel } from './bannedUser.model';
 import type {
   FlaggedReviewLean,

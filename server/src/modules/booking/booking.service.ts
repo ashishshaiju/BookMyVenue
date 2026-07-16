@@ -11,7 +11,6 @@ import {
   deleteLockById,
   fetchMyBookings,
   fetchBookingById,
-  fetchUserBookingByRefIdOrId,
   fetchBookingByPaymentReference,
   type AggregatedBooking,
 } from './booking.repository';
@@ -19,6 +18,7 @@ import type { PaginationParams, PaginatedResponse } from '../../types/pagination
 import { minutesToTimeString } from '../../utils/timeUtils';
 import { EmailIntent, EmailTaskStatus, type EmailIntentType } from '../../constants/email.constants';
 import type { ILock } from './lock.types';
+import type { IBooking } from './booking.types';
 import type { RazorpayWebhookNotes } from './booking.types';
 import { findUserEmailById } from '../user/user.repository';
 import { findVenueNameAndOwner } from '../venue/venue.repository';
@@ -308,14 +308,14 @@ export async function getAllBookings(
   return findAllBookings(paginationParams, filters);
 }
 
-export async function getMyBookings(userId: string) {
+export async function getMyBookings(userId: string): Promise<{ bookings: { upcoming: Record<string, unknown>[]; cancelled: Record<string, unknown>[]; completed: Record<string, unknown>[] } }> {
   return fetchMyBookings(userId);
 }
 
-export async function getBookingById(bookingId: string, userId: string) {
+export async function getBookingById(bookingId: string, userId: string): Promise<Record<string, unknown> | null> {
   return fetchBookingById(bookingId, userId);
 }
 
-export async function getBookingByPaymentReference(paymentId: string) {
+export async function getBookingByPaymentReference(paymentId: string): Promise<IBooking | null> {
   return fetchBookingByPaymentReference(paymentId);
 }

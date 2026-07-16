@@ -1,31 +1,34 @@
 import { UserModel } from '../user/user.models';
+import type { IUser } from '../user/user.models';
 import { RoleModel } from '../../models/role.model';
+import type { IRole } from '../../models/role.model';
 import { UserRoleModel } from '../../models/user-role.model';
+import type { IUserRole } from '../../models/user-role.model';
 import type mongoose from 'mongoose';
 import type { PaginationParams, PaginatedResponse } from '../../types/pagination.types';
 import { buildPaginationMeta } from '../../utils/paginationUtils';
 
-export async function findActiveUserByEmail(email: string) {
+export async function findActiveUserByEmail(email: string): Promise<IUser | null> {
   return UserModel.findOne({ email, active: true, deleted: false }).exec();
 }
 
-export async function findUserById(userId: string) {
+export async function findUserById(userId: string): Promise<IUser | null> {
   return UserModel.findById(userId).exec();
 }
 
-export async function findRoleByName(name: string) {
+export async function findRoleByName(name: string): Promise<IRole | null> {
   return RoleModel.findOne({ name }).exec();
 }
 
-export async function findUserRole(userId: mongoose.Types.ObjectId, roleId: mongoose.Types.ObjectId) {
+export async function findUserRole(userId: mongoose.Types.ObjectId, roleId: mongoose.Types.ObjectId): Promise<IUserRole | null> {
   return UserRoleModel.findOne({ userId, roleId }).exec();
 }
 
-export async function createUserRole(userId: mongoose.Types.ObjectId, roleId: mongoose.Types.ObjectId) {
+export async function createUserRole(userId: mongoose.Types.ObjectId, roleId: mongoose.Types.ObjectId): Promise<IUserRole> {
   return UserRoleModel.create({ userId, roleId });
 }
 
-export async function updateUserRoleStatus(existing: any, active: boolean, deleted: boolean) {
+export async function updateUserRoleStatus(existing: IUserRole, active: boolean, deleted: boolean): Promise<void> {
   existing.active = active;
   existing.deleted = deleted;
   await existing.save();

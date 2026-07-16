@@ -143,7 +143,7 @@ async function assignOwnerRoleIfNeeded(userId: string): Promise<void> {
 
 export async function createVenue(userId: string, dto: CreateVenueDTO): Promise<IVenue> {
   // Guard: Check for venue creation ban
-  const { isBannedForScope } = await import('../moderation/bannedUser.service');
+  const { isBannedForScope } = await import('../moderation/bannedUser.service.js');
   const isBanned = await isBannedForScope(userId, 'venue_creation');
   if (isBanned) {
     throw new ConflictError('You are currently banned from creating new venues.');
@@ -359,7 +359,7 @@ export async function suspendVenue(venueId: string, adminId: string, dto: Suspen
   }
 
   // Log activity
-  const { logModerationAction } = await import('../moderation/moderationActivity.service');
+  const { logModerationAction } = await import('../moderation/moderationActivity.service.js');
   await logModerationAction(adminId, 'suspend_venue', venueId, 'venue', dto.suspensionReason);
 
   return updated;
@@ -380,7 +380,7 @@ export async function unsuspendVenue(venueId: string, adminId: string): Promise<
   }
 
   // Log activity
-  const { logModerationAction } = await import('../moderation/moderationActivity.service');
+  const { logModerationAction } = await import('../moderation/moderationActivity.service.js');
   await logModerationAction(adminId, 'unsuspend_venue', venueId, 'venue');
 
   return updated;

@@ -14,7 +14,7 @@ export async function submitReview(userId: string, venueId: string, dto: { ratin
   }
 
   if (dto.comment?.trim()) {
-    const { isBannedForScope } = await import('../moderation/bannedUser.service');
+    const { isBannedForScope } = await import('../moderation/bannedUser.service.js');
     const isBanned = await isBannedForScope(userId, 'commenting', venueId);
     if (isBanned) {
       throw new ConflictError('You are currently banned from commenting.');
@@ -61,7 +61,7 @@ export async function addComment(userId: string, venueId: string, comment: strin
     throw new ValidationError('Comment cannot be empty');
   }
 
-  const { isBannedForScope } = await import('../moderation/bannedUser.service');
+  const { isBannedForScope } = await import('../moderation/bannedUser.service.js');
   const isBanned = await isBannedForScope(userId, 'commenting', venueId);
   if (isBanned) {
     throw new ConflictError('You are currently banned from commenting.');
@@ -95,7 +95,7 @@ export async function updateReview(userId: string, reviewId: string, dto: Update
     }
 
     if (dto.comment?.trim()) {
-      const { isBannedForScope } = await import('../moderation/bannedUser.service');
+      const { isBannedForScope } = await import('../moderation/bannedUser.service.js');
       const isBanned = await isBannedForScope(userId, 'commenting', review.venueId.toString());
       if (isBanned) {
         throw new ConflictError('You are currently banned from commenting.');
@@ -222,7 +222,7 @@ export async function moderateReview(
 
   // Log activity
   if (dto.action === 'remove' || dto.action === 'restore' || dto.action === 'approve_hide') {
-    const { logModerationAction } = await import('../moderation/moderationActivity.service');
+    const { logModerationAction } = await import('../moderation/moderationActivity.service.js');
     const actionType = dto.action === 'restore' ? 'restore_review' : 'remove_review';
     await logModerationAction(moderatorId, actionType, reviewId, 'review', dto.reason, { 
       venueId: updated.venueId.toString(), 
@@ -271,7 +271,7 @@ export async function replyToReview(
   const review = await repo.findReviewById(reviewId);
   if (!review) throw new NotFoundError('Review not found');
   
-  const { isBannedForScope } = await import('../moderation/bannedUser.service');
+  const { isBannedForScope } = await import('../moderation/bannedUser.service.js');
   const venue = await VenueModel.findById(venueId);
   if (venue) {
     const isBanned = await isBannedForScope(venue.ownerUserId.toString(), 'commenting', venueId);
