@@ -27,6 +27,12 @@
 
     /* Custom design tokens */
     --bg-primary: #f4f4f4;
+    --bg-secondary: #000000;
+    --bg-tertiary: #ffffff;
+    --bg-green: #2b6953;
+    --bg-grey: #e3e4e4;
+    --text-primary: #000000;
+    --text-secondary: #7a7a80;
     --sidebar-bg: #18181b;
     --sidebar-border: #27272a;
     --sidebar-text: #71717a;

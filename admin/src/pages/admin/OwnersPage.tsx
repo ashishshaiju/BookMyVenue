@@ -1,55 +1,34 @@
+import { useState } from "react";
 
-import { useState } from 'react';
-
-import { useApiQuery } from '../../hooks/useApi';
-import { useModal } from '../../hooks/useModal';
-import { OwnerDetailPanel } from '../../components/common/panels/OwnerDetailPanel';
-import { QUERY_KEYS } from '../../config/queryKeys';
-import { API_ENDPOINTS } from '../../constants';
-import { DataTable } from '../../components/ui/data-table';
-import { Badge } from '../../components/ui/badge';
-
-// Types
-interface Owner {
-  [key: string]: unknown;
-  _id: string;
-  username: string;
-  email: string;
-  active: boolean;
-  createdAt: string;
-}
-
-interface OwnersResponse {
-  users: Owner[];
-  pagination: { totalPages: number; currentPage: number };
-}
+import { useModal } from "@/hooks/useModal";
+import { ROLES } from "@/constants/roles";
+import { OwnerDetailPanel } from "@/components/common/panels/OwnerDetailPanel";
+import { useAdminUsers } from "@/services/api/useAdminUsers";
+import { DataTable } from "@/components/ui/data-table";
+import { Badge } from "@/components/ui/badge";
+import type { Owner } from "@/types";
 
 // Component
 export default function OwnersPage() {
   const [page, setPage] = useState(1);
   const { openModal } = useModal();
 
-  const params = new URLSearchParams({ page: String(page), limit: '10', role: 'owner' });
-
-  const { data, isLoading } = useApiQuery<OwnersResponse>(
-    [...QUERY_KEYS.ADMIN_OWNERS, page],
-    { method: 'GET', url: `${API_ENDPOINTS.ADMIN_USERS}?${params}` },
-  );
+  const { data, isLoading } = useAdminUsers(page, ROLES.OWNER);
 
   const columns = [
     {
-      accessorKey: 'username',
-      header: 'Name',
+      accessorKey: "username",
+      header: "Name",
       cell: ({ row }: { row: { original: Owner } }) => (
-        <span 
+        <span
           className="font-medium cursor-pointer text-primary hover:underline"
           onClick={() => {
             openModal({
               title: `Owner Profile`,
-              size: 'xl',
+              size: "xl",
               component: OwnerDetailPanel,
               data: row.original,
-              actions: []
+              actions: [],
             });
           }}
         >
@@ -58,25 +37,28 @@ export default function OwnersPage() {
       ),
     },
     {
-      accessorKey: 'email',
-      header: 'Email',
+      accessorKey: "email",
+      header: "Email",
       cell: ({ row }: { row: { original: Owner } }) => (
-        <span className="text-muted-foreground text-sm">{row.original.email}</span>
+        <span className="text-muted-foreground text-sm">
+          {row.original.email}
+        </span>
       ),
     },
     {
-      accessorKey: 'active',
-      header: 'Status',
+      accessorKey: "active",
+      header: "Status",
       cell: ({ row }: { row: { original: Owner } }) => (
-        <Badge variant={row.original.active ? 'default' : 'secondary'}>
-          {row.original.active ? 'Active' : 'Inactive'}
+        <Badge variant={row.original.active ? "default" : "secondary"}>
+          {row.original.active ? "Active" : "Inactive"}
         </Badge>
       ),
     },
     {
-      accessorKey: 'createdAt',
-      header: 'Joined',
-      cell: ({ row }: { row: { original: Owner } }) => new Date(row.original.createdAt).toLocaleDateString(),
+      accessorKey: "createdAt",
+      header: "Joined",
+      cell: ({ row }: { row: { original: Owner } }) =>
+        new Date(row.original.createdAt).toLocaleDateString(),
     },
   ];
 
@@ -91,7 +73,7 @@ export default function OwnersPage() {
 
       <DataTable
         columns={columns}
-        data={data?.users ?? []}
+        data={(data?.users as unknown as Owner[]) ?? []}
         page={page}
         totalPages={data?.pagination?.totalPages ?? 0}
         onPageChange={setPage}

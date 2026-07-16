@@ -13,7 +13,11 @@ const definition: OAS3Definition = {
   servers: [
     {
       url: '/api/v1',
-      description: 'Development server',
+      description: 'Development server (localhost)',
+    },
+    {
+      url: 'https://bmvserver.zrok.io/api/v1',
+      description: 'zrok tunnel (HTTPS)',
     },
   ],
   components: {
@@ -67,6 +71,12 @@ const definition: OAS3Definition = {
     { name: 'Bookings', description: 'Checkout and payment flow' },
     { name: 'RBAC', description: 'Permission cache management (super-admin only)' },
     { name: 'Webhooks', description: 'Incoming Razorpay payment event handler' },
+    { name: 'Geo', description: 'Geospatial lookups (city/state autocomplete)' },
+    { name: 'Moderation', description: 'User moderation — ban and unban operations (admin only)' },
+    { name: 'Owner', description: 'Owner onboarding, earnings, and dashboard' },
+    { name: 'Reviews', description: 'Venue review submission and moderation' },
+    { name: 'Role', description: 'Role definitions and assignment (admin only)' },
+    { name: 'Wishlist', description: 'User venue wishlist management' },
   ],
 };
 

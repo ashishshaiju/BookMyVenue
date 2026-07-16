@@ -3,9 +3,10 @@ import { Types } from 'mongoose';
 import { ResponseUtil } from '../../utils/responseUtils';
 import { logError } from '../../utils/logger';
 import * as workflow from './booking.workflow';
-import { fetchMyBookings, fetchBookingById, fetchBookingByPaymentReference, findAllBookings } from './booking.repository';
+import * as service from './booking.service';
 import type { BookingStatusType } from '../../constants/booking.constants';
 import { verifyPaymentSignature } from '../../services/razorpay.service';
+import { getUserReviewedBookings } from '../review/review.service';
 import type {
   BlockSlotBodyDTO,
   CheckoutBodyDTO,
@@ -47,7 +48,7 @@ export const blockSlot = async (req: Request, res: Response): Promise<void> => {
     const error = err as Error;
     if (error.message.includes('not found') || error.message.includes('unavailable')) {
       ResponseUtil.notFound(res, error.message);
-    } else if (error.message.includes('no longer available')) {
+    } else if (error.message.includes('no longer available') || error.message.includes('Someone else is booking')) {
       ResponseUtil.conflict(res, error.message);
     } else if (error.message.includes('Invalid') || error.message.includes('mismatch')) {
       ResponseUtil.badRequest(res, error.message);
@@ -140,7 +141,7 @@ export const verifyPayment = async (req: Request, res: Response): Promise<void> 
       return;
     }
 
-    const booking = await fetchBookingByPaymentReference(paymentId);
+    const booking = await service.getBookingByPaymentReference(paymentId);
     if (booking) {
       const bookingRef = `BMV-${booking._id.toString().slice(-6).toUpperCase()}`;
       ResponseUtil.success(res, 'Payment verified successfully', { _id: booking._id.toString(), bookingRef });
@@ -183,7 +184,23 @@ export const getMyBookings = async (req: Request, res: Response): Promise<void> 
       return;
     }
 
-    const result = await fetchMyBookings(userId);
+    const [bookingsResult, reviewedBookingIds] = await Promise.all([
+      service.getMyBookings(userId),
+      getUserReviewedBookings(userId),
+    ]);
+
+    // Merge hasReview flag into completed bookings
+    const result = {
+      ...bookingsResult,
+      bookings: {
+        ...bookingsResult.bookings,
+        completed: bookingsResult.bookings.completed.map((booking: Record<string, unknown>) => ({
+          ...booking,
+          hasReview: reviewedBookingIds.has(booking._id as string),
+        })),
+      },
+    };
+
     ResponseUtil.success(res, 'My bookings retrieved successfully', result);
   } catch (err) {
     const error = err as Error;
@@ -210,7 +227,7 @@ export const getBookingById = async (req: Request, res: Response): Promise<void>
       return;
     }
 
-    const booking = await fetchBookingById(bookingId, userId);
+    const booking = await service.getBookingById(bookingId, userId);
     if (!booking) {
       ResponseUtil.notFound(res, 'Booking not found');
       return;
@@ -250,6 +267,8 @@ export const cancelBooking = async (req: Request, res: Response): Promise<void> 
     const error = err as Error;
     if (error.message.includes('not found')) {
       ResponseUtil.notFound(res, error.message);
+    } else if (error.message.includes('already been cancelled')) {
+      ResponseUtil.conflict(res, error.message);
     } else if (error.message.includes('Cannot') || error.message.includes('Only confirmed') || error.message.includes('Cancellation window')) {
       ResponseUtil.badRequest(res, error.message);
     } else {
@@ -266,7 +285,7 @@ export const getAllBookings = async (req: Request, res: Response): Promise<void>
   try {
     const { status, venueId } = req.validated?.query as AdminBookingFiltersDTO;
     const paginationParams = req.pagination ?? { page: 1, limit: 10, skip: 0, sort: '' };
-    const result = await findAllBookings(paginationParams, {
+    const result = await service.getAllBookings(paginationParams, {
       status: status as BookingStatusType | undefined,
       venueId
     });

@@ -70,6 +70,10 @@ export interface AddVenueFormValues {
   pincode: string;
   fullAddress: string;
   googleMapsLink: string;
+  coordinates?: {
+    lat: number | string;
+    lng: number | string;
+  } | null;
   spaceAttributes: string[];
   seatingConfigurations: string[];
   maxCapacity: string;
@@ -156,6 +160,8 @@ export interface VenueDetail {
   cancellation: ICancellation;
   status: VenueStatus;
   createdAt: string;
+  avgRating?: number;
+  reviewCount?: number;
 }
 
 export interface PublicVenue {
@@ -175,6 +181,8 @@ export interface PublicVenue {
   bookingType?: 'fixedBooking' | 'flexibleBooking';
   pricing?: IPricing;
   fixedPackages?: { price: number }[];
+  avgRating?: number;
+  reviewCount?: number;
 }
 
 export interface VenueFilters {
@@ -203,4 +211,26 @@ export interface PaginationMeta {
 export interface PaginatedVenuesResponse {
   venues: PublicVenue[];
   pagination: PaginationMeta;
+}
+
+export interface MyVenuesResponse {
+  count: number;
+  venues: MyVenue[];
+}
+
+export interface VenuePin {
+  _id: string;
+  name: string;
+  location: {
+    coordinates: [number, number]; // [lng, lat]
+  };
+  coverImage: string;
+  avgRating: number;
+}
+
+export interface VenuePinsBBox {
+  swLng: number;
+  swLat: number;
+  neLng: number;
+  neLat: number;
 }

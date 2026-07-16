@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { verifyAccessToken } from '../../middlewares/auth.middleware';
+import { verifyAccessToken, verifyAccessTokenOptional } from '../../middlewares/auth.middleware';
 import { requirePermission, requireRole } from '../../middlewares/rbac.middleware';
 import { PERMISSIONS as P } from '../../constants/permissions';
 import * as controller from './venue.controller';
@@ -143,6 +143,7 @@ router
     controller.createVenue
   )
   .get(
+    verifyAccessTokenOptional,
     validateQuery(validator.publicVenueFiltersSchema),
     paginationMiddleware(),
     controller.getPaginatedActiveVenues
@@ -171,6 +172,52 @@ router
 router
   .route('/my-venues')
   .get(verifyAccessToken, requirePermission(P.venues.read), controller.getMyVenues);
+
+/**
+ * @openapi
+ * /venues/pins:
+ *   get:
+ *     tags: [Venues]
+ *     summary: Get lightweight venue pins for map view (geospatial filtering)
+ *     parameters:
+ *       - in: query
+ *         name: swLng
+ *         schema:
+ *           type: number
+ *         description: Southwest longitude (bounding box)
+ *       - in: query
+ *         name: swLat
+ *         schema:
+ *           type: number
+ *         description: Southwest latitude
+ *       - in: query
+ *         name: neLng
+ *         schema:
+ *           type: number
+ *         description: Northeast longitude
+ *       - in: query
+ *         name: neLat
+ *         schema:
+ *           type: number
+ *         description: Northeast latitude
+ *     responses:
+ *       200:
+ *         description: Array of venue pins with location and rating
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ */
+router
+  .route('/pins')
+  .get(controller.getVenuePins);
 
 /**
  * @openapi
@@ -303,6 +350,27 @@ router
 
 /**
  * @openapi
+ * /venues/featured:
+ *   get:
+ *     tags: [Venues]
+ *     summary: Get all featured venues (public)
+ *     responses:
+ *       200:
+ *         description: Array of featured venues
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessResponse'
+ */
+router
+  .route('/featured')
+  .get(
+    verifyAccessTokenOptional,
+    controller.getFeaturedVenues
+  );
+
+/**
+ * @openapi
  * /venues/{id}:
  *   get:
  *     tags: [Venues]
@@ -377,7 +445,11 @@ router
  */
 router
   .route('/:id')
-  .get(validateParams(validator.venueIdParamSchema), controller.getVenueById)
+  .get(
+    verifyAccessTokenOptional,
+    validateParams(validator.venueIdParamSchema),
+    controller.getVenueById
+  )
   .put(
     verifyAccessToken,
     requirePermission(P.venues.update),
@@ -613,6 +685,26 @@ router
  *         description: Venue not found
  *       409:
  *         description: Only approved venues can be featured
+ *   delete:
+ *     tags: [Venues]
+ *     summary: Unfeature a venue (admin only)
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Venue removed from featured list
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Admin role required
+ *       404:
+ *         description: Venue not found
  */
 router
   .route('/:id/feature')
@@ -623,6 +715,13 @@ router
     validateParams(validator.venueIdParamSchema),
     validateBody(validator.featureVenueSchema),
     controller.featureVenue
+  )
+  .delete(
+    verifyAccessToken,
+    requireRole('admin'),
+    requirePermission(P.venues.activate),
+    validateParams(validator.venueIdParamSchema),
+    controller.unfeatureVenue
   );
 
 export { router as venueRouter };

@@ -1,10 +1,10 @@
-import { Types, type Document } from 'mongoose';
+import { Types, type ClientSession } from 'mongoose';
 import { buildPaginationMeta } from '../../utils/paginationUtils';
 import { BookingStatus, type BookingStatusType } from '../../constants/booking.constants';
-import { LockModel } from './lock.model';
-import { BookingModel } from './booking.model';
-import { FailedBookingModel } from './failedBooking.model';
-import { ProcessedWebhookModel } from './processedWebhook.model';
+import { LockModel } from './models/lock.model';
+import { BookingModel } from './models/booking.model';
+import { FailedBookingModel } from './models/failedBooking.model';
+import { ProcessedWebhookModel } from './models/processedWebhook.model';
 import { VenueModel } from '../venue/venue.model';
 import type { IVenue, IRefundRule } from '../venue/venue.types';
 import type { IBooking } from './booking.types';
@@ -214,13 +214,14 @@ export async function fetchActiveConflicts(
   options?: {
     excludeUserId?: string;
     excludeSessionTokenHash?: string;
+    session?: ClientSession;
   }
 ): Promise<{ start: number; end: number }[]> {
   const vId = new Types.ObjectId(venueId);
 
   let lockQuery: Record<string, unknown> = { venueId: vId, date };
   const excludeConditions: Record<string, unknown>[] = [];
-  
+
   if (options?.excludeUserId) {
     excludeConditions.push({ userId: new Types.ObjectId(options.excludeUserId) });
   }
@@ -232,10 +233,8 @@ export async function fetchActiveConflicts(
     lockQuery = { ...lockQuery, $nor: excludeConditions };
   }
 
-  const [locks, bookings] = await Promise.all([
-    LockModel.find(lockQuery).lean(),
-    BookingModel.find({ venueId: vId, date, status: BookingStatus.CONFIRMED }).lean(),
-  ]);
+  const locks = await LockModel.find(lockQuery).session(options?.session ?? null).lean();
+  const bookings = await BookingModel.find({ venueId: vId, date, status: BookingStatus.CONFIRMED }).session(options?.session ?? null).lean();
 
   return [
     ...locks.map((l: ILock) => ({ start: l.startTime, end: l.endTime })),
@@ -401,13 +400,31 @@ export async function fetchUserBookingByRefIdOrId(bookingId: string, userId: str
   }
 }
 
-export async function findLockById(lockId: string): Promise<ILock | null> {
+export async function findLockById(lockId: string, userId: string): Promise<ILock | null> {
+  return LockModel.findOne({ _id: new Types.ObjectId(lockId), userId: new Types.ObjectId(userId) }).lean();
+}
+
+export async function findLockByIdRaw(lockId: string): Promise<ILock | null> {
   return LockModel.findById(lockId).lean();
 }
 
-export async function deleteLocksByConditions(deleteConditions: Record<string, unknown>[]): Promise<unknown> {
+export async function deleteLockById(lockId: string): Promise<void> {
+  await LockModel.deleteOne({ _id: new Types.ObjectId(lockId) });
+}
+
+export async function createLock(
+  data: Partial<ILock>[],
+  session?: ClientSession
+): Promise<ILock[]> {
+  return LockModel.create(data, { session });
+}
+
+export async function deleteLocksByConditions(
+  deleteConditions: Record<string, unknown>[],
+  session?: ClientSession
+): Promise<unknown> {
   if (deleteConditions.length > 0) {
-    return LockModel.deleteMany({ $or: deleteConditions });
+    return LockModel.deleteMany({ $or: deleteConditions }, { session });
   }
   return null;
 }
@@ -416,10 +433,37 @@ export async function fetchBookingByPaymentReference(paymentId: string): Promise
   return BookingModel.findOne({ paymentReference: paymentId }).lean();
 }
 
-export async function updateBookingToCancelled(booking: Document & IBooking, reason?: string): Promise<IBooking> {
-  booking.set('status', BookingStatus.CANCELLED);
-  if (reason) {
-    booking.set('cancellationReason', reason);
-  }
-  return booking.save();
+// Atomically transitions CONFIRMED -> CANCELLED. Returns the pre-update
+// document if this call won the race, or null if the booking was already
+// cancelled (by a concurrent request or otherwise). This is the sole gate
+// that must pass before a refund is issued — it guarantees at most one
+// caller can ever proceed to refund for a given booking.
+export async function claimBookingForCancellation(
+  bookingId: string,
+  userId: string,
+  reason?: string
+): Promise<IBooking | null> {
+  return BookingModel.findOneAndUpdate(
+    {
+      _id: new Types.ObjectId(bookingId),
+      userId: new Types.ObjectId(userId),
+      status: BookingStatus.CONFIRMED,
+    },
+    {
+      $set: {
+        status: BookingStatus.CANCELLED,
+        ...(reason ? { cancellationReason: reason } : {}),
+      },
+    },
+    { new: false }
+  ).lean();
+}
+
+export async function findVerifiedUserIds(venueId: string, userIds: string[]): Promise<Set<string>> {
+  const verified = await BookingModel.find({
+    venueId,
+    userId: { $in: userIds },
+    status: { $ne: BookingStatus.CANCELLED },
+  }).distinct('userId');
+  return new Set(verified.map(id => id.toString()));
 }

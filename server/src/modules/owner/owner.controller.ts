@@ -2,9 +2,10 @@ import type { z } from 'zod';
 import type { Request, Response } from 'express';
 import { ResponseUtil } from '../../utils/responseUtils';
 import { handleError } from '../../utils/errors';
-import type { blockDatesSchema, unblockDatesSchema, offlineBookingSchema } from './owner.validator';
+import type { blockDatesSchema, unblockDatesSchema, offlineBookingSchema, ownerReplySchema, requestHideSchema } from './owner.validator';
 import * as service from './owner.service';
 import * as workflow from './owner.workflow';
+import * as reviewService from '../review/review.service';
 
 // GET /api/v1/owner/analytics/:venueId
 export const getVenueAnalytics = async (req: Request, res: Response): Promise<void> => {
@@ -21,8 +22,7 @@ export const getVenueAnalytics = async (req: Request, res: Response): Promise<vo
 export const getVenueBookings = async (req: Request, res: Response): Promise<void> => {
   try {
     const venueId = req.params.venueId as string;
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 10;
+    const { page, limit } = req.pagination ?? { page: 1, limit: 10, skip: 0, sort: '' };
 
     const result = await service.getVenueBookingsService(venueId, page, limit);
 
@@ -91,5 +91,52 @@ export const unblockDates = async (req: Request, res: Response): Promise<void> =
     ResponseUtil.success(res, 'Dates unblocked successfully', blockedDates);
   } catch (e) {
     handleError(res, e, 'unblockDates');
+  }
+};
+
+// GET /api/v1/owner/venue/:venueId/reviews
+export const getVenueReviews = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const venueId = req.params.venueId as string;
+    const { page, limit, skip } = req.pagination ?? { page: 1, limit: 10, skip: 0, sort: '' };
+
+    const result = await reviewService.getOwnerVenueReviews(venueId, { page, limit, skip, sort: '' });
+    ResponseUtil.paginated(res, 'Venue reviews retrieved', result.reviews, result.pagination, 'reviews');
+  } catch (e) {
+    handleError(res, e, 'getVenueReviews');
+  }
+};
+
+// POST /api/v1/owner/venue/:venueId/reviews/:reviewId/reply
+export const replyToReview = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const venueId = req.params.venueId as string;
+    const reviewId = req.params.reviewId as string;
+    const { text } = req.validated?.body as z.infer<typeof ownerReplySchema>;
+
+    const review = await reviewService.replyToReview(venueId, reviewId, text);
+    ResponseUtil.success(res, 'Reply added successfully', review);
+  } catch (e) {
+    handleError(res, e, 'replyToReview');
+  }
+};
+
+// POST /api/v1/owner/venue/:venueId/reviews/:reviewId/report
+export const reportReview = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.userId;
+    if (!userId) {
+      ResponseUtil.unauthorized(res, 'Unauthorized');
+      return;
+    }
+
+    const venueId = req.params.venueId as string;
+    const reviewId = req.params.reviewId as string;
+    const { reason } = req.validated?.body as z.infer<typeof requestHideSchema>;
+
+    const review = await reviewService.requestHideForReview(venueId, reviewId, userId, reason);
+    ResponseUtil.success(res, 'Report submitted to admin', review);
+  } catch (e) {
+    handleError(res, e, 'reportReview');
   }
 };

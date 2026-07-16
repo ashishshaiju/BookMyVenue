@@ -1,9 +1,4 @@
-import type {
-  ISlotConfig,
-  IPreviewSlot,
-  IBlockedTime,
-  IPricingRule,
-} from './slotGenerator.types';
+import type { ISlotConfig, IPreviewSlot, IBlockedTime, IPricingRule } from './slotGenerator.types';
 
 export const timeToMinutes = (time: string): number => {
   const [hours, minutes] = time.split(':').map(Number);
@@ -64,23 +59,12 @@ export const getPriceForTimeRange = (
 };
 
 export const isWorkingDay = (date: Date, workingDays: string[]): boolean => {
-  const dayNames = [
-    'Sunday',
-    'Monday',
-    'Tuesday',
-    'Wednesday',
-    'Thursday',
-    'Friday',
-    'Saturday',
-  ];
+  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   const dayName = dayNames[date.getDay()];
   return workingDays.includes(dayName);
 };
 
-export const getNextWorkingDay = (
-  startDate: Date,
-  workingDays: string[]
-): Date => {
+export const getNextWorkingDay = (startDate: Date, workingDays: string[]): Date => {
   const maxDays = 90;
   const currentDate = new Date(startDate);
 
@@ -106,10 +90,7 @@ export const parseDateString = (dateStr: string): Date => {
   return new Date(year, month - 1, day);
 };
 
-export const generateFlexibleSlots = (
-  date: string,
-  config: ISlotConfig
-): IPreviewSlot[] => {
+export const generateFlexibleSlots = (date: string, config: ISlotConfig): IPreviewSlot[] => {
   const slots: IPreviewSlot[] = [];
 
   if (!config.workingHours || !config.slotDuration) {
@@ -138,16 +119,10 @@ export const generateFlexibleSlots = (
     const endTime = minutesToTime(currentTime + slotDurationMinutes);
 
     const isBlocked = isTimeBlocked(startTime, endTime, config.blockedTimes);
-    const defaultPrice = config.pricingType === 'timeBasedPricing' 
-      ? config.basePrice || '0'
-      : config.samePrice || '0';
+    const defaultPrice =
+      config.pricingType === 'timeBasedPricing' ? config.basePrice || '0' : config.samePrice || '0';
 
-    const price = getPriceForTimeRange(
-      startTime,
-      endTime,
-      config.pricingRules,
-      defaultPrice
-    );
+    const price = getPriceForTimeRange(startTime, endTime, config.pricingRules, defaultPrice);
 
     const slot: IPreviewSlot = {
       id: `slot-${date}-${slotIndex}`,
@@ -155,9 +130,7 @@ export const generateFlexibleSlots = (
       endTime,
       price,
       isAvailable: !isBlocked,
-      reason: isBlocked
-        ? 'This time slot is blocked'
-        : undefined,
+      reason: isBlocked ? 'This time slot is blocked' : undefined,
     };
 
     slots.push(slot);
@@ -168,10 +141,7 @@ export const generateFlexibleSlots = (
   return slots;
 };
 
-export const prepareFixedSlots = (
-  date: string,
-  config: ISlotConfig
-): IPreviewSlot[] => {
+export const prepareFixedSlots = (date: string, config: ISlotConfig): IPreviewSlot[] => {
   const slots: IPreviewSlot[] = [];
 
   if (!config.fixedPackages || config.fixedPackages.length === 0) {
@@ -179,11 +149,7 @@ export const prepareFixedSlots = (
   }
 
   config.fixedPackages.forEach((pkg, index) => {
-    const isBlocked = isTimeBlocked(
-      pkg.startTime,
-      pkg.endTime,
-      config.blockedTimes
-    );
+    const isBlocked = isTimeBlocked(pkg.startTime, pkg.endTime, config.blockedTimes);
 
     const slot: IPreviewSlot = {
       id: `fixed-${date}-${index}`,
@@ -201,10 +167,7 @@ export const prepareFixedSlots = (
   return slots;
 };
 
-export const generateSlots = (
-  date: string,
-  config: ISlotConfig
-): IPreviewSlot[] => {
+export const generateSlots = (date: string, config: ISlotConfig): IPreviewSlot[] => {
   if (config.bookingType === 'fixedBooking') {
     return prepareFixedSlots(date, config);
   }

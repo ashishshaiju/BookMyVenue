@@ -1,4 +1,4 @@
-import type { AddVenueFormValues } from '../types/venue.types';
+import type { AddVenueFormValues } from '@/types/venue.types';
 
 export function mapFormToDTO(values: AddVenueFormValues, imageUrls: string[]) {
   const base = {
@@ -6,6 +6,9 @@ export function mapFormToDTO(values: AddVenueFormValues, imageUrls: string[]) {
     description: values.VenueDescription,
     address: values.fullAddress,
     ...(values.googleMapsLink ? { googleMapsUrl: values.googleMapsLink } : {}),
+    ...(values.coordinates && {
+      coordinates: [Number(values.coordinates.lng), Number(values.coordinates.lat)],
+    }),
 
     venueType: values.venueType,
     district: values.district,
@@ -64,9 +67,10 @@ export function mapFormToDTO(values: AddVenueFormValues, imageUrls: string[]) {
     }));
 
   const pricingType = values.pricingType;
-  const basePrice = pricingType === 'fixedPricing'
-    ? Number(values.samePrice ?? 0)
-    : Number(values.pricing.basePrice ?? 0);
+  const basePrice =
+    pricingType === 'fixedPricing'
+      ? Number(values.samePrice ?? 0)
+      : Number(values.pricing.basePrice ?? 0);
 
   return {
     ...base,

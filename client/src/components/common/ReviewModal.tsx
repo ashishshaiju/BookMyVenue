@@ -6,11 +6,38 @@ type ReviewModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   venueName: string;
+  onSubmit?: (rating: number, comment: string) => Promise<void>;
 };
 
-const ReviewModal = ({ open, onOpenChange, venueName }: ReviewModalProps) => {
+const ReviewModal = ({ open, onOpenChange, venueName, onSubmit }: ReviewModalProps) => {
   const [rating, setRating] = useState(0);
   const [review, setReview] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async () => {
+    if (rating === 0) {
+      alert('Please select a rating');
+      return;
+    }
+
+    if (!onSubmit) {
+      alert('Submit handler not configured');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await onSubmit(rating, review);
+      setRating(0);
+      setReview('');
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Failed to submit review:', error);
+      alert('Failed to submit review. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -66,13 +93,18 @@ const ReviewModal = ({ open, onOpenChange, venueName }: ReviewModalProps) => {
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
+            disabled={isSubmitting}
             className="rounded-2xl cursor-pointer"
           >
             Cancel
           </Button>
 
-          <Button className="rounded-2xl bg-[var(--bg-green)] hover:opacity-90 cursor-pointer">
-            Submit Review
+          <Button
+            onClick={handleSubmit}
+            disabled={isSubmitting || rating === 0}
+            className="rounded-2xl bg-[var(--bg-green)] hover:opacity-90 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isSubmitting ? 'Submitting...' : 'Submit Review'}
           </Button>
         </div>
       </DialogContent>

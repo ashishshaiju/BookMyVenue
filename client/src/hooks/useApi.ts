@@ -4,10 +4,10 @@ import {
   type UseQueryOptions,
   type UseMutationOptions,
 } from '@tanstack/react-query';
-import { axiosInstance } from '../config/axios';
+import { axiosInstance } from '@/config/axios';
 import { AxiosError } from 'axios';
 import type { AxiosRequestConfig } from 'axios';
-import { showError } from '../utils/toast';
+import { useToast } from './useToast';
 
 // Error message helper
 const getErrorMessage = (error: unknown): string => {
@@ -46,6 +46,8 @@ export function useApiMutation<T = unknown, TVariables = unknown>(
   config: AxiosRequestConfig,
   options?: UseMutationOptions<T, Error, TVariables>
 ) {
+  const { error: showError } = useToast();
+
   return useMutation<T, Error, TVariables>({
     mutationFn: async (variables: TVariables) => {
       try {

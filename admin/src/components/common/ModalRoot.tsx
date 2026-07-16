@@ -1,21 +1,21 @@
-import { useModalStore } from '../../store/useModalStore';
+import { useModalStore } from "@/store/useModalStore";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
-import { Loader2 } from 'lucide-react';
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { Loader2 } from "lucide-react";
 
 const SIZE_CLASS = {
-  sm: 'sm:max-w-sm',
-  md: 'sm:max-w-md',
-  lg: 'sm:max-w-2xl',
-  xl: 'sm:max-w-4xl',
-  '2xl': 'sm:max-w-6xl',
+  sm: "sm:max-w-sm",
+  md: "sm:max-w-md",
+  lg: "sm:max-w-2xl",
+  xl: "sm:max-w-4xl",
+  "2xl": "sm:max-w-6xl",
 };
 
 export function ModalRoot() {
@@ -27,7 +27,12 @@ export function ModalRoot() {
 
   return (
     <Dialog open={true} onOpenChange={(open) => !open && close()}>
-      <DialogContent className={cn(SIZE_CLASS[modal.size ?? 'lg'], 'max-h-[90vh] flex flex-col')}>
+      <DialogContent
+        className={cn(
+          SIZE_CLASS[modal.size ?? "lg"],
+          "max-h-[90vh] flex flex-col",
+        )}
+      >
         <DialogHeader>
           <DialogTitle>{modal.title}</DialogTitle>
         </DialogHeader>
@@ -42,12 +47,16 @@ export function ModalRoot() {
             {modal.actions.map((action, i) => (
               <Button
                 key={i}
-                variant={action.variant ?? 'default'}
+                variant={action.variant ?? "default"}
                 disabled={action.disabled || action.isLoading}
                 onClick={action.onClick}
               >
-                {action.isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {!action.isLoading && action.icon && <span className="mr-2">{action.icon}</span>}
+                {action.isLoading && (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                )}
+                {!action.isLoading && action.icon && (
+                  <span className="mr-2">{action.icon}</span>
+                )}
                 {action.label}
               </Button>
             ))}

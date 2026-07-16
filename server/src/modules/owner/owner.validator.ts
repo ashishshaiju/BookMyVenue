@@ -33,4 +33,20 @@ export const offlineBookingSchema = z.object({
   startTime: z.number().int().min(0).max(1439, 'startTime must be minutes from midnight'),
   endTime: z.number().int().min(1).max(1440, 'endTime must be minutes from midnight'),
   amountPaid: z.number().positive('Amount must be positive'),
+}).refine((data) => data.endTime > data.startTime, {
+  message: 'endTime must be after startTime',
+  path: ['endTime'],
+});
+
+export const reviewParamsSchema = z.object({
+  venueId: z.string().regex(/^[a-f\d]{24}$/i, 'Invalid venue ID'),
+  reviewId: z.string().regex(/^[a-f\d]{24}$/i, 'Invalid review ID'),
+});
+
+export const ownerReplySchema = z.object({
+  text: z.string().trim().min(1, 'Reply cannot be empty').max(500, 'Reply too long'),
+});
+
+export const requestHideSchema = z.object({
+  reason: z.string().trim().min(10, 'Reason must be at least 10 characters').max(500),
 });

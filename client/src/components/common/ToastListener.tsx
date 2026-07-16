@@ -1,8 +1,10 @@
 import { useEffect } from 'react';
-import { showError } from '@/utils/toast';
+import { useToast } from '@/hooks/useToast';
 
 // Listens to global interceptor events and displays toast notifications.
 export function ToastListener() {
+  const { error: showError } = useToast();
+
   useEffect(() => {
     const handleLogout = (event: CustomEvent<{ message: string }>) => {
       showError(event.detail?.message || 'Session expired. Please log in again.');
@@ -19,7 +21,7 @@ export function ToastListener() {
       window.removeEventListener('auth:logout', handleLogout as EventListener);
       window.removeEventListener('auth:forbidden', handleForbidden as EventListener);
     };
-  }, []);
+  }, [showError]);
 
   return null;
 }

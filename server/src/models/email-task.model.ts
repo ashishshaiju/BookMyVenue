@@ -15,6 +15,7 @@ export interface IEmailTask extends Document {
   status: EmailTaskStatusType;
   workerId: string | null;
   lockedAt: Date | null;
+  retryAfter: Date;
   retries: number;
   lastError: string | null;
   createdAt: Date;
@@ -38,6 +39,7 @@ const EmailTaskSchema = new Schema<IEmailTask>(
     },
     workerId: { type: String, default: null },
     lockedAt: { type: Date, default: null },
+    retryAfter: { type: Date, required: true },
     retries: { type: Number, default: 0 },
     lastError: { type: String, default: null },
   },
@@ -45,7 +47,7 @@ const EmailTaskSchema = new Schema<IEmailTask>(
 );
 
 // Compound index for fast polling
-EmailTaskSchema.index({ status: 1, lockedAt: 1 });
+EmailTaskSchema.index({ status: 1, lockedAt: 1, retryAfter: 1 });
 EmailTaskSchema.index({ createdAt: 1 }, { expireAfterSeconds: 15 * 60 });
 
 export const EmailTaskModel = mongoose.model<IEmailTask>(

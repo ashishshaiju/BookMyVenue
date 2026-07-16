@@ -4,6 +4,8 @@ import type { VenueStatusEnum, VenueFields } from '../../constants/venue.constan
 
 export type VenueStatus = (typeof VenueStatusEnum)[number];
 
+export type PlainVenue = Omit<IVenue, keyof Document> & { _id: IVenue['_id'] };
+
 export type VenueKey = (typeof VenueFields)[number];
 
 export interface IGeoPoint {
@@ -105,6 +107,10 @@ export interface IVenue extends Document {
   // Cancellation & Refund
   cancellation: ICancellation;
 
+  // Ratings & Reviews
+  avgRating: number;
+  reviewCount: number;
+
   // Operational
   status: VenueStatus;
   ownerUserId: mongoose.Types.ObjectId;
@@ -157,5 +163,8 @@ export interface PublicVenueFilters {
   spaceAttributes?: string[];
   seatingConfigurations?: string[];
   amenities?: string[];
-  sortBy?: 'price-low' | 'price-high' | 'rating';
+  sortBy?: 'price-low' | 'price-high' | 'rating' | 'distance';
+  lat?: number;
+  lng?: number;
+  radiusKm?: number;
 }

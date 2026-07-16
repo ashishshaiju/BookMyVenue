@@ -8,6 +8,11 @@ export async function findUserById(userId: string): Promise<IUser | null> {
   return UserModel.findById(userId).select('-password').exec();
 }
 
+export async function findUserEmailById(userId: string): Promise<string | null> {
+  const user = await UserModel.findById(userId).select('email').lean().exec();
+  return (user as { email?: string } | null)?.email ?? null;
+}
+
 export async function findActiveUserById(id: string): Promise<IUser | null> {
   return UserModel.findOne({ _id: id, active: true, deleted: false }).exec();
 }
@@ -54,6 +59,32 @@ export async function updateUserPassword(
     { _id: userId },
     { $set: { password: passwordHash, passwordChangedAt: new Date() } },
     { session }
+  ).exec();
+}
+
+export async function findActiveUserByUsernameExcludingId(
+  username: string,
+  excludeUserId: string
+): Promise<IUser | null> {
+  return UserModel.findOne({
+    username,
+    _id: { $ne: excludeUserId },
+    deleted: false,
+  }).exec();
+}
+
+export async function updateUserProfile(
+  userId: string,
+  data: { username?: string; profilePicture?: string; profilePicturePublicId?: string }
+): Promise<IUser | null> {
+  return UserModel.findByIdAndUpdate(userId, { $set: data }, { new: true }).exec();
+}
+
+export async function clearUserProfilePicture(userId: string): Promise<IUser | null> {
+  return UserModel.findByIdAndUpdate(
+    userId,
+    { $unset: { profilePicture: '', profilePicturePublicId: '' } },
+    { new: true }
   ).exec();
 }
 
@@ -122,6 +153,7 @@ export async function findAllUsers(
           username: 1,
           email: 1,
           active: 1,
+          isBanned: 1,
           createdAt: 1,
           roles: { $map: { input: '$roles', as: 'r', in: '$$r.name' } },
           venues: 1,
@@ -149,5 +181,49 @@ export async function toggleUserStatus(userId: string): Promise<IUser | null> {
   }
   user.active = !user.active;
   await user.save();
+  return user;
+}
+
+export async function banUser(userId: string, adminId: string, banReason: string): Promise<IUser> {
+  const user = await UserModel.findByIdAndUpdate(
+    userId,
+    {
+      active: false,
+      banReason,
+      bannedBy: adminId,
+      bannedAt: new Date(),
+    },
+    { new: true }
+  ).exec();
+
+  if (!user) {
+    throw new Error('User not found');
+  }
+
+  return user;
+}
+
+export async function unbanUser(userId: string): Promise<IUser> {
+  // Using $unset for legacy fields, and $set for actual schema fields
+  const user = await UserModel.findByIdAndUpdate(
+    userId,
+    {
+      $unset: {
+        banReason: 1,
+        bannedBy: 1,
+        bannedAt: 1,
+      },
+      $set: {
+        isBanned: false,
+        active: true,
+      }
+    },
+    { new: true, strict: false }
+  ).exec();
+
+  if (!user) {
+    throw new Error('User not found');
+  }
+
   return user;
 }

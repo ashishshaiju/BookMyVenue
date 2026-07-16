@@ -4,6 +4,8 @@ import * as repo from './owner.repository';
 import type { offlineBookingSchema } from './owner.validator';
 import type { IBooking } from '../booking/booking.types';
 import type { z } from 'zod';
+import { fetchActiveConflicts } from '../booking/booking.repository';
+import { checkOverlap } from '../../utils/timeUtils';
 
 export function getDateThreshold(daysAgo: number): string {
   const date = new Date();
@@ -31,6 +33,11 @@ export async function getVenueBookingsService(venueId: string, page: number, lim
 }
 
 export async function createOfflineBookingService(userId: string, dto: z.infer<typeof offlineBookingSchema>): Promise<{ bookingId: string }> {
+  const conflicts = await fetchActiveConflicts(dto.venueId, dto.date);
+  if (checkOverlap(dto.startTime, dto.endTime, conflicts)) {
+    throw new ConflictError('This slot overlaps with an existing booking or hold for the selected date.');
+  }
+
   const booking = await repo.createOfflineBookingRecord(
     dto.venueId,
     userId,

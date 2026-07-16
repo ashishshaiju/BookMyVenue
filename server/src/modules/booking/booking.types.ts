@@ -3,6 +3,12 @@ import type { BookingStatusType } from '../../constants/booking.constants';
 
 export type BookingStatus = BookingStatusType;
 
+export interface RazorpayWebhookNotes {
+  lockId?: string;
+  venueId?: string;
+  userId?: string;
+}
+
 export interface IBooking extends Document {
   venueId: Types.ObjectId;
   userId: Types.ObjectId;

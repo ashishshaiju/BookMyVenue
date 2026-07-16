@@ -1,11 +1,11 @@
 import type { Request, Response } from 'express';
-import { VenueModel } from '../venue/venue.model';
+import { findVenueById } from '../venue/venue.repository';
 import { fetchActiveConflicts } from '../booking/booking.repository';
 import { generateAvailability, getBookableDates } from './availability.workflow';
 import { ResponseUtil } from '../../utils/responseUtils';
 import { logError, logInfo } from '../../utils/logger';
 import crypto from 'crypto';
-import type { VenueIdParamDTO } from '../booking/booking.validator';
+import { validateDateForVenue, type VenueIdParamDTO } from '../booking/booking.validator';
 import type { AvailabilityQueryDTO } from './availability.validator';
 
 export const getVenueAvailability = async (req: Request, res: Response): Promise<void> => {
@@ -19,7 +19,7 @@ export const getVenueAvailability = async (req: Request, res: Response): Promise
     const { id } = validated.params as VenueIdParamDTO;
     const { date } = validated.query as AvailabilityQueryDTO;
 
-    const venue = await VenueModel.findById(id).lean();
+    const venue = await findVenueById(id);
     if (!venue) {
        ResponseUtil.notFound(res, 'Venue not found');
       return;
@@ -28,6 +28,12 @@ export const getVenueAvailability = async (req: Request, res: Response): Promise
     if (!date) {
       const bookableData = getBookableDates(venue);
       ResponseUtil.success(res, 'Bookable dates calculated successfully', bookableData);
+      return;
+    }
+
+    const dateCheck = validateDateForVenue(venue, date);
+    if (!dateCheck.valid) {
+      ResponseUtil.badRequest(res, dateCheck.reason ?? 'This date is not available for booking.');
       return;
     }
 

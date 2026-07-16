@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
-import { FaBuilding } from 'react-icons/fa';
-import { Formik, Form, Field, ErrorMessage } from 'formik';
+import { Formik, Form } from 'formik';
 import { Link, useNavigate, useSearchParams } from 'react-router';
+import AuthLayout from '@/layout/AuthLayout';
 import { resetPasswordSchema } from './validation';
 import { axiosInstance } from '@/config/axios';
 import { API_ENDPOINTS } from '@/constants';
 import { useToast } from '@/hooks/useToast';
 import { extractErrorMessage } from '@/utils/toast';
 import type { FormikHelpers } from 'formik';
+import { PasswordInput } from '@/components/auth/PasswordInput';
+import { AuthSubmitButton } from '@/components/auth/AuthSubmitButton';
 
 interface ResetFormValues {
   password: string;
@@ -17,6 +19,7 @@ interface ResetFormValues {
 const ResetPasswordPage = () => {
   const toast = useToast();
   const navigate = useNavigate();
+
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token');
 
@@ -24,10 +27,9 @@ const ResetPasswordPage = () => {
 
   useEffect(() => {
     if (!token) {
-      toast.error('Reset token is missing from the URL. Please request a new link.');
+      toast.error('Reset token is missing from the URL. Please request a new password reset link.');
     }
-
-  }, [token]);
+  }, [token, toast]);
 
   const handleSubmit = async (
     values: ResetFormValues,
@@ -47,6 +49,7 @@ const ResetPasswordPage = () => {
       });
 
       toast.success(response.data?.message || 'Password reset successful!');
+
       resetForm();
 
       setTimeout(() => {
@@ -62,101 +65,76 @@ const ResetPasswordPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-center items-center p-5">
-      <div className="flex flex-col items-center gap-4">
-        <h1 className="text-[var(--text-primary)] font-sans text-5xl font-bold">Book My Venue</h1>
-
-        <div className="bg-[var(--bg-secondary)] p-2 rounded-sm">
-          <FaBuilding className="text-5xl" color="white" />
-        </div>
-      </div>
-
-      <div className="flex flex-col justify-center items-center">
-        {!token && (
-          <div className="w-120 mt-6 p-4 rounded-xl bg-red-500/10 border border-red-500 text-red-500 text-sm text-center">
-            Reset token is missing. Please request a new password reset link.
-          </div>
-        )}
-        <h2 className="text-3xl text-[var(--text-primary)] mt-10 font-semibold">Reset Password</h2>
-
-        <p className="text-[var(--text-secondary)] mt-2">
-          Create a new secure password for your account.
-        </p>
-
-        <Formik
-          initialValues={{
-            password: '',
-            confirmPassword: '',
-          }}
-          validationSchema={resetPasswordSchema}
-          onSubmit={handleSubmit}
-        >
-          <Form className="flex flex-col gap-5 w-full mt-6">
-            <div className="flex flex-col gap-2">
-              <label className="text-[var(--text-secondary)] text-sm" htmlFor="password">
-                New Password
-              </label>
-
-              <Field
-                type="password"
-                id="password"
-                name="password"
-                placeholder="Enter new password"
-                className="w-120 p-3 border border-[var(--text-secondary)] rounded-xl bg-[var(--bg-tertiary)] text-[var(--text-primary)]"
-                disabled={loading || !token}
-              />
-
-              <div className="h-2">
-                <ErrorMessage name="password" component="p" className="text-red-500 text-sm" />
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <label className="text-[var(--text-secondary)] text-sm" htmlFor="confirmPassword">
-                Confirm Password
-              </label>
-
-              <Field
-                type="password"
-                id="confirmPassword"
-                name="confirmPassword"
-                placeholder="Confirm new password"
-                className="w-120 p-3 border border-[var(--text-secondary)] rounded-xl bg-[var(--bg-tertiary)] text-[var(--text-primary)]"
-                disabled={loading || !token}
-              />
-
-              <div className="h-2">
-                <ErrorMessage
-                  name="confirmPassword"
-                  component="p"
-                  className="text-red-500 text-sm"
-                />
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading || !token}
-              className="w-120 mt-6 bg-[var(--bg-secondary)] border-2 border-transparent hover:bg-[var(--bg-primary)] hover:border-2 hover:text-[var(--text-primary)] hover:border-[var(--bg-secondary)] transition-all duration-200 p-3 rounded-xl text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? 'Resetting...' : 'Reset Password'}
-            </button>
-          </Form>
-        </Formik>
-
-        <div className="mt-10">
-          <p className="text-[var(--text-secondary)]">
-            Back to
+    <AuthLayout
+      title="Reset Password 🔐"
+      subtitle="Create a strong password to secure your account."
+      footer={
+        <div className="flex flex-col gap-2">
+          <div>
+            Remembered your password?
             <Link
               to="/login"
-              className="text-[var(--text-primary)] ml-2 font-medium hover:underline transition-all"
+              className="ml-2 font-semibold text-[var(--text-primary)] hover:underline"
             >
               Sign In
             </Link>
+          </div>
+          <p className="text-xs leading-relaxed text-[var(--text-secondary)]/80">
+            Note: If you choose to log in using your existing password, this reset token will be
+            immediately invalidated. As a best practice, changing your password frequently helps
+            maintain account security. But don't forget it too!
           </p>
         </div>
-      </div>
-    </div>
+      }
+    >
+      {!token && (
+        <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 p-4 dark:border-red-900 dark:bg-red-950">
+          <h3 className="font-semibold text-red-700 dark:text-red-400">Invalid Reset Link</h3>
+          <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+            Your password reset link is missing or has expired. Please request a new password reset
+            email.
+          </p>
+        </div>
+      )}
+
+      <Formik
+        initialValues={{
+          password: '',
+          confirmPassword: '',
+        }}
+        validationSchema={resetPasswordSchema}
+        onSubmit={handleSubmit}
+      >
+        {({ values }) => (
+          <Form className="space-y-6">
+            <PasswordInput
+              id="password"
+              name="password"
+              label="New Password"
+              placeholder="Enter new password"
+              withHint
+              value={values.password}
+              disabled={loading || !token}
+            />
+
+            <PasswordInput
+              id="confirmPassword"
+              name="confirmPassword"
+              label="Confirm Password"
+              placeholder="Confirm new password"
+              disabled={loading || !token}
+            />
+
+            <AuthSubmitButton
+              isSubmitting={loading}
+              disabled={!token}
+              text="Reset Password"
+              loadingText="Resetting Password..."
+            />
+          </Form>
+        )}
+      </Formik>
+    </AuthLayout>
   );
 };
 

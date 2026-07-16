@@ -24,8 +24,8 @@ export const razorpayConfig = {
 } as const;
 
 export const authEnvs = {
-  accessTokenExpiry: process.env.ACCESS_TOKEN_EXPIRY ?? '60s',
-  refreshTokenExpiry: process.env.REFRESH_TOKEN_EXPIRY ?? '30m',
+  accessTokenExpiry: process.env.ACCESS_TOKEN_EXPIRY ?? '30m',
+  refreshTokenExpiry: process.env.REFRESH_TOKEN_EXPIRY ?? '7d',
   accessTokenSecret: process.env.JWT_ACCESS_SECRET,
   refreshTokenSecret: process.env.JWT_REFRESH_SECRET,
 } as const;

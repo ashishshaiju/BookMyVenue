@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { verifyAccessToken } from '../../middlewares/auth.middleware';
 import { requireSuperAdmin } from '../../middlewares/rbac.middleware';
 import { validateBody, validateQuery } from '../../middlewares/validation.middleware';
+import { paginationMiddleware } from '../../middlewares/pagination.middleware';
 import * as validator from './role.validator';
 import { roleController } from './role.controller';
 
@@ -82,6 +83,6 @@ router
  */
 router
   .route('/admins')
-  .get(verifyAccessToken, requireSuperAdmin, validateQuery(validator.getAdminsQuerySchema), roleController.getAdmins);
+  .get(verifyAccessToken, requireSuperAdmin, validateQuery(validator.getAdminsQuerySchema), paginationMiddleware(), roleController.getAdmins);
 
 export { router as roleRouter };

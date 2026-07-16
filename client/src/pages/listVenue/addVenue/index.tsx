@@ -31,6 +31,7 @@ const BLANK_FORM: AddVenueFormValues = {
   pincode: '',
   fullAddress: '',
   googleMapsLink: '',
+  coordinates: null,
   spaceAttributes: [],
   seatingConfigurations: [],
   maxCapacity: '',
@@ -236,7 +237,7 @@ const AddVenue = () => {
                 <button
                   type="button"
                   onClick={() => setStep((s) => s - 1)}
-                  className="border border-[var(--bg-grey)] px-6 py-2.5 rounded-xl cursor-pointer hover:bg-[var(--bg-tertiary)] transition-colors"
+                  className="border border-[var(--bg-grey)] px-6 py-2.5 rounded-xl cursor-pointer hover:bg-[var(--bg-grey)]/30 transition-colors"
                 >
                   ← Previous
                 </button>
@@ -246,7 +247,7 @@ const AddVenue = () => {
 
               {hasErrors && (
                 <div className="text-center">
-                  <p className="text-red-500 text-sm font-semibold">
+                  <p className="text-red-500 dark:text-red-400 text-sm font-semibold">
                     Please fix the errors before continuing
                   </p>
                   <p

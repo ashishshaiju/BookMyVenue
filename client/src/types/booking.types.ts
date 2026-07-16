@@ -50,6 +50,7 @@ export interface BookingCardDTO {
   totalPrice: number;
   paymentMethod?: string;
   uiStatus: 'upcoming' | 'completed' | 'cancelled';
+  hasReview?: boolean;
 }
 
 export interface BookingDetailDTO extends BookingCardDTO {
@@ -82,4 +83,46 @@ export interface BookerInfoForm {
   phone: string;
   place: string;
   note?: string;
+}
+
+export interface ApiResponse<T> {
+  success: boolean;
+  data: T;
+  message?: string;
+}
+
+export interface VerifyPaymentPayload {
+  orderId: string;
+  paymentId: string;
+  signature: string;
+}
+
+export interface VerifyPaymentResult {
+  _id: string;
+  bookingRef: string;
+}
+
+export interface LockSlotPayload {
+  date: string;
+  startTime: string;
+  endTime: string;
+}
+
+export interface LockSlotResponse {
+  lockId: string;
+  expiresAt: string;
+  amountToPay: number;
+}
+
+export interface BookableDatesResponse {
+  bookableDates: string[];
+  disabledDates: string[];
+  maxDate: string;
+}
+
+export interface DayAvailabilityResponse {
+  venueId: string;
+  date: string;
+  bookingType: string;
+  slots: Slot[];
 }

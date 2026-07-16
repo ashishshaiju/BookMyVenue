@@ -20,7 +20,7 @@
   --bg-tertiary: #ffffff;
   --bg-green: #2b6953;
   --bg-grey: #e3e4e4;
-  --bg-star: #b2f746,
+  --bg-star: #b2f746;
   /* text color */
   --text-primary: #000000;
   --text-secondary: #7a7a80;
@@ -114,6 +114,27 @@ select:-webkit-autofill {
   }
 }
 
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  opacity: 0;
+}
+
+.animate-fade-in-up-delay {
+  animation: fade-in-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards;
+  opacity: 0;
+}
+
 @theme inline {
   --font-heading: var(--font-sans);
   --font-sans: 'Inter Variable', sans-serif;
@@ -158,6 +179,19 @@ select:-webkit-autofill {
 }
 
 .dark {
+  /* "Night" versions of the custom BookMyVenue tokens — soft charcoal base
+     (not near-black) with each layer a clearly distinct step: secondary is
+     the darkest (CTA buttons, same "darkest surface" role it has in light
+     mode), tertiary lifts up for card elevation, grey lifts further for
+     visible borders. */
+  --bg-primary: #2b2a33;
+  --bg-secondary: #1e1d24;
+  --bg-tertiary: #34333d;
+  --bg-grey: #403f4a;
+  --bg-green: #4ecf94;
+  --text-primary: #d6ddd8;
+  --text-secondary: #8a958e;
+
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
@@ -189,6 +223,43 @@ select:-webkit-autofill {
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+}
+
+/* Leaflet dark-mode overrides (VenueMap). Leaflet renders its own DOM for
+   tiles/controls/popups outside React, so it can't be reached with Tailwind
+   classes — themed here instead, scoped to .dark so light mode keeps the
+   library's default (already-correct) styling. */
+.dark .leaflet-tile-pane {
+  filter: invert(1) hue-rotate(180deg) brightness(0.95) contrast(0.9);
+}
+
+.dark .leaflet-popup-content-wrapper,
+.dark .leaflet-popup-tip {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.dark .leaflet-popup-close-button {
+  color: var(--text-secondary) !important;
+}
+
+.dark .leaflet-control-zoom a {
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary);
+  border-color: var(--bg-grey) !important;
+}
+
+.dark .leaflet-control-zoom a:hover {
+  background-color: var(--bg-grey);
+}
+
+.dark .leaflet-control-attribution {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+}
+
+.dark .leaflet-control-attribution a {
+  color: var(--bg-green);
 }
 
 @layer base {

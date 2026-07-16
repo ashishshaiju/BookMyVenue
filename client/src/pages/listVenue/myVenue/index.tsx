@@ -41,8 +41,10 @@ const MyVenues = () => {
       {isLoading && <VenueCardSkeleton count={3} />}
 
       {isError && (
-        <div className="bg-red-50 border border-red-100 rounded-2xl p-8 text-center">
-          <p className="text-red-600 mb-4">Failed to load your venues. Please try again.</p>
+        <div className="bg-red-50 dark:bg-red-950/30 border border-red-100 dark:border-red-900 rounded-2xl p-8 text-center">
+          <p className="text-red-600 dark:text-red-400 mb-4">
+            Failed to load your venues. Please try again.
+          </p>
           <Button variant="outline" onClick={() => refetch()}>
             Retry
           </Button>
@@ -50,7 +52,7 @@ const MyVenues = () => {
       )}
 
       {data && data.venues.length === 0 && (
-        <div className="bg-white border border-[var(--bg-grey)] rounded-3xl p-12 text-center flex flex-col items-center justify-center min-h-[400px]">
+        <div className="bg-[var(--bg-tertiary)] border border-[var(--bg-grey)] rounded-3xl p-12 text-center flex flex-col items-center justify-center min-h-[400px]">
           <div className="w-20 h-20 bg-[var(--bg-primary)] rounded-full flex items-center justify-center mb-6 text-[var(--bg-green)]">
             <MdAddBusiness size={40} />
           </div>

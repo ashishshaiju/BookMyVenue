@@ -21,7 +21,7 @@ const ListSidebar = () => {
             className={`flex items-center gap-3 rounded-xl px-4 py-3 transition ${
               isActive('add-venue')
                 ? 'bg-[var(--bg-green)] text-white shadow-md'
-                : 'text-[var(--text-primary)] hover:bg-[var(--bg-primary)]'
+                : 'text-[var(--text-primary)] hover:bg-[var(--bg-grey)]/30'
             }`}
           >
             <IoAddCircleOutline size={20} />
@@ -33,7 +33,7 @@ const ListSidebar = () => {
             className={`flex items-center gap-3 rounded-xl px-4 py-3 transition ${
               isActive('my-venues') || location.pathname === '/list-venue'
                 ? 'bg-[var(--bg-green)] text-white shadow-md'
-                : 'text-[var(--text-primary)] hover:bg-[var(--bg-primary)]'
+                : 'text-[var(--text-primary)] hover:bg-[var(--bg-grey)]/30'
             }`}
           >
             <MdOutlineMeetingRoom size={20} />
@@ -49,7 +49,7 @@ const ListSidebar = () => {
           className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-colors w-24 ${
             isActive('add-venue')
               ? 'text-[var(--bg-green)]'
-              : 'text-[var(--text-secondary)] hover:bg-[var(--bg-primary)]'
+              : 'text-[var(--text-secondary)] hover:bg-[var(--bg-grey)]/30'
           }`}
         >
           <IoAddCircleOutline size={22} />
@@ -61,7 +61,7 @@ const ListSidebar = () => {
           className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-colors w-24 ${
             isActive('my-venues') || location.pathname === '/list-venue'
               ? 'text-[var(--bg-green)]'
-              : 'text-[var(--text-secondary)] hover:bg-[var(--bg-primary)]'
+              : 'text-[var(--text-secondary)] hover:bg-[var(--bg-grey)]/30'
           }`}
         >
           <MdOutlineMeetingRoom size={22} />

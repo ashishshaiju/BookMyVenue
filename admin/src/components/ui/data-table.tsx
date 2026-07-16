@@ -2,9 +2,9 @@ import {
   flexRender,
   getCoreRowModel,
   useReactTable,
-} from '@tanstack/react-table';
-import type { ColumnDef } from '@tanstack/react-table';
-import { Button } from './button';
+} from "@tanstack/react-table";
+import type { ColumnDef } from "@tanstack/react-table";
+import { Button } from "./button";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -23,9 +23,8 @@ export function DataTable<TData, TValue>({
   totalPages,
   onPageChange,
   isLoading,
-  emptyMessage = 'No results.',
+  emptyMessage = "No results.",
 }: DataTableProps<TData, TValue>) {
-
   const table = useReactTable({
     data,
     columns,
@@ -41,12 +40,15 @@ export function DataTable<TData, TValue>({
               <tr key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
                   return (
-                    <th key={header.id} className="h-12 px-4 align-middle font-medium">
+                    <th
+                      key={header.id}
+                      className="h-12 px-4 align-middle font-medium"
+                    >
                       {header.isPlaceholder
                         ? null
                         : flexRender(
                             header.column.columnDef.header,
-                            header.getContext()
+                            header.getContext(),
                           )}
                     </th>
                   );
@@ -71,7 +73,10 @@ export function DataTable<TData, TValue>({
                 >
                   {row.getVisibleCells().map((cell) => (
                     <td key={cell.id} className="p-4 align-middle">
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext(),
+                      )}
                     </td>
                   ))}
                 </tr>
