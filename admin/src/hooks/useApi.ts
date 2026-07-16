@@ -5,7 +5,7 @@ import {
   type UseMutationOptions,
   type QueryKey,
 } from "@tanstack/react-query";
-import { axiosInstance } from "../config/axios";
+import { axiosInstance } from "@/config/axios";
 import { AxiosError } from "axios";
 import type { AxiosRequestConfig } from "axios";
 

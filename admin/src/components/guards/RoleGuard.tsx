@@ -1,7 +1,8 @@
 import { Navigate, Outlet } from "react-router";
-import { useApiQuery } from "../../hooks/useApi";
-import { QUERY_KEYS } from "../../config/queryKeys";
-import { API_ENDPOINTS } from "../../constants";
+import { useApiQuery } from "@/hooks/useApi";
+import { QUERY_KEYS } from "@/config/queryKeys";
+import { API_ENDPOINTS } from "@/constants";
+import { PROFILE_STALE_TIME } from "@/constants/queryConfig";
 import type { UserProfile } from "./AuthGuard";
 
 interface RoleGuardProps {
@@ -12,7 +13,7 @@ export function RoleGuard({ allowedRoles }: RoleGuardProps) {
   const { data: profile, isLoading } = useApiQuery<UserProfile>(
     QUERY_KEYS.PROFILE,
     { method: "GET", url: API_ENDPOINTS.PROFILE },
-    { staleTime: 5 * 60 * 1000 },
+    { staleTime: PROFILE_STALE_TIME },
   );
 
   if (isLoading) {

@@ -1,4 +1,4 @@
-import type { AddVenueFormValues } from '../types/venue.types';
+import type { AddVenueFormValues } from '@/types/venue.types';
 
 export function mapFormToDTO(values: AddVenueFormValues, imageUrls: string[]) {
   const base = {

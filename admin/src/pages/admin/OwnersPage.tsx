@@ -1,20 +1,19 @@
 import { useState } from "react";
 
-import { useModal } from "../../hooks/useModal";
-import { OwnerDetailPanel } from "../../components/common/panels/OwnerDetailPanel";
-import { useAdminUsers } from "../../services/api/useAdminUsers";
-import { DataTable } from "../../components/ui/data-table";
-import { Badge } from "../../components/ui/badge";
-import type { Owner } from "../../types";
-
-
+import { useModal } from "@/hooks/useModal";
+import { ROLES } from "@/constants/roles";
+import { OwnerDetailPanel } from "@/components/common/panels/OwnerDetailPanel";
+import { useAdminUsers } from "@/services/api/useAdminUsers";
+import { DataTable } from "@/components/ui/data-table";
+import { Badge } from "@/components/ui/badge";
+import type { Owner } from "@/types";
 
 // Component
 export default function OwnersPage() {
   const [page, setPage] = useState(1);
   const { openModal } = useModal();
 
-  const { data, isLoading } = useAdminUsers(page, "owner");
+  const { data, isLoading } = useAdminUsers(page, ROLES.OWNER);
 
   const columns = [
     {
@@ -74,7 +73,7 @@ export default function OwnersPage() {
 
       <DataTable
         columns={columns}
-        data={data?.users ?? []}
+        data={(data?.users as unknown as Owner[]) ?? []}
         page={page}
         totalPages={data?.pagination?.totalPages ?? 0}
         onPageChange={setPage}

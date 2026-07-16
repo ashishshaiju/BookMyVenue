@@ -1,4 +1,5 @@
 import { axiosInstance } from '@/config/axios';
+import { API_ENDPOINTS } from '@/constants';
 
 export interface ReviewDTO {
   rating?: number;
@@ -45,7 +46,9 @@ export async function getVenueReviews(
   page: number = 1,
   limit: number = 10
 ): Promise<ReviewsResponse> {
-  const { data } = await axiosInstance.get(`/reviews/venue/${venueId}?page=${page}&limit=${limit}`);
+  const { data } = await axiosInstance.get(
+    `${API_ENDPOINTS.VENUE_REVIEWS(venueId)}?page=${page}&limit=${limit}`
+  );
 
   interface ReviewRaw {
     userId?: { _id?: string; id?: string; username?: string; userName?: string } | string;
@@ -73,20 +76,20 @@ export async function getVenueReviews(
 }
 
 export async function submitReview(venueId: string, dto: ReviewDTO): Promise<Review> {
-  const { data } = await axiosInstance.post(`/reviews/venue/${venueId}`, dto);
+  const { data } = await axiosInstance.post(API_ENDPOINTS.VENUE_REVIEWS(venueId), dto);
   return data.data;
 }
 
 export async function getMyRating(venueId: string): Promise<number | null> {
-  const { data } = await axiosInstance.get(`/reviews/venue/${venueId}/my-rating`);
+  const { data } = await axiosInstance.get(API_ENDPOINTS.VENUE_MY_RATING(venueId));
   return data.data.rating;
 }
 
 export async function updateReview(reviewId: string, dto: UpdateReviewDTO): Promise<Review> {
-  const { data } = await axiosInstance.patch(`/reviews/${reviewId}`, dto);
+  const { data } = await axiosInstance.patch(API_ENDPOINTS.REVIEW_BY_ID(reviewId), dto);
   return data.data;
 }
 
 export async function deleteReview(reviewId: string): Promise<void> {
-  await axiosInstance.delete(`/reviews/${reviewId}`);
+  await axiosInstance.delete(API_ENDPOINTS.REVIEW_BY_ID(reviewId));
 }

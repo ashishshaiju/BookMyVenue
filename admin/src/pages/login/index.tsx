@@ -2,12 +2,13 @@ import { useState } from "react";
 import { useNavigate, useLocation } from "react-router";
 import { Loader2, Building2, Mail, Lock, Eye, EyeOff } from "lucide-react";
 
-import { Button } from "../../components/ui/button";
-import { useApiMutation } from "../../hooks/useApi";
-import { API_ENDPOINTS } from "../../constants";
-import { queryClient } from "../../config/queryClient";
-import { QUERY_KEYS } from "../../config/queryKeys";
-import { getSafeRedirectUrl } from "../../utils/redirect";
+import { Button } from "@/components/ui/button";
+import { useApiMutation } from "@/hooks/useApi";
+import { API_ENDPOINTS } from "@/constants";
+import { ROUTES } from "@/constants/routes";
+import { queryClient } from "@/config/queryClient";
+import { QUERY_KEYS } from "@/config/queryKeys";
+import { getSafeRedirectUrl } from "@/utils/redirect";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -32,14 +33,14 @@ export default function LoginPage() {
         });
 
         const localRedirect = localStorage.getItem("redirectUrl");
-        let finalRedirect = "/dashboard";
+        let finalRedirect: string = ROUTES.DASHBOARD;
 
         if (redirectParam && localRedirect && redirectParam === localRedirect) {
-          finalRedirect = getSafeRedirectUrl(redirectParam, "/dashboard");
+          finalRedirect = getSafeRedirectUrl(redirectParam, ROUTES.DASHBOARD);
         } else if (redirectParam) {
-          finalRedirect = getSafeRedirectUrl(redirectParam, "/dashboard");
+          finalRedirect = getSafeRedirectUrl(redirectParam, ROUTES.DASHBOARD);
         } else if (localRedirect) {
-          finalRedirect = getSafeRedirectUrl(localRedirect, "/dashboard");
+          finalRedirect = getSafeRedirectUrl(localRedirect, ROUTES.DASHBOARD);
         }
 
         try {

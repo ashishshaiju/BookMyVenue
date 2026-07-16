@@ -1,35 +1,7 @@
 import { Field, ErrorMessage } from 'formik';
 import { KERALA_DISTRICTS } from '@/constants';
 import { PlaceAutocomplete } from '@/components/PlaceAutocomplete';
-
-const venueTypes = [
-  'Hall',
-  'Turf',
-  'Swimming Pool',
-  'Open Ground',
-  'Auditorium',
-  'Convention Center',
-  'Resort',
-  'Party Hall',
-  'Conference Space',
-  'Other',
-];
-
-const spaceAttributes = [
-  'Indoor',
-  'Outdoor (Garden/Lawn)',
-  'Rooftop',
-  'Poolside',
-  'Both Indoor & Outdoor',
-];
-
-const seatingConfigs = [
-  'Floating',
-  'Theatre Seating',
-  'Round Table',
-  'Banquet Seating',
-  'Standing',
-];
+import { VENUE_TYPES, SPACE_ATTRIBUTES, SEATING_CONFIGURATIONS } from '@/constants/venueConstants';
 
 const err = 'text-red-500 text-sm mt-1';
 
@@ -81,7 +53,7 @@ const BasicInfoStep = () => {
               className="w-full rounded-xl border border-[var(--bg-grey)] px-4 pr-8 py-3 outline-none focus:border-[var(--bg-green)]"
             >
               <option value="">Select venue type</option>
-              {venueTypes.map((type) => (
+              {VENUE_TYPES.map((type) => (
                 <option key={type} value={type}>
                   {type}
                 </option>
@@ -160,7 +132,7 @@ const BasicInfoStep = () => {
         <div className="mt-8">
           <h3 className="font-semibold text-lg mb-4">Space Attributes</h3>
           <div className="flex flex-wrap gap-3">
-            {spaceAttributes.map((item) => (
+            {SPACE_ATTRIBUTES.map((item) => (
               <label
                 key={item}
                 className="flex items-center gap-2 border border-[var(--bg-grey)] rounded-xl px-4 py-3 cursor-pointer"
@@ -177,7 +149,7 @@ const BasicInfoStep = () => {
         <div className="mt-8">
           <h3 className="font-semibold text-lg mb-4">Seating Configuration</h3>
           <div className="flex flex-wrap gap-3">
-            {seatingConfigs.map((item) => (
+            {SEATING_CONFIGURATIONS.map((item) => (
               <label
                 key={item}
                 className="flex items-center gap-2 border border-[var(--bg-grey)] rounded-xl px-4 py-3 cursor-pointer"

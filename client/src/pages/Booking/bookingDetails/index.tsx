@@ -1,18 +1,13 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router';
-import {
-  FiCalendar,
-  FiClock,
-  FiMapPin,
-  FiChevronLeft,
-  FiPhone,
-  FiMail,
-  FiUsers,
-  FiInfo,
-  FiFileText,
-} from 'react-icons/fi';
+import { FiMapPin, FiChevronLeft, FiInfo, FiFileText } from 'react-icons/fi';
 import { useBookingById } from '@/hooks/useBookingById';
 import CancelBookingModal from '@/components/common/CancelBookingModal';
+import { BOOKING_UI_STATUS, CANCELLATION_POLICIES } from '@/constants/bookingConstants';
+
+// Subcomponents
+import { BookingInfo } from './components/BookingInfo';
+import { BookingSidebarDetails } from './components/BookingSidebarDetails';
 
 const BookingDetails = () => {
   const { bookingRefId } = useParams<{ bookingRefId: string }>();
@@ -67,18 +62,18 @@ const BookingDetails = () => {
     );
   }
 
-  const isCancelable = uiStatus === 'upcoming' && booking.cancellationPolicy !== 'Non-refundable';
+  const isCancelable =
+    uiStatus === BOOKING_UI_STATUS.UPCOMING &&
+    booking.cancellationPolicy !== CANCELLATION_POLICIES.NON_REFUNDABLE;
 
   let cancelTooltip = '';
-  if (uiStatus === 'completed') cancelTooltip = 'Cancellation is not available for past bookings';
-  else if (uiStatus === 'cancelled') cancelTooltip = 'This booking is already cancelled';
-  else if (booking.cancellationPolicy === 'Non-refundable')
+  if (uiStatus === BOOKING_UI_STATUS.COMPLETED)
+    cancelTooltip = 'Cancellation is not available for past bookings';
+  else if (uiStatus === BOOKING_UI_STATUS.CANCELLED)
+    cancelTooltip = 'This booking is already cancelled';
+  else if (booking.cancellationPolicy === CANCELLATION_POLICIES.NON_REFUNDABLE)
     cancelTooltip = 'This venue has a non-refundable policy';
   else if (booking.cancellationRefundPct === 0) cancelTooltip = 'Cancellation window has passed';
-
-  if (isCancelable && booking.cancellationRefundPct === 0) {
-    // although technically refundable policy, window passed
-  }
 
   return (
     <div className="min-h-screen bg-[var(--bg-primary)] pt-24 pb-12 px-4">
@@ -101,9 +96,9 @@ const BookingDetails = () => {
               </span>
               <span
                 className={`px-3 py-1 rounded-full text-xs font-bold ${
-                  uiStatus === 'upcoming'
+                  uiStatus === BOOKING_UI_STATUS.UPCOMING
                     ? 'bg-orange-100 text-orange-700 border border-orange-200 dark:bg-orange-950/30 dark:text-orange-400 dark:border-orange-900/50'
-                    : uiStatus === 'completed'
+                    : uiStatus === BOOKING_UI_STATUS.COMPLETED
                       ? 'bg-green-100 text-green-700 border border-green-200 dark:bg-green-950/30 dark:text-green-400 dark:border-green-900/50'
                       : 'bg-red-100 text-red-700 border border-red-200 dark:bg-red-950/30 dark:text-red-400 dark:border-red-900/50'
                 }`}
@@ -142,70 +137,7 @@ const BookingDetails = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Column */}
           <div className="lg:col-span-2 space-y-8">
-            <div className="bg-[var(--bg-tertiary)] border border-[var(--bg-grey)] rounded-3xl overflow-hidden shadow-sm">
-              <div className="h-64 w-full relative">
-                <img
-                  src={booking.coverImage}
-                  alt={booking.venueName}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div className="p-6 md:p-8">
-                <h3 className="text-xl font-bold text-[var(--text-primary)] mb-6">
-                  Booking Details
-                </h3>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="flex items-start gap-4">
-                    <div className="bg-[var(--bg-primary)] p-3 rounded-xl text-[var(--bg-green)] border border-[var(--bg-grey)]">
-                      <FiCalendar size={20} />
-                    </div>
-                    <div>
-                      <p className="text-sm text-[var(--text-secondary)] mb-1">Date</p>
-                      <p className="font-semibold text-lg text-[var(--text-primary)]">
-                        {booking.date}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-4">
-                    <div className="bg-[var(--bg-primary)] p-3 rounded-xl text-[var(--bg-green)] border border-[var(--bg-grey)]">
-                      <FiClock size={20} />
-                    </div>
-                    <div>
-                      <p className="text-sm text-[var(--text-secondary)] mb-1">Time Range</p>
-                      <p className="font-semibold text-lg text-[var(--text-primary)]">
-                        {booking.timeRange}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-4">
-                    <div className="bg-[var(--bg-primary)] p-3 rounded-xl text-[var(--bg-green)] border border-[var(--bg-grey)]">
-                      <FiUsers size={20} />
-                    </div>
-                    <div>
-                      <p className="text-sm text-[var(--text-secondary)] mb-1">Guest Count</p>
-                      <p className="font-semibold text-lg text-[var(--text-primary)]">
-                        {booking.guestCount || 'Not specified'}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-4">
-                    <div className="bg-[var(--bg-primary)] p-3 rounded-xl text-[var(--bg-green)] border border-[var(--bg-grey)]">
-                      <FiInfo size={20} />
-                    </div>
-                    <div>
-                      <p className="text-sm text-[var(--text-secondary)] mb-1">Event Type</p>
-                      <p className="font-semibold text-lg text-[var(--text-primary)] capitalize">
-                        {booking.eventType || 'Not specified'}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <BookingInfo booking={booking} />
 
             {booking.bookerInfo && (
               <div className="bg-[var(--bg-tertiary)] border border-[var(--bg-grey)] rounded-3xl p-6 md:p-8 shadow-sm">
@@ -251,78 +183,7 @@ const BookingDetails = () => {
           </div>
 
           {/* Right Column */}
-          <div className="space-y-8">
-            <div className="bg-[var(--bg-tertiary)] border border-[var(--bg-grey)] rounded-3xl p-6 shadow-sm">
-              <h3 className="text-lg font-bold text-[var(--text-primary)] mb-6">Payment Summary</h3>
-              <div className="space-y-4 mb-6">
-                <div className="flex justify-between items-center text-sm">
-                  <span className="text-[var(--text-secondary)]">Total Amount</span>
-                  <span className="font-bold text-[var(--text-primary)]">
-                    ₹{booking.totalPrice}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center text-sm">
-                  <span className="text-[var(--text-secondary)]">Payment Method</span>
-                  <span className="font-medium text-[var(--text-primary)] uppercase">
-                    {booking.paymentMethod || 'Online'}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center text-sm">
-                  <span className="text-[var(--text-secondary)]">Transaction ID</span>
-                  <span className="font-mono bg-[var(--bg-primary)] px-2 py-1 rounded text-xs">
-                    {booking.paymentReference}
-                  </span>
-                </div>
-              </div>
-              <div className="pt-4 border-t border-[var(--bg-grey)] flex justify-between items-center">
-                <span className="font-bold text-[var(--text-primary)]">Amount Paid</span>
-                <span className="text-2xl font-extrabold text-[var(--bg-green)]">
-                  ₹{booking.totalPrice}
-                </span>
-              </div>
-            </div>
-
-            <div className="bg-[var(--bg-tertiary)] border border-[var(--bg-grey)] rounded-3xl p-6 shadow-sm">
-              <h3 className="text-lg font-bold text-[var(--text-primary)] mb-4">Contact Venue</h3>
-              <div className="space-y-4">
-                <a
-                  href={`tel:${booking.contactPhone}`}
-                  className="flex items-center gap-3 text-[var(--text-primary)] hover:text-[var(--bg-green)] transition"
-                >
-                  <div className="w-10 h-10 bg-[var(--bg-primary)] rounded-full flex items-center justify-center border border-[var(--bg-grey)]">
-                    <FiPhone />
-                  </div>
-                  <span className="font-medium">{booking.contactPhone}</span>
-                </a>
-                {booking.contactEmail && (
-                  <a
-                    href={`mailto:${booking.contactEmail}`}
-                    className="flex items-center gap-3 text-[var(--text-primary)] hover:text-[var(--bg-green)] transition"
-                  >
-                    <div className="w-10 h-10 bg-[var(--bg-primary)] rounded-full flex items-center justify-center border border-[var(--bg-grey)]">
-                      <FiMail />
-                    </div>
-                    <span className="font-medium truncate">{booking.contactEmail}</span>
-                  </a>
-                )}
-              </div>
-              <div className="mt-6 pt-6 border-t border-[var(--bg-grey)]">
-                <p className="text-sm font-medium text-[var(--text-secondary)] mb-2">
-                  Venue Address
-                </p>
-                <p className="text-sm text-[var(--text-primary)]">{booking.address}</p>
-              </div>
-            </div>
-
-            <div className="bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-900/30 rounded-3xl p-6">
-              <h3 className="text-lg font-bold text-orange-800 dark:text-orange-400 mb-2">
-                Cancellation Policy
-              </h3>
-              <p className="text-sm text-orange-700 dark:text-orange-300">
-                {booking.cancellationPolicy}
-              </p>
-            </div>
-          </div>
+          <BookingSidebarDetails booking={booking} />
         </div>
       </div>
 

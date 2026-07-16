@@ -1,21 +1,19 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from './useAuth';
-import * as wishlistService from '../services/wishlistService';
-
-const SESSION_TOKEN_KEY = 'x-session-token';
-const STORAGE_KEY_PREFIX = 'wishlist_';
+import * as wishlistService from '@/services/wishlistService';
+import { STORAGE_KEYS } from '@/constants';
 
 function getSessionId(): string {
-  let sessionId = localStorage.getItem(SESSION_TOKEN_KEY);
+  let sessionId = localStorage.getItem(STORAGE_KEYS.SESSION_TOKEN);
   if (!sessionId) {
     sessionId = crypto.randomUUID();
-    localStorage.setItem(SESSION_TOKEN_KEY, sessionId);
+    localStorage.setItem(STORAGE_KEYS.SESSION_TOKEN, sessionId);
   }
   return sessionId;
 }
 
 function getLocalWishlistKey(): string {
-  return `${STORAGE_KEY_PREFIX}${getSessionId()}`;
+  return `${STORAGE_KEYS.WISHLIST_PREFIX}${getSessionId()}`;
 }
 
 export function getLocalWishlist(): Record<string, boolean> {

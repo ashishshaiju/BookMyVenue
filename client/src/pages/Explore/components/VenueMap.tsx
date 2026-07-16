@@ -1,7 +1,13 @@
 import { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { useVenuePins, type VenuePin } from '../../../hooks/useVenuePins';
+import { useVenuePins, type VenuePin } from '@/hooks/useVenuePins';
+import {
+  DEFAULT_MAP_CENTER,
+  DEFAULT_MAP_ZOOM,
+  MAP_MAX_ZOOM,
+  MAP_DEBOUNCE_MS,
+} from '@/constants/map';
 
 interface VenueMapProps {
   onBBoxChange?: (bbox: { swLng: number; swLat: number; neLng: number; neLat: number }) => void;
@@ -37,8 +43,8 @@ export function VenueMap({ onBBoxChange, selectedVenueId, onPinClick, venues }: 
 
         // Create map centered on Kerala, India
         const map = L.map(mapContainer.current, {
-          center: [10.8505, 76.2711],
-          zoom: 8,
+          center: DEFAULT_MAP_CENTER,
+          zoom: DEFAULT_MAP_ZOOM,
           zoomControl: true,
           scrollWheelZoom: true,
         });
@@ -46,7 +52,7 @@ export function VenueMap({ onBBoxChange, selectedVenueId, onPinClick, venues }: 
         // Add OpenStreetMap tiles
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
           attribution: '© OpenStreetMap contributors',
-          maxZoom: 19,
+          maxZoom: MAP_MAX_ZOOM,
         }).addTo(map);
 
         mapRef.current = map;
@@ -65,7 +71,7 @@ export function VenueMap({ onBBoxChange, selectedVenueId, onPinClick, venues }: 
             };
             onBBoxChangeRef.current?.(bbox);
             fetchPinsRef.current(bbox);
-          }, 500); // Debounce map movements by 500ms
+          }, MAP_DEBOUNCE_MS);
 
           debounceTimerRef.current = timer;
         };

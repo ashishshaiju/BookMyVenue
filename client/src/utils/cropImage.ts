@@ -1,4 +1,6 @@
-const MAX_OUTPUT_BYTES = 2 * 1024 * 1024; // mirrors useAvatarUpload's MAX_FILE_SIZE
+import { MAX_AVATAR_FILE_SIZE } from '@/constants/upload';
+
+const MAX_OUTPUT_BYTES = MAX_AVATAR_FILE_SIZE;
 const QUALITY_STEPS = [0.92, 0.8, 0.6];
 
 interface CropPixels {

@@ -1,11 +1,11 @@
-import { axiosInstance as api } from '../config/axios';
-import { API_ENDPOINTS } from '../constants';
+import { axiosInstance as api } from '@/config/axios';
+import { API_ENDPOINTS } from '@/constants';
 import type {
   BookingCardDTO,
   BookingDetailDTO,
   BookerInfoForm,
   CancelBookingResponse,
-} from '../types/booking.types';
+} from '@/types/booking.types';
 
 export type ApiResponse<T> = { success: boolean; data: T; message?: string };
 

@@ -1,14 +1,14 @@
-import type { 
-  User, 
-  Owner, 
-  Admin, 
-  Venue, 
-  MyVenue, 
-  Booking, 
-  Review, 
-  Log, 
-  MonthData 
-} from './models';
+import type {
+  User,
+  Owner,
+  Admin,
+  Venue,
+  MyVenue,
+  Booking,
+  Review,
+  Log,
+  MonthData,
+} from "./models";
 
 export interface PaginatedResponse<T> {
   data: T[];

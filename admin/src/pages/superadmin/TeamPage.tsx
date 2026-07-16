@@ -1,13 +1,14 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useToast } from "../../hooks/useToast";
+import { useToast } from "@/hooks/useToast";
 
-import { useApiQuery, useApiMutation } from "../../hooks/useApi";
-import { QUERY_KEYS } from "../../config/queryKeys";
-import { API_ENDPOINTS } from "../../constants";
-import { DataTable } from "../../components/ui/data-table";
-import { Badge } from "../../components/ui/badge";
-import { Button } from "../../components/ui/button";
+import { useApiQuery, useApiMutation } from "@/hooks/useApi";
+import { QUERY_KEYS } from "@/config/queryKeys";
+import { API_ENDPOINTS } from "@/constants";
+import { DEFAULT_PAGE_LIMIT } from "@/constants/pagination";
+import { DataTable } from "@/components/ui/data-table";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -15,9 +16,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "../../components/ui/dialog";
-import { Input } from "../../components/ui/input";
-import { Label } from "../../components/ui/label";
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface Admin {
   [key: string]: unknown;
@@ -44,7 +45,10 @@ export default function TeamPage() {
   const invalidate = () =>
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SUPER_ADMINS });
 
-  const params = new URLSearchParams({ page: String(page), limit: "10" });
+  const params = new URLSearchParams({
+    page: String(page),
+    limit: String(DEFAULT_PAGE_LIMIT),
+  });
 
   const { data, isLoading } = useApiQuery<AdminsResponse>(
     [...QUERY_KEYS.SUPER_ADMINS, page],
@@ -91,8 +95,7 @@ export default function TeamPage() {
 
   // Handlers
   const handlePromote = () => {
-    if (!promoteEmail.trim())
-      return error("Please enter an email address");
+    if (!promoteEmail.trim()) return error("Please enter an email address");
     promoteMutation.mutate({ email: promoteEmail.trim() });
   };
 

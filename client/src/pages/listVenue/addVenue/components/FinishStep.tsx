@@ -1,6 +1,9 @@
 import { Field, FieldArray, ErrorMessage, useFormikContext } from 'formik';
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/useToast';
+import { ALLOWED_IMAGE_TYPES, MAX_IMAGE_FILE_SIZE } from '@/constants/upload';
+import { FORM_ERROR_CLASS } from '@/constants/uiClasses';
+import { CANCELLATION_POLICIES, REFUND_TYPES } from '@/constants/bookingConstants';
 
 type FinishStepValues = {
   contact: { name: string; phone: string; email?: string };
@@ -12,10 +15,7 @@ type FinishStepValues = {
   venuePhotos: File[];
 };
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
-const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-
-const err = 'text-red-500 dark:text-red-400 text-sm mt-1';
+const err = FORM_ERROR_CLASS;
 
 const FinishStep = () => {
   const [previewImages, setPreviewImages] = useState<string[]>([]);
@@ -57,13 +57,17 @@ const FinishStep = () => {
                 onChange={(e) => {
                   const files = Array.from(e.target.files || []);
                   const validFiles = files.filter((file) => {
-                    if (!ALLOWED_TYPES.includes(file.type)) {
+                    if (
+                      !ALLOWED_IMAGE_TYPES.includes(
+                        file.type as (typeof ALLOWED_IMAGE_TYPES)[number]
+                      )
+                    ) {
                       showError(
                         `Invalid file type: ${file.name}. Only JPG, PNG and WEBP are allowed.`
                       );
                       return false;
                     }
-                    if (file.size > MAX_FILE_SIZE) {
+                    if (file.size > MAX_IMAGE_FILE_SIZE) {
                       showError(`File too large: ${file.name}. Maximum size is 5MB.`);
                       return false;
                     }
@@ -169,7 +173,7 @@ const FinishStep = () => {
           </div>
 
           {/* Refund Rules — only for refundable */}
-          {values.cancellation.policy === 'refundable' && (
+          {values.cancellation.policy === CANCELLATION_POLICIES.REFUNDABLE && (
             <div>
               <h3 className="font-semibold text-lg mb-4">Refund Rules</h3>
               <p className="text-[var(--text-secondary)] mb-4">
@@ -193,7 +197,7 @@ const FinishStep = () => {
               </div>
 
               {/* Refund Rules — only for time based */}
-              {values.cancellation.refundType === 'timeBasedRefund' && (
+              {values.cancellation.refundType === REFUND_TYPES.TIME_BASED && (
                 <FieldArray name="cancellation.refundRules">
                   {({ push, remove }) => (
                     <div className="space-y-5">

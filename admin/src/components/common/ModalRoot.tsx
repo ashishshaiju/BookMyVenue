@@ -1,4 +1,4 @@
-import { useModalStore } from "../../store/useModalStore";
+import { useModalStore } from "@/store/useModalStore";
 import {
   Dialog,
   DialogContent,

@@ -1,6 +1,6 @@
 import { Outlet } from "react-router";
 import { Sidebar } from "./Sidebar";
-import { ModalRoot } from "../common/ModalRoot";
+import { ModalRoot } from "@/components/common/ModalRoot";
 
 export function MainLayout() {
   return (

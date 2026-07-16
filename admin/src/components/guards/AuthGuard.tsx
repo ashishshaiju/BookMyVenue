@@ -1,8 +1,10 @@
 import { Navigate, Outlet, useLocation } from "react-router";
 import { Loader2 } from "lucide-react";
-import { useApiQuery } from "../../hooks/useApi";
-import { QUERY_KEYS } from "../../config/queryKeys";
-import { API_ENDPOINTS } from "../../constants";
+import { useApiQuery } from "@/hooks/useApi";
+import { QUERY_KEYS } from "@/config/queryKeys";
+import { API_ENDPOINTS } from "@/constants";
+import { ROLES } from "@/constants/roles";
+import { PROFILE_STALE_TIME } from "@/constants/queryConfig";
 
 export interface UserProfile {
   _id: string;
@@ -21,7 +23,7 @@ export function AuthGuard() {
   } = useApiQuery<UserProfile>(
     QUERY_KEYS.PROFILE,
     { method: "GET", url: API_ENDPOINTS.PROFILE },
-    { staleTime: 5 * 60 * 1000 },
+    { staleTime: PROFILE_STALE_TIME },
   );
 
   if (isLoading) {
@@ -48,9 +50,9 @@ export function AuthGuard() {
   }
 
   if (
-    profile.role !== "owner" &&
-    profile.role !== "admin" &&
-    profile.role !== "superAdmin"
+    profile.role !== ROLES.OWNER &&
+    profile.role !== ROLES.ADMIN &&
+    profile.role !== ROLES.SUPER_ADMIN
   ) {
     return <Navigate to="/unauthorized" replace />;
   }

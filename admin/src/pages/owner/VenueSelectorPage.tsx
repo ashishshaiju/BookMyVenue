@@ -1,14 +1,15 @@
 import { useEffect, useMemo } from "react";
 import { useNavigate } from "react-router";
 import { Loader2, Store, PlusCircle } from "lucide-react";
-import { useApiQuery } from "../../hooks/useApi";
-import { QUERY_KEYS } from "../../config/queryKeys";
-import { API_ENDPOINTS } from "../../constants";
-import { useAppStore } from "../../store/useAppStore";
-import { Card, CardContent } from "../../components/ui/card";
-import { Badge } from "../../components/ui/badge";
-import { Button } from "../../components/ui/button";
-import { cn } from "../../lib/utils";
+import { useApiQuery } from "@/hooks/useApi";
+import { QUERY_KEYS } from "@/config/queryKeys";
+import { API_ENDPOINTS, CLIENT_APP_URL } from "@/constants";
+import { VENUE_STATUS } from "@/constants/venueStatus";
+import { useAppStore } from "@/store/useAppStore";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface MyVenue {
   _id: string;
@@ -38,7 +39,7 @@ export default function VenueSelectorPage() {
 
   const venues = useMemo(() => data?.venues || [], [data?.venues]);
   const approvedVenues = useMemo(
-    () => venues.filter((v) => v.status === "Approved"),
+    () => venues.filter((v) => v.status === VENUE_STATUS.APPROVED),
     [venues],
   );
 
@@ -79,7 +80,7 @@ export default function VenueSelectorPage() {
           <Button
             variant="outline"
             className="mt-4"
-            onClick={() => window.open("http://localhost:5173", "_blank")}
+            onClick={() => window.open(CLIENT_APP_URL, "_blank")}
           >
             <PlusCircle className="mr-2 h-4 w-4" />
             Go to Client App
@@ -108,7 +109,7 @@ export default function VenueSelectorPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {venues.map((venue) => {
-          const isApproved = venue.status === "Approved";
+          const isApproved = venue.status === VENUE_STATUS.APPROVED;
 
           return (
             <Card
@@ -137,17 +138,17 @@ export default function VenueSelectorPage() {
                   <div className="absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-[2px]">
                     <Badge
                       variant={
-                        venue.status === "Rejected"
+                        venue.status === VENUE_STATUS.REJECTED
                           ? "destructive"
                           : "secondary"
                       }
                       className={cn(
                         "text-sm px-3 py-1 uppercase tracking-wider font-semibold",
-                        venue.status === "Suspended" &&
+                        venue.status === VENUE_STATUS.SUSPENDED &&
                           "bg-amber-500/20 text-amber-500 hover:bg-amber-500/30",
                       )}
                     >
-                      {venue.status === "PendingReview"
+                      {venue.status === VENUE_STATUS.PENDING_REVIEW
                         ? "Under Review"
                         : venue.status}
                     </Badge>
@@ -166,18 +167,20 @@ export default function VenueSelectorPage() {
                   <span>•</span>
                   <span>{venue.city}</span>
                 </div>
-                {venue.status === "Rejected" && venue.rejectionReason && (
-                  <p className="mt-4 text-sm text-red-400 bg-red-950/30 p-2 rounded border border-red-900/50 line-clamp-2">
-                    <span className="font-semibold">Reason:</span>{" "}
-                    {venue.rejectionReason}
-                  </p>
-                )}
-                {venue.status === "Suspended" && venue.suspensionReason && (
-                  <p className="mt-4 text-sm text-amber-500 bg-amber-950/30 p-2 rounded border border-amber-900/50 line-clamp-2">
-                    <span className="font-semibold">Suspended:</span>{" "}
-                    {venue.suspensionReason}
-                  </p>
-                )}
+                {venue.status === VENUE_STATUS.REJECTED &&
+                  venue.rejectionReason && (
+                    <p className="mt-4 text-sm text-red-400 bg-red-950/30 p-2 rounded border border-red-900/50 line-clamp-2">
+                      <span className="font-semibold">Reason:</span>{" "}
+                      {venue.rejectionReason}
+                    </p>
+                  )}
+                {venue.status === VENUE_STATUS.SUSPENDED &&
+                  venue.suspensionReason && (
+                    <p className="mt-4 text-sm text-amber-500 bg-amber-950/30 p-2 rounded border border-amber-900/50 line-clamp-2">
+                      <span className="font-semibold">Suspended:</span>{" "}
+                      {venue.suspensionReason}
+                    </p>
+                  )}
               </CardContent>
             </Card>
           );

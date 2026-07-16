@@ -11,4 +11,6 @@ export const QUERY_KEYS = {
   OWNER_REVIEWS: (venueId: string) => ["owner", "reviews", venueId] as const,
   OWNER_AVAILABILITY: (venueId: string) =>
     ["owner", "availability", venueId] as const,
+  MODERATION_SUMMARY: ["moderation-summary"] as const,
+  MODERATION_LOGS: ["moderation-logs"] as const,
 } as const;

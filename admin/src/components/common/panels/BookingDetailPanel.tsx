@@ -1,5 +1,7 @@
-import { Badge } from "../../ui/badge";
-import { Card } from "../../ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import { BOOKING_STATUS_COLORS } from "@/constants/bookings";
+import { minutesToTime } from "@/utils/bookingUtils";
 import {
   Clock,
   Calendar as CalendarIcon,
@@ -43,24 +45,9 @@ export function BookingDetailPanel({
   const data = rawData as unknown as BookingData;
   if (!data) return null;
 
-  const STATUS_COLORS: Record<string, string> = {
-    CONFIRMED: "bg-green-500/10 text-green-500 hover:bg-green-500/20",
-    PENDING: "bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20",
-    CANCELLED: "bg-red-500/10 text-red-500 hover:bg-red-500/20",
-    REFUNDED: "bg-orange-500/10 text-orange-500 hover:bg-orange-500/20",
-  };
-
   const statusColor =
-    STATUS_COLORS[data.status] || "bg-gray-500/10 text-gray-500";
-
-  const formatTime = (minutes?: number) => {
-    if (minutes === undefined) return "N/A";
-    const h = Math.floor(minutes / 60)
-      .toString()
-      .padStart(2, "0");
-    const m = (minutes % 60).toString().padStart(2, "0");
-    return `${h}:${m}`;
-  };
+    BOOKING_STATUS_COLORS[data.status as keyof typeof BOOKING_STATUS_COLORS] ??
+    "bg-gray-500/10 text-gray-500";
 
   return (
     <div className="space-y-6 text-sm">
@@ -106,7 +93,7 @@ export function BookingDetailPanel({
               </span>
               <span className="font-medium text-foreground">
                 {data.startTime !== undefined && data.endTime !== undefined
-                  ? `${formatTime(data.startTime)} - ${formatTime(data.endTime)}`
+                  ? `${minutesToTime(data.startTime)} - ${minutesToTime(data.endTime)}`
                   : "N/A"}
               </span>
             </div>

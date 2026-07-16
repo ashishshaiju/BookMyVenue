@@ -2,11 +2,12 @@ import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import { FiCheckCircle, FiCalendar, FiMapPin, FiCreditCard } from 'react-icons/fi';
 import { MdOutlineMeetingRoom } from 'react-icons/md';
+import { BOOKING_REDIRECT_COUNTDOWN_SECONDS } from '@/constants/bookingConstants';
 
 const BookingConfirmation = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [countdown, setCountdown] = useState(5);
+  const [countdown, setCountdown] = useState(BOOKING_REDIRECT_COUNTDOWN_SECONDS);
 
   const state = location.state as {
     paymentId?: string;

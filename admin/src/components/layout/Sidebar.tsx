@@ -12,22 +12,25 @@ import {
   Star,
   ActivitySquare,
 } from "lucide-react";
-import { useApiQuery } from "../../hooks/useApi";
-import { QUERY_KEYS } from "../../config/queryKeys";
-import { API_ENDPOINTS } from "../../constants";
-import type { UserProfile } from "../guards/AuthGuard";
-import { cn } from "../../lib/utils";
-import { axiosInstance } from "../../config/axios";
-import { queryClient } from "../../config/queryClient";
-import { Button } from "../ui/button";
-import { useAppStore } from "../../store/useAppStore";
+import { useApiQuery } from "@/hooks/useApi";
+import { QUERY_KEYS } from "@/config/queryKeys";
+import { API_ENDPOINTS } from "@/constants";
+import { ROLES } from "@/constants/roles";
+import { VENUE_STATUS } from "@/constants/venueStatus";
+import { PROFILE_STALE_TIME } from "@/constants/queryConfig";
+import type { UserProfile } from "@/components/guards/AuthGuard";
+import { cn } from "@/lib/utils";
+import { axiosInstance } from "@/config/axios";
+import { queryClient } from "@/config/queryClient";
+import { Button } from "@/components/ui/button";
+import { useAppStore } from "@/store/useAppStore";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../ui/select";
+} from "@/components/ui/select";
 
 type NavItem = {
   label: string;
@@ -53,69 +56,69 @@ const NAV_CONFIG: NavItem[] = [
     label: "Bookings",
     path: (venueId) => `/dashboard/venue/${venueId}/bookings`,
     icon: CalendarCheck,
-    roles: ["owner"],
+    roles: [ROLES.OWNER],
   },
   {
     label: "Reviews",
     path: (venueId) => `/dashboard/venue/${venueId}/reviews`,
     icon: Star,
-    roles: ["owner"],
+    roles: [ROLES.OWNER],
   },
   {
     label: "Calendar",
     path: (venueId) => `/dashboard/venue/${venueId}/calendar`,
     icon: Calendar,
-    roles: ["owner"],
+    roles: [ROLES.OWNER],
   },
   {
     label: "Reports",
     path: (venueId) => `/dashboard/venue/${venueId}/reports`,
     icon: BarChart2,
-    roles: ["owner"],
+    roles: [ROLES.OWNER],
   },
   // admin
   {
     label: "Global Bookings",
     path: "/dashboard/bookings",
     icon: CalendarCheck,
-    roles: ["admin", "superAdmin"],
+    roles: [ROLES.ADMIN, ROLES.SUPER_ADMIN],
   },
   {
     label: "Global Venues",
     path: "/dashboard/venues",
     icon: Building2,
-    roles: ["admin", "superAdmin"],
+    roles: [ROLES.ADMIN, ROLES.SUPER_ADMIN],
   },
   {
     label: "Global Owners",
     path: "/dashboard/owners",
     icon: Users,
-    roles: ["admin", "superAdmin"],
+    roles: [ROLES.ADMIN, ROLES.SUPER_ADMIN],
   },
   {
     label: "Moderation",
     path: "/dashboard/moderation",
     icon: AlertTriangle,
-    roles: ["admin", "superAdmin"],
+    roles: [ROLES.ADMIN, ROLES.SUPER_ADMIN],
   },
   // superAdmin only
   {
     label: "Team",
     path: "/dashboard/team",
     icon: Shield,
-    roles: ["superAdmin"],
+    roles: [ROLES.SUPER_ADMIN],
   },
   {
     label: "Users",
     path: "/dashboard/users",
     icon: UserCog,
-    roles: ["superAdmin"],
+    roles: [ROLES.SUPER_ADMIN],
   },
   {
     label: "Activity Logs",
     path: "/dashboard/logs",
     icon: ActivitySquare,
-    roles: ["superAdmin"],
+    roles: [ROLES.SUPER_ADMIN],
   },
 ];
 
@@ -126,15 +129,15 @@ export function Sidebar() {
   const { data: profile } = useApiQuery<UserProfile>(
     QUERY_KEYS.PROFILE,
     { method: "GET", url: API_ENDPOINTS.PROFILE },
-    { staleTime: 5 * 60 * 1000 },
+    { staleTime: PROFILE_STALE_TIME },
   );
 
   const { data: myVenuesData } = useApiQuery<MyVenuesResponse>(
     QUERY_KEYS.MY_VENUES,
     { method: "GET", url: API_ENDPOINTS.MY_VENUES },
     {
-      staleTime: 5 * 60 * 1000,
-      enabled: profile?.role === "owner",
+      staleTime: PROFILE_STALE_TIME,
+      enabled: profile?.role === ROLES.OWNER,
     },
   );
 
@@ -170,7 +173,7 @@ export function Sidebar() {
       {/* Navigation Links */}
       <nav className="flex-1 space-y-1 px-4 py-4">
         {navItems.map((item) => {
-          const isOwner = profile?.role === "owner";
+          const isOwner = profile?.role === ROLES.OWNER;
           const isDisabled = isOwner && !activeVenueId;
           const toPath =
             typeof item.path === "function"
@@ -200,7 +203,7 @@ export function Sidebar() {
       </nav>
 
       {/* Venue Switcher (Only for owners) */}
-      {profile?.role === "owner" && (
+      {profile?.role === ROLES.OWNER && (
         <div className="px-4 py-4">
           <Select
             value={activeVenueId || undefined}
@@ -220,10 +223,12 @@ export function Sidebar() {
                 <SelectItem
                   key={venue._id}
                   value={venue._id}
-                  disabled={venue.status !== "Approved"}
+                  disabled={venue.status !== VENUE_STATUS.APPROVED}
                 >
                   {venue.name}{" "}
-                  {venue.status !== "Approved" ? `(${venue.status})` : ""}
+                  {venue.status !== VENUE_STATUS.APPROVED
+                    ? `(${venue.status})`
+                    : ""}
                 </SelectItem>
               ))}
             </SelectContent>

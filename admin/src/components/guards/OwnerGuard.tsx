@@ -1,7 +1,10 @@
 import { Navigate, Outlet, useLocation } from "react-router";
-import { useApiQuery } from "../../hooks/useApi";
-import { QUERY_KEYS } from "../../config/queryKeys";
-import { API_ENDPOINTS } from "../../constants";
+import { useApiQuery } from "@/hooks/useApi";
+import { QUERY_KEYS } from "@/config/queryKeys";
+import { API_ENDPOINTS } from "@/constants";
+import { ROLES } from "@/constants/roles";
+import { PROFILE_STALE_TIME } from "@/constants/queryConfig";
+import { ROUTES } from "@/constants/routes";
 import type { UserProfile } from "./AuthGuard";
 
 export function OwnerGuard() {
@@ -9,10 +12,10 @@ export function OwnerGuard() {
   const { data: profile } = useApiQuery<UserProfile>(
     QUERY_KEYS.PROFILE,
     { method: "GET", url: API_ENDPOINTS.PROFILE },
-    { staleTime: 5 * 60 * 1000 },
+    { staleTime: PROFILE_STALE_TIME },
   );
 
-  if (profile?.role === "owner" && location.pathname === "/dashboard") {
+  if (profile?.role === ROLES.OWNER && location.pathname === ROUTES.DASHBOARD) {
     return <Navigate to="/dashboard/select-venue" replace />;
   }
 

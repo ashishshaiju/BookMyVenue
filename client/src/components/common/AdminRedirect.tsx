@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { DASHBOARD_URL } from '../../constants';
+import { DASHBOARD_URL } from '@/constants';
 
 export const AdminRedirect = () => {
   const [dots, setDots] = useState('');

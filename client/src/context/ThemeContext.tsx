@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect, useCallback, type ReactNode } from 'react';
-import { STORAGE_KEYS } from '../constants';
+import { STORAGE_KEYS } from '@/constants';
 
 // What the user picked (persisted as-is) vs. what's actually painted on
 // screen ('system' always resolves to 'light' or 'dark' before being applied).

@@ -1,10 +1,13 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router';
-import { FiCalendar, FiClock, FiMapPin, FiSearch, FiChevronRight } from 'react-icons/fi';
+import { FiCalendar, FiSearch } from 'react-icons/fi';
 import { useMyBookings } from '@/hooks/useMyBookings';
 import ReviewModal from '@/components/common/ReviewModal';
 import * as reviewService from '@/services/reviewService';
 import { useToast } from '@/hooks/useToast';
+import { BookingCard } from '@/components/bookings/BookingCard';
+import { NextBookingBanner } from '@/components/bookings/NextBookingBanner';
+import { BOOKING_UI_STATUS } from '@/constants/bookingConstants';
 
 import type { BookingCardDTO } from '@/types/booking.types';
 
@@ -14,7 +17,7 @@ const DEFAULT_BOOKINGS = { upcoming: [], completed: [], cancelled: [] };
 
 const MyBookings = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<TabType>('upcoming');
+  const [activeTab, setActiveTab] = useState<TabType>(BOOKING_UI_STATUS.UPCOMING);
   const [searchQuery, setSearchQuery] = useState('');
   const [reviewModal, setReviewModal] = useState<{ open: boolean; booking: BookingCardDTO | null }>(
     {
@@ -49,9 +52,9 @@ const MyBookings = () => {
   };
 
   const tabs: { id: TabType; label: string; count: number }[] = [
-    { id: 'upcoming', label: 'Upcoming', count: bookingsData.upcoming.length },
-    { id: 'completed', label: 'Completed', count: bookingsData.completed.length },
-    { id: 'cancelled', label: 'Cancelled', count: bookingsData.cancelled.length },
+    { id: BOOKING_UI_STATUS.UPCOMING, label: 'Upcoming', count: bookingsData.upcoming.length },
+    { id: BOOKING_UI_STATUS.COMPLETED, label: 'Completed', count: bookingsData.completed.length },
+    { id: BOOKING_UI_STATUS.CANCELLED, label: 'Cancelled', count: bookingsData.cancelled.length },
   ];
 
   const filteredBookings = useMemo(() => {
@@ -108,46 +111,10 @@ const MyBookings = () => {
           </div>
         </div>
 
-        {/* Next Upcoming Booking Banner */}
-        {nextBooking && activeTab === 'upcoming' && !isLoading && (
-          <div
-            onClick={() => navigate(`/booking/${nextBooking.bookingRef}`)}
-            className="mb-10 bg-gradient-to-r from-[var(--bg-green)] to-green-600 rounded-3xl p-6 text-white shadow-xl cursor-pointer hover:shadow-2xl transition-all relative overflow-hidden group"
-          >
-            <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full -translate-y-1/2 translate-x-1/2 group-hover:scale-110 transition-transform duration-700"></div>
-            <div className="relative z-10 flex flex-col md:flex-row items-center gap-6">
-              <div className="w-full md:w-48 h-32 rounded-2xl overflow-hidden shrink-0 border-2 border-white/20">
-                <img
-                  src={nextBooking.coverImage}
-                  alt={nextBooking.venueName}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div className="flex-grow">
-                <div className="inline-flex items-center gap-1.5 bg-white/20 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-3">
-                  <span className="w-2 h-2 rounded-full bg-white animate-pulse"></span> Next Up
-                </div>
-                <h2 className="text-2xl font-bold mb-2">{nextBooking.venueName}</h2>
-                <div className="flex flex-wrap gap-4 text-white/80 text-sm font-medium">
-                  <span className="flex items-center gap-1.5">
-                    <FiCalendar /> {nextBooking.date}
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <FiClock /> {nextBooking.timeRange}
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <FiMapPin /> {nextBooking.city}
-                  </span>
-                </div>
-              </div>
-              <div className="shrink-0 flex items-center justify-center w-12 h-12 bg-white/10 rounded-full group-hover:bg-white/20 transition-colors hidden md:flex">
-                <FiChevronRight className="text-2xl" />
-              </div>
-            </div>
-          </div>
+        {nextBooking && activeTab === BOOKING_UI_STATUS.UPCOMING && !isLoading && (
+          <NextBookingBanner nextBooking={nextBooking} />
         )}
 
-        {/* Controls: Tabs & Search */}
         <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
           <div className="flex p-1 bg-[var(--bg-tertiary)] border border-[var(--bg-grey)] rounded-2xl w-full md:w-auto overflow-x-auto hide-scrollbar">
             {tabs.map((tab) => (
@@ -182,7 +149,6 @@ const MyBookings = () => {
           </div>
         </div>
 
-        {/* Content */}
         {isLoading ? (
           renderSkeleton()
         ) : isError ? (
@@ -204,7 +170,7 @@ const MyBookings = () => {
                 ? 'Try adjusting your search criteria.'
                 : `You don't have any ${activeTab} bookings at the moment. Explore venues to make a reservation.`}
             </p>
-            {!searchQuery && activeTab === 'upcoming' && (
+            {!searchQuery && activeTab === BOOKING_UI_STATUS.UPCOMING && (
               <button
                 onClick={() => navigate('/')}
                 className="mt-6 px-6 py-3 bg-[var(--bg-green)] text-white font-bold rounded-xl hover:bg-green-600 transition"
@@ -216,83 +182,20 @@ const MyBookings = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredBookings.map((booking: BookingCardDTO) => (
-              <div
+              <BookingCard
                 key={booking._id}
-                onClick={() => navigate(`/booking/${booking.bookingRef}`)}
-                className="group bg-[var(--bg-tertiary)] border border-[var(--bg-grey)] rounded-3xl overflow-hidden hover:shadow-xl transition-all duration-300 hover:border-[var(--bg-green)] cursor-pointer flex flex-col"
-              >
-                <div className="h-48 overflow-hidden relative">
-                  <img
-                    src={booking.coverImage}
-                    alt={booking.venueName}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                  <div className="absolute top-4 left-4 bg-[var(--bg-tertiary)]/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-[var(--text-primary)] shadow-sm">
-                    {booking.bookingRef}
-                  </div>
-                  {activeTab === 'cancelled' && (
-                    <div className="absolute inset-0 bg-red-500/20 flex items-center justify-center backdrop-blur-[2px]">
-                      <span className="bg-red-500 text-white px-4 py-1.5 rounded-full font-bold text-sm">
-                        CANCELLED
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                <div className="p-6 flex-grow flex flex-col">
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="text-lg font-bold text-[var(--text-primary)] line-clamp-1">
-                      {booking.venueName}
-                    </h3>
-                  </div>
-                  <p className="text-[var(--text-secondary)] text-sm mb-4 flex items-center gap-1.5">
-                    <FiMapPin className="text-[var(--bg-green)]" /> {booking.city},{' '}
-                    {booking.district}
-                  </p>
-
-                  <div className="space-y-2 mb-6">
-                    <div className="flex items-center gap-3 text-sm font-medium text-[var(--text-primary)] bg-[var(--bg-primary)] px-3 py-2 rounded-lg">
-                      <FiCalendar className="text-[var(--bg-green)]" /> {booking.date}
-                    </div>
-                    <div className="flex items-center gap-3 text-sm font-medium text-[var(--text-primary)] bg-[var(--bg-primary)] px-3 py-2 rounded-lg">
-                      <FiClock className="text-[var(--bg-green)]" /> {booking.timeRange}
-                    </div>
-                  </div>
-
-                  <div className="mt-auto pt-4 border-t border-[var(--bg-grey)] space-y-3">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-[var(--text-secondary)] font-medium">
-                        Total Paid
-                      </span>
-                      <span className="font-bold text-[var(--text-primary)]">
-                        ₹{booking.totalPrice}
-                      </span>
-                    </div>
-                    {activeTab === 'completed' && !booking.hasReview && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setReviewModal({ open: true, booking });
-                        }}
-                        className="w-full bg-[var(--bg-green)] hover:bg-emerald-600 text-white py-2 rounded-lg font-medium text-sm transition"
-                      >
-                        Rate this Booking
-                      </button>
-                    )}
-                    {activeTab === 'completed' && booking.hasReview && (
-                      <div className="text-center text-xs text-[var(--bg-green)] font-medium">
-                        ✓ Review submitted
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
+                booking={booking}
+                activeTab={activeTab}
+                onReviewClick={(b, e) => {
+                  e.stopPropagation();
+                  setReviewModal({ open: true, booking: b });
+                }}
+              />
             ))}
           </div>
         )}
       </div>
 
-      {/* Review Modal */}
       <ReviewModal
         open={reviewModal.open}
         onOpenChange={(open) => setReviewModal({ ...reviewModal, open })}

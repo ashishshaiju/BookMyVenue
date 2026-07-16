@@ -1,5 +1,7 @@
-import { axiosInstance } from "../config/axios";
-import { API_ENDPOINTS } from "../constants";
+import { axiosInstance } from "@/config/axios";
+import { API_ENDPOINTS } from "@/constants";
+import { DEFAULT_PAGE_LIMIT } from "@/constants/pagination";
+import { ROLES } from "@/constants/roles";
 
 export interface PaginatedResponse<T> {
   data: T[];
@@ -12,7 +14,11 @@ export interface PaginatedResponse<T> {
 }
 
 export const adminService = {
-  getVenues: async (page: number, limit: number = 10, status?: string) => {
+  getVenues: async (
+    page: number,
+    limit: number = DEFAULT_PAGE_LIMIT,
+    status?: string,
+  ) => {
     const params = new URLSearchParams({
       page: page.toString(),
       limit: limit.toString(),
@@ -55,7 +61,7 @@ export const adminService = {
     );
     return response.data;
   },
-  getBookings: async (page: number, limit: number = 10) => {
+  getBookings: async (page: number, limit: number = DEFAULT_PAGE_LIMIT) => {
     const params = new URLSearchParams({
       page: page.toString(),
       limit: limit.toString(),
@@ -65,18 +71,18 @@ export const adminService = {
     );
     return response.data.data; // { bookings, pagination }
   },
-  getOwners: async (page: number, limit: number = 10) => {
+  getOwners: async (page: number, limit: number = DEFAULT_PAGE_LIMIT) => {
     const params = new URLSearchParams({
       page: page.toString(),
       limit: limit.toString(),
-      role: "owner",
+      role: ROLES.OWNER,
     });
     const response = await axiosInstance.get(
       `${API_ENDPOINTS.ADMIN_USERS}?${params.toString()}`,
     );
     return response.data.data; // { users, pagination }
   },
-  getAdmins: async (page: number, limit: number = 10) => {
+  getAdmins: async (page: number, limit: number = DEFAULT_PAGE_LIMIT) => {
     const params = new URLSearchParams({
       page: page.toString(),
       limit: limit.toString(),

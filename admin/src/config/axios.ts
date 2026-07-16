@@ -5,7 +5,7 @@ import type {
   AxiosResponse,
   InternalAxiosRequestConfig,
 } from "axios";
-import { API_BASE_URL, API_ENDPOINTS } from "../constants";
+import { API_BASE_URL, API_ENDPOINTS, API_TIMEOUT } from "@/constants";
 
 // Types
 interface QueuedRequest {
@@ -37,7 +37,7 @@ export const createAxiosInstance = (): AxiosInstance => {
   const instance = axios.create({
     baseURL: `${API_BASE_URL}/api/v1`,
     withCredentials: true,
-    timeout: 30000,
+    timeout: API_TIMEOUT,
     headers: {
       "Content-Type": "application/json",
     },

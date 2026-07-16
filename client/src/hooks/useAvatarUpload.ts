@@ -1,21 +1,19 @@
 import { useState } from 'react';
 import { useToast } from './useToast';
-import { getAvatarUploadSignature } from '../services/userService';
+import { getAvatarUploadSignature } from '@/services/userService';
 import axios from 'axios';
-
-const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2 MB
-const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+import { ALLOWED_IMAGE_TYPES, MAX_AVATAR_FILE_SIZE } from '@/constants/upload';
 
 export const useAvatarUpload = () => {
   const [isUploading, setIsUploading] = useState(false);
   const { error: showError } = useToast();
 
   const validateFile = (file: File) => {
-    if (!ALLOWED_TYPES.includes(file.type)) {
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
       showError(`Invalid file type: ${file.name}. Only JPG, PNG and WEBP are allowed.`);
       return false;
     }
-    if (file.size > MAX_FILE_SIZE) {
+    if (file.size > MAX_AVATAR_FILE_SIZE) {
       showError(`File too large: ${file.name}. Maximum size is 2MB.`);
       return false;
     }

@@ -1,4 +1,4 @@
-import { useModalStore, type ActiveModal } from "../store/useModalStore";
+import { useModalStore, type ActiveModal } from "@/store/useModalStore";
 
 export function useModal() {
   const open = useModalStore((s) => s.open);

@@ -1,22 +1,21 @@
-import { useState } from 'react';
-import { Formik, Form, Field, ErrorMessage } from 'formik';
+import { Formik, Form } from 'formik';
 import { Link, useNavigate, useLocation } from 'react-router';
-import { HiOutlineMail, HiOutlineLockClosed, HiOutlineEye } from 'react-icons/hi';
-import { HiOutlineEyeSlash } from 'react-icons/hi2';
+import { HiOutlineMail } from 'react-icons/hi';
 import AuthLayout from '@/layout/AuthLayout';
 import { signinSchema } from './validation';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
 import { extractErrorMessage } from '@/utils/toast';
 import { getSafeRedirectUrl } from '@/utils/redirect';
+import { AuthInput } from '@/components/auth/AuthInput';
+import { PasswordInput } from '@/components/auth/PasswordInput';
+import { AuthSubmitButton } from '@/components/auth/AuthSubmitButton';
 
 const LoginPage = () => {
   const { login } = useAuth();
   const toast = useToast();
   const navigate = useNavigate();
   const location = useLocation();
-
-  const [showPassword, setShowPassword] = useState(false);
 
   const searchParams = new URLSearchParams(location.search);
   const redirectParam = searchParams.get('redirect');
@@ -81,81 +80,22 @@ const LoginPage = () => {
       >
         {({ isSubmitting }) => (
           <Form className="space-y-6">
-            {/* Email */}
+            <AuthInput
+              id="email"
+              name="email"
+              type="email"
+              label="Email Address"
+              placeholder="john@example.com"
+              icon={<HiOutlineMail />}
+            />
 
-            <div>
-              <label
-                htmlFor="email"
-                className="mb-2 block text-sm font-medium text-[var(--text-secondary)]"
-              >
-                Email Address
-              </label>
-
-              <div className="group flex h-14 items-center rounded-2xl border border-[var(--bg-grey)] bg-[var(--bg-tertiary)] px-4 transition-all duration-200 focus-within:border-[var(--text-primary)] focus-within:ring-4 focus-within:ring-[var(--bg-grey)]">
-                <HiOutlineMail className="mr-3 text-xl text-[var(--text-secondary)] transition-colors group-focus-within:text-[var(--text-primary)]" />
-
-                <Field
-                  id="email"
-                  name="email"
-                  type="email"
-                  placeholder="john@example.com"
-                  className="h-full w-full bg-transparent text-[var(--text-primary)] outline-none placeholder:text-[var(--text-secondary)]"
-                />
-              </div>
-
-              <ErrorMessage
-                name="email"
-                component="p"
-                className="mt-2 text-sm text-red-500 dark:text-red-400"
-              />
-            </div>
-
-            {/* Password */}
-
-            <div>
-              <div className="mb-2 flex items-center justify-between">
-                <label
-                  htmlFor="password"
-                  className="text-sm font-medium text-[var(--text-secondary)]"
-                >
-                  Password
-                </label>
-
-                <Link
-                  to="/forgot-password"
-                  className="text-sm font-medium text-[var(--text-secondary)] transition hover:text-[var(--text-primary)] hover:underline"
-                >
-                  Forgot Password?
-                </Link>
-              </div>
-
-              <div className="group flex h-14 items-center rounded-2xl border border-[var(--bg-grey)] bg-[var(--bg-tertiary)] px-4 transition-all duration-200 focus-within:border-[var(--text-primary)] focus-within:ring-4 focus-within:ring-[var(--bg-grey)]">
-                <HiOutlineLockClosed className="mr-3 text-xl text-[var(--text-secondary)] transition-colors group-focus-within:text-[var(--text-primary)]" />
-
-                <Field
-                  id="password"
-                  name="password"
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="Enter your password"
-                  className="h-full w-full bg-transparent text-[var(--text-primary)] outline-none placeholder:text-[var(--text-secondary)]"
-                />
-
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]"
-                >
-                  {showPassword ? <HiOutlineEyeSlash size={22} /> : <HiOutlineEye size={22} />}
-                </button>
-              </div>
-
-              <ErrorMessage
-                name="password"
-                component="p"
-                className="mt-2 text-sm text-red-500 dark:text-red-400"
-              />
-            </div>
-            {/* Remember Me */}
+            <PasswordInput
+              id="password"
+              name="password"
+              label="Password"
+              placeholder="Enter your password"
+              showForgotPassword
+            />
 
             <div className="flex items-center justify-between">
               <label className="flex cursor-pointer items-center gap-2 text-sm text-[var(--text-secondary)]">
@@ -167,47 +107,11 @@ const LoginPage = () => {
               </label>
             </div>
 
-            {/* Submit */}
-
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="group flex h-14 w-full items-center justify-center rounded-2xl bg-[var(--bg-secondary)] text-base font-semibold text-white shadow-lg transition-all duration-300 hover:-translate-y-0.5 hover:opacity-90 hover:shadow-xl active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {isSubmitting ? (
-                <>
-                  <svg
-                    className="mr-2 h-5 w-5 animate-spin"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-20"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    />
-
-                    <path
-                      className="opacity-90"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                    />
-                  </svg>
-                  Signing In...
-                </>
-              ) : (
-                <>
-                  Sign In
-                  <span className="ml-2 transition-transform duration-300 group-hover:translate-x-1">
-                    →
-                  </span>
-                </>
-              )}
-            </button>
+            <AuthSubmitButton
+              isSubmitting={isSubmitting}
+              text="Sign In"
+              loadingText="Signing In..."
+            />
           </Form>
         )}
       </Formik>

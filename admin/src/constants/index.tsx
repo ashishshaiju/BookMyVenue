@@ -2,6 +2,11 @@
 export const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:3003";
 
+export const API_TIMEOUT = 30000;
+
+export const CLIENT_APP_URL =
+  import.meta.env.VITE_CLIENT_URL || "http://localhost:5173";
+
 // Storage Keys
 export const STORAGE_KEYS = {
   USER_ID: "user_id",

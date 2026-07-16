@@ -1,11 +1,13 @@
 import { useEffect, useRef } from "react";
 import { Outlet, useNavigate, useParams } from "react-router";
 import { Loader2 } from "lucide-react";
-import { useToast } from "../../hooks/useToast";
-import { useAppStore } from "../../store/useAppStore";
-import { useApiQuery } from "../../hooks/useApi";
-import { QUERY_KEYS } from "../../config/queryKeys";
-import { API_ENDPOINTS } from "../../constants";
+import { useToast } from "@/hooks/useToast";
+import { useAppStore } from "@/store/useAppStore";
+import { useApiQuery } from "@/hooks/useApi";
+import { QUERY_KEYS } from "@/config/queryKeys";
+import { API_ENDPOINTS } from "@/constants";
+import { VENUE_STATUS } from "@/constants/venueStatus";
+import { PROFILE_STALE_TIME } from "@/constants/queryConfig";
 
 interface MyVenue {
   _id: string;
@@ -36,7 +38,7 @@ export function TenantLayout() {
   } = useApiQuery<MyVenuesResponse>(
     QUERY_KEYS.MY_VENUES,
     { method: "GET", url: API_ENDPOINTS.MY_VENUES },
-    { staleTime: 5 * 60 * 1000 },
+    { staleTime: PROFILE_STALE_TIME },
   );
 
   const venue =
@@ -49,12 +51,12 @@ export function TenantLayout() {
     !isError &&
     !!myVenues &&
     !!venueId &&
-    (!venue || venue.status !== "Approved");
+    (!venue || venue.status !== VENUE_STATUS.APPROVED);
 
   useEffect(() => {
     if (!venueId || isLoading || isError || !myVenues) return;
 
-    if (!venue || venue.status !== "Approved") {
+    if (!venue || venue.status !== VENUE_STATUS.APPROVED) {
       // Avoid toast/navigate spam on re-renders for the same venueId
       if (handledFailRef.current === venueId) return;
       handledFailRef.current = venueId;
@@ -70,7 +72,16 @@ export function TenantLayout() {
 
     handledFailRef.current = null;
     setActiveVenue(venueId, venue.name);
-  }, [venueId, venue, myVenues, isLoading, isError, navigate, setActiveVenue]);
+  }, [
+    venueId,
+    venue,
+    myVenues,
+    isLoading,
+    isError,
+    navigate,
+    setActiveVenue,
+    error,
+  ]);
 
   if (isLoading) {
     return (

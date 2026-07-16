@@ -3,7 +3,7 @@ export interface User {
   _id: string;
   username: string;
   email: string;
-  status: 'active' | 'suspended' | 'banned';
+  status: "active" | "suspended" | "banned";
   createdAt: string;
 }
 
@@ -12,7 +12,7 @@ export interface Owner {
   _id: string;
   username: string;
   email: string;
-  status: 'active' | 'suspended' | 'banned';
+  status: "active" | "suspended" | "banned";
   venuesCount: number;
   createdAt: string;
 }
@@ -22,7 +22,7 @@ export interface Admin {
   _id: string;
   username: string;
   email: string;
-  role: 'admin' | 'superAdmin';
+  role: "admin" | "superAdmin";
   createdAt: string;
 }
 
@@ -33,7 +33,7 @@ export interface Venue {
   category: string;
   capacity: number;
   pricePerHour: number;
-  status: 'draft' | 'pending' | 'active' | 'rejected' | 'deactivated';
+  status: "draft" | "pending" | "active" | "rejected" | "deactivated";
   address: {
     city: string;
     state: string;
@@ -50,7 +50,7 @@ export interface MyVenue {
   [key: string]: unknown;
   _id: string;
   name: string;
-  status: 'active' | 'pending' | 'rejected' | 'deactivated' | 'draft';
+  status: "active" | "pending" | "rejected" | "deactivated" | "draft";
   category: string;
   rating?: number;
   totalBookings?: number;
@@ -64,7 +64,7 @@ export interface Booking {
   date: string;
   startTime: number;
   endTime: number;
-  status: 'pending' | 'confirmed' | 'cancelled';
+  status: "pending" | "confirmed" | "cancelled";
   totalPrice: number;
   createdAt: string;
   bookerName?: string;
@@ -83,8 +83,8 @@ export interface Review {
   userId: { username: string; email: string };
   rating: number;
   comment?: string;
-  status: 'visible' | 'flagged' | 'removed';
-  hideRequestStatus: 'none' | 'pending' | 'approved' | 'rejected';
+  status: "visible" | "flagged" | "removed";
+  hideRequestStatus: "none" | "pending" | "approved" | "rejected";
   ownerReply?: { text: string; repliedAt: string | Date };
   hideRequestReason?: string;
   createdAt: string;
@@ -112,15 +112,15 @@ export interface BanRecord {
   createdAt: string;
 }
 
-export interface ModerationSummary {
-  flaggedReviews: number;
-  hideRequests: number;
-  suspendedVenues: number;
-  bannedUsers: number;
-}
-
 export interface MonthData {
   month: string;
   revenue: number;
   bookings: number;
+}
+
+export interface BlockedDate {
+  dateObj: Date;
+  isPast: boolean;
+  date: string;
+  venueId: string;
 }

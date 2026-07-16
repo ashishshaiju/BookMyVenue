@@ -1,9 +1,11 @@
 import { useState } from "react";
-import { useApiQuery } from "../../hooks/useApi";
-import { API_ENDPOINTS } from "../../constants";
-import { Card } from "../../components/ui/card";
-import { DataTable } from "../../components/ui/data-table";
-import { Badge } from "../../components/ui/badge";
+import { useApiQuery } from "@/hooks/useApi";
+import { API_ENDPOINTS } from "@/constants";
+import { ACTIVITY_LOGS_PAGE_LIMIT } from "@/constants/pagination";
+import { QUERY_KEYS } from "@/config/queryKeys";
+import { Card } from "@/components/ui/card";
+import { DataTable } from "@/components/ui/data-table";
+import { Badge } from "@/components/ui/badge";
 
 interface Log {
   _id: string;
@@ -55,9 +57,9 @@ const ActivityLogsPage = () => {
   const [page, setPage] = useState(1);
 
   const { data, isLoading } = useApiQuery<LogsResponse>(
-    ["moderation-logs", page],
+    [...QUERY_KEYS.MODERATION_LOGS, page],
     {
-      url: `${API_ENDPOINTS.MODERATION_LOGS}?page=${page}&limit=20`,
+      url: `${API_ENDPOINTS.MODERATION_LOGS}?page=${page}&limit=${ACTIVITY_LOGS_PAGE_LIMIT}`,
       method: "GET",
     },
   );

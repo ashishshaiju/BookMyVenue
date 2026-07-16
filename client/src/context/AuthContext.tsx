@@ -1,10 +1,10 @@
 import React, { createContext, useState, useEffect, type ReactNode } from 'react';
-import { axiosInstance } from '../config/axios';
-import { API_ENDPOINTS, STORAGE_KEYS } from '../constants';
-import { useToast } from '../hooks/useToast';
-import { clearDraft, clearDraftSession } from '../utils/venueDraft';
-import { queryClient } from '../config/queryClient';
-import { resetProfileGreeting } from '../utils/profileGreeting';
+import { axiosInstance } from '@/config/axios';
+import { API_ENDPOINTS, STORAGE_KEYS } from '@/constants';
+import { useToast } from '@/hooks/useToast';
+import { clearDraft, clearDraftSession } from '@/utils/venueDraft';
+import { queryClient } from '@/config/queryClient';
+import { resetProfileGreeting } from '@/utils/profileGreeting';
 
 export interface User {
   id: string;
@@ -30,7 +30,7 @@ export const AuthContext = createContext<AuthContextType | undefined>(undefined)
 const clearAuthData = (setUser: React.Dispatch<React.SetStateAction<User | null>>) => {
   setUser(null);
   queryClient.clear();
-  localStorage.removeItem('x-session-token');
+  localStorage.removeItem(STORAGE_KEYS.SESSION_TOKEN);
   localStorage.removeItem(STORAGE_KEYS.IS_LOGGED_IN);
   localStorage.removeItem(STORAGE_KEYS.USER_ID);
   localStorage.removeItem(STORAGE_KEYS.USER_NAME);

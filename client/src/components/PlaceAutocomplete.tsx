@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useFormikContext } from 'formik';
-import type { GeoSearchResult } from '../types/geo.types';
-import { axiosInstance } from '../config/axios';
+import type { GeoSearchResult } from '@/types/geo.types';
+import { axiosInstance } from '@/config/axios';
 
 interface PlaceAutocompleteProps {
   fieldName?: string;

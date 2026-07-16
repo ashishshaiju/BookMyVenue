@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
-import { axiosInstance } from '../config/axios';
+import { axiosInstance } from '@/config/axios';
+import { API_ENDPOINTS } from '@/constants';
 
 export interface VenuePin {
   _id: string;
@@ -42,7 +43,7 @@ export function useVenuePins(): UseVenuePinsReturn {
         neLat: bbox.neLat.toString(),
       });
 
-      const response = await axiosInstance.get(`/venues/pins?${params}`);
+      const response = await axiosInstance.get(`${API_ENDPOINTS.VENUE_PINS}?${params}`);
 
       setPins(response.data?.data || []);
     } catch (err) {

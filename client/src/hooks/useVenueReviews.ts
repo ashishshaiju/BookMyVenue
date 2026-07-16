@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
-import * as reviewService from '../services/reviewService';
-import type { Review, ReviewsResponse } from '../services/reviewService';
+import * as reviewService from '@/services/reviewService';
+import type { Review, ReviewsResponse } from '@/services/reviewService';
 
 export interface UseVenueReviewsReturn {
   reviews: Review[];

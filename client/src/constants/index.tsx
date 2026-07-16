@@ -1,4 +1,3 @@
-import { INDIA_STATES } from './india';
 export { FILTER_PRICE_STEPS, KERALA_DISTRICTS } from './filterConstants';
 
 // API Configuration
@@ -13,6 +12,8 @@ const STORAGE_KEYS = {
   USER_ROLE: 'user_role',
   IS_LOGGED_IN: 'isLoggedIn',
   THEME: 'theme',
+  SESSION_TOKEN: 'x-session-token',
+  WISHLIST_PREFIX: 'wishlist_',
 } as const;
 
 // API Endpoints
@@ -77,4 +78,4 @@ const API_ENDPOINTS = {
   DASHBOARD: '/dashboard',
 } as const;
 
-export { INDIA_STATES, API_ENDPOINTS, STORAGE_KEYS, API_BASE_URL, DASHBOARD_URL, RAZORPAY_KEY_ID };
+export { API_ENDPOINTS, STORAGE_KEYS, API_BASE_URL, DASHBOARD_URL, RAZORPAY_KEY_ID };

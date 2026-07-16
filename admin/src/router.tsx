@@ -8,6 +8,8 @@ import { RoleGuard } from "./components/guards/RoleGuard";
 import { OwnerGuard } from "./components/guards/OwnerGuard";
 import { MainLayout } from "./components/layout/MainLayout";
 import { TenantLayout } from "./components/layout/TenantLayout";
+import { ROLES } from "@/constants/roles";
+import { ROUTES } from "@/constants/routes";
 
 import VenuesPage from "./pages/admin/VenuesPage";
 import BookingsPage from "./pages/admin/BookingsPage";
@@ -26,7 +28,7 @@ export function AppRouter() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/" element={<Navigate to={ROUTES.DASHBOARD} replace />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
@@ -34,7 +36,7 @@ export function AppRouter() {
         <Route path="/dashboard" element={<AuthGuard />}>
           <Route element={<MainLayout />}>
             {/* Owner routes */}
-            <Route element={<RoleGuard allowedRoles={["owner"]} />}>
+            <Route element={<RoleGuard allowedRoles={[ROLES.OWNER]} />}>
               <Route path="select-venue" element={<VenueSelectorPage />} />
               <Route path="venue/:venueId" element={<TenantLayout />}>
                 <Route index element={<Navigate to="reports" replace />} />
@@ -47,13 +49,15 @@ export function AppRouter() {
 
             {/* Admin & SuperAdmin routes */}
             <Route
-              element={<RoleGuard allowedRoles={["admin", "superAdmin"]} />}
+              element={
+                <RoleGuard allowedRoles={[ROLES.ADMIN, ROLES.SUPER_ADMIN]} />
+              }
             >
               <Route path="venues" element={<VenuesPage />} />
               <Route path="bookings" element={<BookingsPage />} />
               <Route path="owners" element={<OwnersPage />} />
               <Route path="moderation" element={<ModerationPage />} />
-              <Route element={<RoleGuard allowedRoles={["superAdmin"]} />}>
+              <Route element={<RoleGuard allowedRoles={[ROLES.SUPER_ADMIN]} />}>
                 <Route path="team" element={<TeamPage />} />
                 <Route path="logs" element={<ActivityLogsPage />} />
                 <Route path="users" element={<UsersPage />} />

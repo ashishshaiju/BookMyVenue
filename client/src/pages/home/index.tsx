@@ -2,27 +2,22 @@ import { useNavigate } from 'react-router';
 import { useState, useCallback } from 'react';
 import { Link } from 'react-router';
 import {
-  IoLocationOutline,
-  IoSearch,
   IoBusinessOutline,
   IoCameraOutline,
   IoCafeOutline,
   IoStarOutline,
   IoHomeOutline,
   IoLeafOutline,
-  // IoLogoFacebook,
-  // IoLogoTwitter,
-  // IoLogoInstagram,
-  // IoLogoLinkedin,
   IoCheckmarkCircle,
 } from 'react-icons/io5';
-import heroImage from '@/assets/hero.png';
+
 import { useApiQuery } from '@/hooks/useApi';
 import { API_ENDPOINTS } from '@/constants';
-import { CompactVenueCard } from '@/components/CompactVenueCard';
 import { useToggleWishlist, useWishlistSync } from '@/hooks/useWishlist';
 import type { PublicVenue } from '@/types/venue.types';
-import { Skeleton } from '@/components/ui/skeleton';
+
+import { HeroSection } from './components/HeroSection';
+import { FeaturedVenues } from './components/FeaturedVenues';
 
 const VENUE_CATEGORIES = [
   { name: 'Wedding Halls', icon: IoStarOutline, value: 'Wedding Hall' },
@@ -69,7 +64,7 @@ const HomePage = () => {
       setTogglingVenues((prev) => new Set([...prev, venueId]));
 
       try {
-        return await toggleWishlistFn(venueId);
+        await toggleWishlistFn(venueId);
       } finally {
         setTogglingVenues((prev) => {
           const next = new Set(prev);
@@ -85,49 +80,7 @@ const HomePage = () => {
     <div className="bg-[var(--bg-primary)]">
       {/* Hero Section */}
       <section className="px-4 md:px-6 lg:px-8 pt-22 pb-8">
-        <div className="relative h-[650px] md:h-[720px] w-full rounded-[2.5rem] overflow-hidden flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/60 z-10" />
-
-          <img
-            src={heroImage}
-            alt="Venue Hero"
-            className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1.5s] ease-out hover:scale-105"
-          />
-
-          <div className="relative z-20 px-6 w-full max-w-6xl text-center flex flex-col justify-center">
-            <h1 className="text-4xl md:text-6xl font-bold text-white leading-tight animate-fade-in-up">
-              Find the Perfect Venue
-              <br />
-              for Every Occasion
-            </h1>
-
-            <p className="text-gray-200 mt-4 max-w-2xl mx-auto text-sm md:text-lg animate-fade-in-up">
-              Curated spaces for corporate events, weddings, and private gatherings.
-            </p>
-
-            <div className="w-[92%] md:w-full max-w-4xl mx-auto bg-[var(--bg-tertiary)] rounded-2xl p-2 shadow-xl flex flex-col md:flex-row items-center gap-2 animate-fade-in-up-delay mt-10 md:mt-20">
-              <div className="flex items-center gap-3 w-full px-4 py-3">
-                <IoLocationOutline className="text-[var(--text-secondary)] text-2xl shrink-0" />
-
-                <input
-                  type="text"
-                  placeholder="Search venue, city, or event type"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="w-full outline-none bg-transparent text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] text-sm md:text-lg"
-                />
-              </div>
-
-              <button
-                onClick={handleSearch}
-                className="w-full md:w-auto px-8 py-4 bg-[var(--bg-green)] text-white rounded-xl font-semibold hover:opacity-90 transition flex items-center justify-center gap-2 text-base shrink-0"
-              >
-                <IoSearch className="text-xl" />
-                Search
-              </button>
-            </div>
-          </div>
-        </div>
+        <HeroSection search={search} setSearch={setSearch} handleSearch={handleSearch} />
 
         {/* Features Strip */}
         <div className="max-w-5xl mx-auto mt-10 grid grid-cols-1 md:grid-cols-3 gap-6 px-4 animate-fade-in-up-delay">
@@ -198,61 +151,12 @@ const HomePage = () => {
       </section>
 
       {/* Featured Venues Section */}
-      <section className="px-6 py-16">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col md:flex-row items-center justify-between mb-10 gap-4">
-            <div>
-              <h2 className="text-3xl font-bold text-[var(--text-primary)]">
-                Featured Properties
-                {/* <br className="hidden md:block" /> */}
-                <span className="text-[var(--bg-green)]"> On Our Listing</span>
-              </h2>
-            </div>
-
-            <Link
-              to="/explore"
-              className="px-6 py-3 border-2 border-[var(--bg-green)] text-[var(--bg-green)] rounded-xl font-medium hover:bg-[var(--bg-green)] hover:text-white transition"
-            >
-              View All Properties
-            </Link>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {isLoading ? (
-              Array.from({ length: 8 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="flex flex-col h-[380px] rounded-2xl border border-[var(--bg-grey)] bg-[var(--bg-tertiary)] overflow-hidden"
-                >
-                  <Skeleton className="w-full h-48 shrink-0" />
-                  <div className="flex-1 p-5 flex flex-col justify-between">
-                    <div>
-                      <Skeleton className="h-6 w-3/4 mb-3" />
-                      <Skeleton className="h-4 w-1/2 mb-2" />
-                      <Skeleton className="h-4 w-1/3" />
-                    </div>
-                  </div>
-                </div>
-              ))
-            ) : featuredVenues.length > 0 ? (
-              featuredVenues
-                .slice(0, 8)
-                .map((venue: PublicVenue) => (
-                  <CompactVenueCard
-                    key={venue._id}
-                    venue={venue}
-                    onToggleWishlist={handleToggleWishlist}
-                    isLoadingWishlist={togglingVenues.has(venue._id)}
-                  />
-                ))
-            ) : (
-              <div className="col-span-full py-12 text-center text-[var(--text-secondary)]">
-                No featured venues currently available.
-              </div>
-            )}
-          </div>
-        </div>
-      </section>
+      <FeaturedVenues
+        isLoading={isLoading}
+        featuredVenues={featuredVenues}
+        togglingVenues={togglingVenues}
+        handleToggleWishlist={handleToggleWishlist}
+      />
 
       {/* Become a Host Section */}
       <section className="px-6 py-16 bg-[var(--bg-tertiary)] border-y border-[var(--bg-grey)]">

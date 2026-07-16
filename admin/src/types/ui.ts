@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { ReactNode } from "react";
 
 export interface NavItem {
   title: string;
@@ -29,4 +29,16 @@ export interface OfflineForm {
   endTime: string;
   customerName: string;
   customerPhone: string;
+  amountPaid: string;
+}
+
+export interface ReviewActionDialogState {
+  open: boolean;
+  action: "remove" | "reject_hide" | "restore" | "approve_hide" | null;
+  reviewId: string | null;
+}
+
+export interface VenueDialogState {
+  open: boolean;
+  venueId?: string;
 }

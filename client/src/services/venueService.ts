@@ -1,6 +1,6 @@
-import { axiosInstance } from '../config/axios';
-import { API_ENDPOINTS } from '../constants';
-import type { VenueFilters } from '../types/venue.types';
+import { axiosInstance } from '@/config/axios';
+import { API_ENDPOINTS } from '@/constants';
+import type { VenueFilters } from '@/types/venue.types';
 
 export async function createVenue(dto: unknown) {
   const res = await axiosInstance.post(API_ENDPOINTS.VENUES, dto);

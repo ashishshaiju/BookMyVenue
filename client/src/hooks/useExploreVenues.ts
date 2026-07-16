@@ -1,6 +1,6 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { getPublicVenues } from '../services/venueService';
-import type { VenueFilters, PaginatedVenuesResponse } from '../types/venue.types';
+import { getPublicVenues } from '@/services/venueService';
+import type { VenueFilters, PaginatedVenuesResponse } from '@/types/venue.types';
 
 export function useExploreVenues(filters: VenueFilters, limit = 12) {
   return useInfiniteQuery<PaginatedVenuesResponse, Error>({

@@ -1,5 +1,5 @@
-import { axiosInstance } from '../config/axios';
-import { API_ENDPOINTS } from '../constants';
+import { axiosInstance } from '@/config/axios';
+import { API_ENDPOINTS } from '@/constants';
 
 export interface UpdateProfileDto {
   username?: string;

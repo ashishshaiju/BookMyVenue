@@ -39,7 +39,6 @@ export const FeaturedVenuesPanel = () => {
     data: venues,
     isLoading,
     isError,
-    error,
   } = useApiQuery<Venue[]>([...QUERY_KEYS.ADMIN_VENUES, "featured"], {
     method: "GET",
     url: API_ENDPOINTS.FEATURED_VENUES,
