@@ -49,7 +49,7 @@ const BookingDetails = () => {
           <FiInfo className="text-4xl text-[var(--text-secondary)] mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-2">Booking Not Found</h2>
           <p className="text-[var(--text-secondary)] mb-6">
-            The booking you are looking for does not exist or has been removed.
+            The requested booking could not be found. It may no longer exist or is not associated with the current account.
           </p>
           <button
             onClick={() => navigate('/my-bookings')}

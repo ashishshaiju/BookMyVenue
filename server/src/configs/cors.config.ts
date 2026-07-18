@@ -21,12 +21,12 @@ export const corsOptions: CorsOptions = {
     nodeEnv === 'production'
       ? parseOrigins(process.env.CLIENT_URL, ['https://bookmyvenue.com'])
       : parseOrigins(process.env.CLIENT_URL, [
-        'https://bmvserver.share.zrok.io',
-        'http://localhost:5173',
-        'http://localhost:3000',
-        'http://localhost:5174',
-        'http://localhost:3001',
-      ]),
+          'https://bmvserver.share.zrok.io',
+          'http://localhost:5173',
+          'http://localhost:3000',
+          'http://localhost:5174',
+          'http://localhost:3001',
+        ]),
   credentials: true,
   optionsSuccessStatus: 204,
 };

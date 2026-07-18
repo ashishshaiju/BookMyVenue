@@ -15,13 +15,20 @@ export const getVenueAvailability = async (req: Request, res: Response): Promise
       ResponseUtil.badRequest(res, 'Validation failed');
       return;
     }
-    
+
     const { id } = validated.params as VenueIdParamDTO;
     const { date } = validated.query as AvailabilityQueryDTO;
 
     const venue = await findVenueById(id);
     if (!venue) {
-       ResponseUtil.notFound(res, 'Venue not found');
+      ResponseUtil.notFound(res, 'Venue not found');
+      return;
+    }
+
+    // Only Approved, active, non-deleted venues expose availability.
+    // Return 404 (not 403) to avoid leaking venue existence for non-public venues.
+    if (venue.status !== 'Approved' || !venue.active || venue.deleted) {
+      ResponseUtil.notFound(res, 'Venue not found');
       return;
     }
 
@@ -62,7 +69,7 @@ export const getVenueAvailability = async (req: Request, res: Response): Promise
     ResponseUtil.success(res, 'Availability calculated successfully', availabilityData);
     return;
   } catch (error) {
-    logError('Error computing availability', error as Record<string,unknown>);
+    logError('Error computing availability', error as Record<string, unknown>);
     ResponseUtil.serverUnavailable(res, 'Failed to compute availability');
     return;
   }

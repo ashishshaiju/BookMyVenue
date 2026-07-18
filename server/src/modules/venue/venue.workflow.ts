@@ -50,7 +50,7 @@ export function canSubmit(venue: IVenue): void {
       `Cannot submit: the following required fields are missing or empty — ${missingFields.join(', ')}`
     );
   }
-  
+
   if (venue.workingDays.length === 0) {
     throw new ValidationError('Cannot submit: at least one working day must be selected');
   }
@@ -92,7 +92,10 @@ export function canSubmit(venue: IVenue): void {
     if (!venue.pricing) {
       throw new ValidationError('Cannot submit: pricing is required for flexible booking type');
     }
-    if (venue.pricing.pricingType === 'timeBasedPricing' && venue.pricing.pricingRules.length === 0) {
+    if (
+      venue.pricing.pricingType === 'timeBasedPricing' &&
+      venue.pricing.pricingRules.length === 0
+    ) {
       throw new ValidationError(
         'Cannot submit: at least one pricing rule is required for time-based pricing'
       );
@@ -108,9 +111,7 @@ export function canSubmit(venue: IVenue): void {
         throw new ValidationError('Cannot submit: pricing rule toTime must be after fromTime');
       }
       if (from < openMin || to > closeMin) {
-        throw new ValidationError(
-          'Cannot submit: pricing rule times must be within working hours'
-        );
+        throw new ValidationError('Cannot submit: pricing rule times must be within working hours');
       }
     });
 
@@ -121,9 +122,7 @@ export function canSubmit(venue: IVenue): void {
         throw new ValidationError('Cannot submit: blocked time toTime must be after fromTime');
       }
       if (from < openMin || to > closeMin) {
-        throw new ValidationError(
-          'Cannot submit: blocked time must be within working hours'
-        );
+        throw new ValidationError('Cannot submit: blocked time must be within working hours');
       }
     });
   }
@@ -135,7 +134,10 @@ export function canSubmit(venue: IVenue): void {
         'Cannot submit: refund type is required for refundable cancellation policy'
       );
     }
-    if (venue.cancellation.refundType === 'timeBasedRefund' && venue.cancellation.refundRules.length === 0) {
+    if (
+      venue.cancellation.refundType === 'timeBasedRefund' &&
+      venue.cancellation.refundRules.length === 0
+    ) {
       throw new ValidationError(
         'Cannot submit: at least one refund rule is required for time-based refund policy'
       );

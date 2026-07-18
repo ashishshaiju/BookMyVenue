@@ -12,6 +12,7 @@ export interface UserProfile {
   email: string;
   role: "owner" | "admin" | "superAdmin";
   avatar?: string;
+  phone?: string;
 }
 
 export function AuthGuard() {

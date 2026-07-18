@@ -195,7 +195,10 @@ export type CheckoutBodyDTO = z.infer<typeof checkoutBodySchema>;
 
 const bookerInfoSchema = z.object({
   name: z.string().trim().min(1, 'Name is required'),
-  email: z.string().trim().regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, 'Valid email is required'),
+  email: z
+    .string()
+    .trim()
+    .regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, 'Valid email is required'),
   phone: z.string().trim().min(10, 'Valid phone number is required'),
   place: z.string().trim().min(1, 'Place is required'),
   note: z.string().trim().optional(),
@@ -239,13 +242,18 @@ export const adminBookingFiltersSchema = z.object({
 export type AdminBookingFiltersDTO = z.infer<typeof adminBookingFiltersSchema>;
 
 export const bookingRefIdParamSchema = z.object({
-  bookingRefId: z.string().trim().refine((val) => {
-    const isObjectId = /^[a-f\d]{24}$/i.test(val);
-    const isBookingRef = val.toUpperCase().startsWith('BMV-') && val.length === 10;
-    return isObjectId || isBookingRef;
-  }, {
-    message: 'Invalid booking ID or reference format',
-  }),
+  bookingRefId: z
+    .string()
+    .trim()
+    .refine(
+      (val) => {
+        const isObjectId = /^[a-f\d]{24}$/i.test(val);
+        const isBookingRef = val.toUpperCase().startsWith('BMV-') && val.length === 10;
+        return isObjectId || isBookingRef;
+      },
+      {
+        message: 'Invalid booking ID or reference format',
+      }
+    ),
 });
 export type BookingRefIdParamDTO = z.infer<typeof bookingRefIdParamSchema>;
-

@@ -3,7 +3,6 @@ import { useApiQuery } from "@/hooks/useApi";
 import { API_ENDPOINTS } from "@/constants";
 import { ACTIVITY_LOGS_PAGE_LIMIT } from "@/constants/pagination";
 import { QUERY_KEYS } from "@/config/queryKeys";
-import { Card } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
 import { Badge } from "@/components/ui/badge";
 
@@ -131,17 +130,15 @@ const ActivityLogsPage = () => {
         </p>
       </div>
 
-      <Card className="p-0 border overflow-hidden">
-        <DataTable
-          columns={columns}
-          data={data?.logs ?? []}
-          page={page}
-          totalPages={data?.pagination?.totalPages ?? 0}
-          onPageChange={setPage}
-          isLoading={isLoading}
-          emptyMessage="No activity logs found."
-        />
-      </Card>
+      <DataTable
+        columns={columns}
+        data={data?.logs ?? []}
+        page={page}
+        totalPages={data?.pagination?.totalPages ?? 0}
+        onPageChange={setPage}
+        isLoading={isLoading}
+        emptyMessage="No activity logs found."
+      />
     </div>
   );
 };

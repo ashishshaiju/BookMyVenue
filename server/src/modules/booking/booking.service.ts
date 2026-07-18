@@ -16,7 +16,11 @@ import {
 } from './booking.repository';
 import type { PaginationParams, PaginatedResponse } from '../../types/pagination.types';
 import { minutesToTimeString } from '../../utils/timeUtils';
-import { EmailIntent, EmailTaskStatus, type EmailIntentType } from '../../constants/email.constants';
+import {
+  EmailIntent,
+  EmailTaskStatus,
+  type EmailIntentType,
+} from '../../constants/email.constants';
 import type { ILock } from './lock.types';
 import type { IBooking } from './booking.types';
 import type { RazorpayWebhookNotes } from './booking.types';
@@ -131,13 +135,16 @@ export async function processCapturedPayment(
   if (lock) {
     const expectedAmountPaise = Math.round(lock.price * 100);
     if (Math.abs(amountPaise - expectedAmountPaise) > 100) {
-      logWarn('Captured payment amount does not match lock price — proceeding, but flagging for review', {
-        module: 'booking.service.ts/processCapturedPayment',
-        lockId,
-        paymentId,
-        expectedAmountPaise,
-        capturedAmountPaise: amountPaise,
-      });
+      logWarn(
+        'Captured payment amount does not match lock price — proceeding, but flagging for review',
+        {
+          module: 'booking.service.ts/processCapturedPayment',
+          lockId,
+          paymentId,
+          expectedAmountPaise,
+          capturedAmountPaise: amountPaise,
+        }
+      );
     }
 
     logInfo('Webhook Scenario A: Lock exists, creating booking', {
@@ -308,11 +315,22 @@ export async function getAllBookings(
   return findAllBookings(paginationParams, filters);
 }
 
-export async function getMyBookings(userId: string): Promise<{ bookings: { upcoming: Record<string, unknown>[]; cancelled: Record<string, unknown>[]; completed: Record<string, unknown>[] } }> {
+export async function getMyBookings(
+  userId: string
+): Promise<{
+  bookings: {
+    upcoming: Record<string, unknown>[];
+    cancelled: Record<string, unknown>[];
+    completed: Record<string, unknown>[];
+  };
+}> {
   return fetchMyBookings(userId);
 }
 
-export async function getBookingById(bookingId: string, userId: string): Promise<Record<string, unknown> | null> {
+export async function getBookingById(
+  bookingId: string,
+  userId: string
+): Promise<Record<string, unknown> | null> {
   return fetchBookingById(bookingId, userId);
 }
 

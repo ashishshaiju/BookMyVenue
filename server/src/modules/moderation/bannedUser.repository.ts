@@ -107,10 +107,7 @@ export async function findActiveBan(
   if (scope === 'commenting' || scope === 'owner_dashboard') {
     if (venueId) {
       // Match either: venueId is null (global) OR venueId matches
-      query.$or = [
-        { venueId: null },
-        { venueId: toObjectId(venueId) },
-      ];
+      query.$or = [{ venueId: null }, { venueId: toObjectId(venueId) }];
     } else {
       // No specific venue passed — just match global (venueId: null)
       query.venueId = null;

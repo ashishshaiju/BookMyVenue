@@ -12,7 +12,8 @@ import * as validator from './venue.validator';
 import rateLimit from 'express-rate-limit';
 import { paginationMiddleware } from '../../middlewares/pagination.middleware';
 
-const router: Router = Router();
+const 
+router: Router = Router();
 
 const uploadSignatureLimiter = rateLimit({
   windowMs: 30 * 60 * 1000,
@@ -58,11 +59,7 @@ const uploadSignatureLimiter = rateLimit({
  */
 router
   .route('/upload-signature')
-  .get(
-    verifyAccessToken,
-    uploadSignatureLimiter,
-    controller.getUploadSignature
-  );
+  .get(verifyAccessToken, uploadSignatureLimiter, controller.getUploadSignature);
 
 /**
  * @openapi
@@ -137,11 +134,7 @@ router
  */
 router
   .route('/')
-  .post(
-    verifyAccessToken,
-    validateBody(validator.createVenueSchema),
-    controller.createVenue
-  )
+  .post(verifyAccessToken, validateBody(validator.createVenueSchema), controller.createVenue)
   .get(
     verifyAccessTokenOptional,
     validateQuery(validator.publicVenueFiltersSchema),
@@ -215,9 +208,7 @@ router
  *                       items:
  *                         type: object
  */
-router
-  .route('/pins')
-  .get(controller.getVenuePins);
+router.route('/pins').get(controller.getVenuePins);
 
 /**
  * @openapi
@@ -262,15 +253,8 @@ router
  */
 router
   .route('/draft')
-  .put(
-    verifyAccessToken,
-    controller.upsertDraft
-  )
-  .get(
-    verifyAccessToken,
-    requirePermission(P.venues.read),
-    controller.getMyDraft
-  );
+  .put(verifyAccessToken, controller.upsertDraft)
+  .get(verifyAccessToken, requirePermission(P.venues.read), controller.getMyDraft);
 
 /**
  * @openapi
@@ -362,12 +346,7 @@ router
  *             schema:
  *               $ref: '#/components/schemas/SuccessResponse'
  */
-router
-  .route('/featured')
-  .get(
-    verifyAccessTokenOptional,
-    controller.getFeaturedVenues
-  );
+router.route('/featured').get(verifyAccessTokenOptional, controller.getFeaturedVenues);
 
 /**
  * @openapi
@@ -722,6 +701,54 @@ router
     requirePermission(P.venues.activate),
     validateParams(validator.venueIdParamSchema),
     controller.unfeatureVenue
+  );
+
+/**
+ * @openapi
+ * /venues/{id}/extend-deadline:
+ *   post:
+ *     tags: [Venues]
+ *     summary: Extend edit deadline for a rejected venue (superAdmin only)
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [newDeadline]
+ *             properties:
+ *               newDeadline:
+ *                 type: string
+ *                 format: date-time
+ *                 description: New deadline for editing (must be within 120 days)
+ *     responses:
+ *       200:
+ *         description: Edit deadline extended successfully
+ *       400:
+ *         description: Invalid deadline
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: SuperAdmin role required
+ *       404:
+ *         description: Venue not found
+ */
+router
+  .route('/:id/extend-deadline')
+  .post(
+    verifyAccessToken,
+    requireRole('superAdmin'),
+    validateParams(validator.venueIdParamSchema),
+    validateBody(validator.extendVenueDeadlineSchema),
+    controller.extendDeadline
   );
 
 export { router as venueRouter };

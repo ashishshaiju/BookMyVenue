@@ -96,15 +96,16 @@ const ReviewSchema = new Schema<IReview>(
 );
 
 // Index for venue reviews listing (public view filters to visible)
-ReviewSchema.index(
-  { venueId: 1, status: 1, createdAt: -1 },
-  { name: 'idx_venue_status_recency' }
-);
+ReviewSchema.index({ venueId: 1, status: 1, createdAt: -1 }, { name: 'idx_venue_status_recency' });
 
 // Partial unique index: only one rating per (userId, venueId)
 ReviewSchema.index(
   { userId: 1, venueId: 1 },
-  { unique: true, partialFilterExpression: { rating: { $exists: true } }, name: 'idx_user_venue_rating' }
+  {
+    unique: true,
+    partialFilterExpression: { rating: { $exists: true } },
+    name: 'idx_user_venue_rating',
+  }
 );
 
 // Index for admin hide-request moderation queue

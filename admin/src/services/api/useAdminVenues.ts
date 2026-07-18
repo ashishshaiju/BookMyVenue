@@ -35,11 +35,27 @@ export function useApproveVenue() {
 
 export function useRejectVenue() {
   const queryClient = useQueryClient();
-  return useApiMutation<unknown, { id: string; reason: string }>(
+  return useApiMutation<unknown, { id: string; reason: string; extendedDeadline?: Date }>(
     (vars) => ({
       method: "POST",
       url: `${API_ENDPOINTS.VENUES}/${vars.id}/reject`,
-      data: { reason: vars.reason },
+      data: { rejectionReason: vars.reason, extendedDeadline: vars.extendedDeadline },
+    }),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ADMIN_VENUES });
+      },
+    },
+  );
+}
+
+export function useExtendVenueDeadline() {
+  const queryClient = useQueryClient();
+  return useApiMutation<unknown, { id: string; newDeadline: Date }>(
+    (vars) => ({
+      method: "POST",
+      url: `${API_ENDPOINTS.VENUES}/${vars.id}/extend-deadline`,
+      data: { newDeadline: vars.newDeadline },
     }),
     {
       onSuccess: () => {

@@ -55,11 +55,7 @@ const router: Router = Router();
 router
   .route('/venue/:venueId')
   .get(paginationMiddleware(), controller.getVenueReviews)
-  .post(
-    verifyAccessToken,
-    requirePermission(P.reviews.create),
-    controller.submitReview
-  );
+  .post(verifyAccessToken, requirePermission(P.reviews.create), controller.submitReview);
 
 /**
  * @openapi
@@ -79,12 +75,7 @@ router
  *       200:
  *         description: My rating
  */
-router
-  .route('/venue/:venueId/my-rating')
-  .get(
-    verifyAccessToken,
-    controller.getMyRating
-  );
+router.route('/venue/:venueId/my-rating').get(verifyAccessToken, controller.getMyRating);
 
 /**
  * @openapi
@@ -138,16 +129,8 @@ router
  */
 router
   .route('/:id')
-  .patch(
-    verifyAccessToken,
-    requirePermission(P.reviews.update),
-    controller.updateReview
-  )
-  .delete(
-    verifyAccessToken,
-    requirePermission(P.reviews.delete),
-    controller.deleteReview
-  );
+  .patch(verifyAccessToken, requirePermission(P.reviews.update), controller.updateReview)
+  .delete(verifyAccessToken, requirePermission(P.reviews.delete), controller.deleteReview);
 
 /**
  * @openapi
@@ -219,10 +202,6 @@ router
  */
 router
   .route('/:id/moderate')
-  .patch(
-    verifyAccessToken,
-    requireRole('admin'),
-    controller.moderateReview
-  );
+  .patch(verifyAccessToken, requireRole('admin'), controller.moderateReview);
 
 export { router as reviewRouter };

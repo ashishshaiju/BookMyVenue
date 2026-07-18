@@ -20,15 +20,25 @@ export async function findRoleByName(name: string): Promise<IRole | null> {
   return RoleModel.findOne({ name }).exec();
 }
 
-export async function findUserRole(userId: mongoose.Types.ObjectId, roleId: mongoose.Types.ObjectId): Promise<IUserRole | null> {
+export async function findUserRole(
+  userId: mongoose.Types.ObjectId,
+  roleId: mongoose.Types.ObjectId
+): Promise<IUserRole | null> {
   return UserRoleModel.findOne({ userId, roleId }).exec();
 }
 
-export async function createUserRole(userId: mongoose.Types.ObjectId, roleId: mongoose.Types.ObjectId): Promise<IUserRole> {
+export async function createUserRole(
+  userId: mongoose.Types.ObjectId,
+  roleId: mongoose.Types.ObjectId
+): Promise<IUserRole> {
   return UserRoleModel.create({ userId, roleId });
 }
 
-export async function updateUserRoleStatus(existing: IUserRole, active: boolean, deleted: boolean): Promise<void> {
+export async function updateUserRoleStatus(
+  existing: IUserRole,
+  active: boolean,
+  deleted: boolean
+): Promise<void> {
   existing.active = active;
   existing.deleted = deleted;
   await existing.save();
@@ -40,7 +50,7 @@ export async function findAdminsWithPagination(
 ): Promise<PaginatedResponse<Record<string, unknown>, 'admins'>> {
   const { limit, skip } = paginationParams;
   const matchStage = { roleId: adminRoleId, active: true, deleted: false };
-  
+
   const [userRoles, totalCountResult] = await Promise.all([
     UserRoleModel.aggregate<Record<string, unknown>>([
       { $match: matchStage },

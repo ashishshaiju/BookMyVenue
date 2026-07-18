@@ -8,10 +8,10 @@ import type {
   VenueKey,
   PublicVenueFilters,
 } from './venue.types';
-import type { IVenueDraft } from "./venueDraft.model";
+import type { IVenueDraft } from './venueDraft.model';
 import { requireOwnVenue } from './venue.ownership';
 import * as workflow from './venue.workflow';
-import { NotFoundError, ConflictError } from '../../utils/errors';
+import { NotFoundError, ConflictError, ValidationError } from '../../utils/errors';
 import type {
   CreateVenueDTO,
   UpdateVenueDTO,
@@ -20,6 +20,8 @@ import type {
   AdminVenueFiltersDTO,
 } from './venue.validator';
 import { VenueFields } from '../../constants/venue.constants';
+import { VENUE_CONSTANTS } from '../../constants/venue.constants';
+import { VenueModel } from './venue.model';
 import { RoleModel } from '../../models/role.model';
 import { findUserEmailById } from '../user/user.repository';
 import * as authRepo from '../auth/auth.repository';
@@ -28,25 +30,19 @@ import { emailService } from '../../services/email.service';
 import mongoose from 'mongoose';
 import { logError } from '../../utils/logger';
 
-// ─── Google Maps URL Resolution & Transformation ─────────────────────────────
+// Google Maps URL Resolution & Transformation
 
 const SHORT_LINK_HOSTS = new Set(['goo.gl', 'maps.app.goo.gl']);
 
 const GOOGLE_MAPS_EMBED_HOSTS = new Set(['maps.google.com', 'www.google.com', 'google.com']);
 
-/**
- * Attempts to convert any Google Maps share/short URL into a valid embed URL.
- * Returns the embed URL string, or null if the URL cannot be resolved or transformed.
- */
 export async function resolveAndTransformGoogleMapsUrl(
-  inputUrl: string | undefined | null,
+  inputUrl: string | undefined | null
 ): Promise<string | null> {
   if (!inputUrl) return null;
 
   try {
     let workingUrl = inputUrl;
-
-    // Step 1: Resolve short links (goo.gl, maps.app.goo.gl) via HEAD request
     const parsed = new URL(workingUrl);
     if (SHORT_LINK_HOSTS.has(parsed.hostname)) {
       const response = await fetch(workingUrl, {
@@ -96,21 +92,24 @@ export async function resolveAndTransformGoogleMapsUrl(
   }
 }
 
-export function sanitizeVenueDto<T extends CreateVenueDTO | UpdateVenueDTO>(dto: T, currentBookingType?: 'fixedBooking' | 'flexibleBooking'): T {
+export function sanitizeVenueDto<T extends CreateVenueDTO | UpdateVenueDTO>(
+  dto: T,
+  currentBookingType?: 'fixedBooking' | 'flexibleBooking'
+): T {
   const bookingType = dto.bookingType ?? currentBookingType;
   if (!bookingType) return dto;
 
   if (bookingType === 'fixedBooking') {
-    const { 
-      flexibleBooking: _fb, 
-      workingHours: _wh, 
-      pricing: _pr, 
-      blockedTimes: _bt, 
-      ...rest 
+    const {
+      flexibleBooking: _fb,
+      workingHours: _wh,
+      pricing: _pr,
+      blockedTimes: _bt,
+      ...rest
     } = dto as Record<string, unknown>;
     return rest as T;
   }
-  
+
   const { fixedPackages: _fp, ...rest } = dto as Record<string, unknown>;
   return rest as T;
 }
@@ -119,11 +118,10 @@ async function assignOwnerRoleIfNeeded(userId: string): Promise<void> {
   const current = await getUserRole(userId);
 
   if (current && ['owner', 'admin', 'superAdmin'].includes(current.roleName)) {
-    return; 
+    return;
   }
 
-  const ownerRole = await RoleModel
-    .findOne({ name: 'owner', active: true, deleted: false })
+  const ownerRole = await RoleModel.findOne({ name: 'owner', active: true, deleted: false })
     .lean()
     .exec();
 
@@ -135,10 +133,7 @@ async function assignOwnerRoleIfNeeded(userId: string): Promise<void> {
     return;
   }
 
-  await authRepo.assignRoleToUser(
-    new mongoose.Types.ObjectId(userId),
-    ownerRole._id
-  );
+  await authRepo.assignRoleToUser(new mongoose.Types.ObjectId(userId), ownerRole._id);
 }
 
 export async function createVenue(userId: string, dto: CreateVenueDTO): Promise<IVenue> {
@@ -159,6 +154,7 @@ export async function createVenue(userId: string, dto: CreateVenueDTO): Promise<
   // Resolve and transform the Google Maps URL to a safe embed URL
   const resolvedMapsUrl = await resolveAndTransformGoogleMapsUrl(sanitizedDto.googleMapsUrl);
 
+  const now = new Date();
   const data = {
     ...sanitizedDto,
     googleMapsUrl: resolvedMapsUrl,
@@ -170,6 +166,8 @@ export async function createVenue(userId: string, dto: CreateVenueDTO): Promise<
     createdBy: userId,
     updatedBy: userId,
     status: 'PendingReview',
+    submissionCount: 1,
+    lastSubmittedAt: now,
   } as unknown as CreateVenueData;
   if (!dto.coordinates) delete (data as unknown as Record<string, unknown>).location;
   delete (data as unknown as Record<string, unknown>).coordinates;
@@ -198,11 +196,23 @@ export async function getVenuePins(bbox?: {
   swLat: number;
   neLng: number;
   neLat: number;
-}): Promise<{ _id: string; name: string; location: { coordinates: [number, number] }; coverImage: string; avgRating: number }[]> {
+}): Promise<
+  {
+    _id: string;
+    name: string;
+    location: { coordinates: [number, number] };
+    coverImage: string;
+    avgRating: number;
+  }[]
+> {
   return repo.findVenuePinsInBounds(bbox);
 }
 
-export async function upsertDraft(userId: string, step: number, formValues: Record<string, unknown>): Promise<IVenueDraft> {
+export async function upsertDraft(
+  userId: string,
+  step: number,
+  formValues: Record<string, unknown>
+): Promise<IVenueDraft> {
   return repo.upsertDraft(userId, step, formValues);
 }
 
@@ -210,7 +220,25 @@ export async function getDraft(userId: string): Promise<IVenueDraft | null> {
   return repo.getDraft(userId);
 }
 
-export async function getMyVenues(userId: string): Promise<Pick<IVenue, "_id" | "name" | "city" | "venueType" | "coverImage" | "status" | "rejectionReason" | "createdAt">[]> {
+export async function getMyVenues(
+  userId: string
+): Promise<
+  (Pick<
+    IVenue,
+    | '_id'
+    | 'name'
+    | 'city'
+    | 'district'
+    | 'venueType'
+    | 'coverImage'
+    | 'status'
+    | 'rejectionHistory'
+    | 'submissionCount'
+    | 'currentEditDeadline'
+    | 'suspensionReason'
+    | 'createdAt'
+  > & { rejectionReason?: string; isFeatured?: boolean })[]
+> {
   return repo.findMyVenuesProjected(userId);
 }
 
@@ -253,13 +281,17 @@ export async function updateVenue(
 
   // Resolve and transform the Google Maps URL to a safe embed URL if provided
   if (sanitizedDto.googleMapsUrl !== undefined) {
-    sanitizedDto.googleMapsUrl = (await resolveAndTransformGoogleMapsUrl(sanitizedDto.googleMapsUrl)) ?? undefined;
+    sanitizedDto.googleMapsUrl =
+      (await resolveAndTransformGoogleMapsUrl(sanitizedDto.googleMapsUrl)) ?? undefined;
   }
 
   const patch: UpdateVenueData = {
     updatedBy: userId,
     ...(Object.fromEntries(
-      VenueFields.filter((key) => sanitizedDto[key] !== undefined).map((key) => [key, sanitizedDto[key]])
+      VenueFields.filter((key) => sanitizedDto[key] !== undefined).map((key) => [
+        key,
+        sanitizedDto[key],
+      ])
     ) as Pick<UpdateVenueData, VenueKey>),
     ...(sanitizedDto.coordinates !== undefined && {
       location: { type: 'Point', coordinates: sanitizedDto.coordinates },
@@ -278,12 +310,64 @@ export async function deleteVenue(venueId: string, userId: string): Promise<void
 }
 
 export async function submitVenue(venueId: string, userId: string): Promise<IVenue> {
-  const venue = await requireOwnVenue(venueId, userId);
-  workflow.canSubmit(venue);
+  const session = await mongoose.startSession();
+  session.startTransaction();
 
-  const updated = await repo.updateVenueStatus(venueId, 'PendingReview', userId);
-  if (!updated) throw new NotFoundError('Venue not found');
-  return updated;
+  try {
+    const venue = await repo.findVenueById(venueId, session);
+    if (!venue) throw new NotFoundError('Venue not found');
+
+    // Ownership check
+    if (venue.ownerUserId.toString() !== userId) {
+      throw new ConflictError('Not authorized to submit this venue');
+    }
+
+    // Status must be Rejected
+    if (venue.status !== 'Rejected') {
+      throw new ValidationError('Only rejected venues can be resubmitted');
+    }
+
+    // Check max attempts
+    if (venue.submissionCount >= VENUE_CONSTANTS.MAX_SUBMISSION_ATTEMPTS) {
+      throw new ValidationError(
+        `Maximum submission attempts (${String(VENUE_CONSTANTS.MAX_SUBMISSION_ATTEMPTS)}) exceeded`
+      );
+    }
+
+    // Check edit deadline (race condition protection)
+    const now = new Date();
+    if (venue.currentEditDeadline && venue.currentEditDeadline < now) {
+      throw new ValidationError('Edit window expired. Venue has been auto-suspended.');
+    }
+
+    // Validate all required fields present
+    workflow.canSubmit(venue);
+
+    // Atomic update: Rejected -> PendingReview, clear deadline, increment count
+    const updated = await VenueModel.findByIdAndUpdate(
+      venueId,
+      {
+        $set: {
+          status: 'PendingReview',
+          currentEditDeadline: null,
+          updatedBy: new mongoose.Types.ObjectId(userId),
+          lastSubmittedAt: now,
+        },
+        $inc: { submissionCount: 1 },
+      },
+      { new: true, session }
+    ).exec();
+
+    if (!updated) throw new NotFoundError('Venue not found');
+
+    await session.commitTransaction();
+    return updated;
+  } catch (err) {
+    await session.abortTransaction();
+    throw err;
+  } finally {
+    await session.endSession();
+  }
 }
 
 // Admin Operations
@@ -292,9 +376,9 @@ export async function getPendingVenues(): Promise<IVenue[]> {
   return repo.findPendingVenues();
 }
 
-export async function getAllVenues(filters: AdminVenueFiltersDTO): Promise<
-  PaginatedResponse<IVenue, 'venues'>
-> {
+export async function getAllVenues(
+  filters: AdminVenueFiltersDTO
+): Promise<PaginatedResponse<IVenue, 'venues'>> {
   const repoFilters: AdminVenueFilters = {
     status: filters.status,
     city: filters.city,
@@ -331,19 +415,90 @@ export async function rejectVenue(
 
   workflow.canReject(venue);
 
-  const extra = dto.rejectionReason ? { rejectionReason: dto.rejectionReason } : undefined;
-  const updated = await repo.updateVenueStatus(venueId, 'Rejected', adminId, extra);
+  // Calculate edit deadline
+  let editDeadline = new Date(Date.now() + VENUE_CONSTANTS.EDIT_WINDOW_DAYS * 24 * 60 * 60 * 1000);
+  let extendedAt: Date | undefined;
+  let extendedBy: mongoose.Types.ObjectId | undefined;
+  let originalDeadline = editDeadline;
+
+  if (dto.extendedDeadline) {
+    const minDeadline = new Date(
+      Date.now() + VENUE_CONSTANTS.EDIT_WINDOW_DAYS * 24 * 60 * 60 * 1000
+    );
+    const maxDeadline = new Date(
+      Date.now() + VENUE_CONSTANTS.MAX_EXTENDED_DAYS * 24 * 60 * 60 * 1000
+    );
+
+    if (dto.extendedDeadline < minDeadline || dto.extendedDeadline > maxDeadline) {
+      throw new ValidationError(
+        `Extended deadline must be between ${String(VENUE_CONSTANTS.EDIT_WINDOW_DAYS)} and ${String(VENUE_CONSTANTS.MAX_EXTENDED_DAYS)} days`
+      );
+    }
+
+    editDeadline = dto.extendedDeadline;
+    extendedAt = new Date();
+    extendedBy = new mongoose.Types.ObjectId(adminId);
+    originalDeadline = new Date(
+      Date.now() + VENUE_CONSTANTS.EDIT_WINDOW_DAYS * 24 * 60 * 60 * 1000
+    );
+  }
+
+  const rejectionEntry = {
+    reason: dto.rejectionReason,
+    rejectedAt: new Date(),
+    rejectedBy: new mongoose.Types.ObjectId(adminId),
+    submissionNumber: venue.rejectionHistory.length + 1,
+    editDeadline,
+    extendedAt,
+    extendedBy,
+    originalDeadline,
+  };
+
+  const updated = await VenueModel.findByIdAndUpdate(
+    venueId,
+    {
+      $set: {
+        status: 'Rejected',
+        rejectionReason: dto.rejectionReason, // backward compat
+        currentEditDeadline: editDeadline,
+        updatedBy: new mongoose.Types.ObjectId(adminId),
+        lastSubmittedAt: new Date(),
+      },
+      $push: { rejectionHistory: rejectionEntry },
+    },
+    { new: true }
+  ).exec();
+
   if (!updated) throw new NotFoundError('Venue not found');
 
   const ownerEmail = await findUserEmailById(venue.ownerUserId.toString());
   if (ownerEmail && dto.rejectionReason) {
-    void emailService.sendVenueRejectedEmail(ownerEmail, venue.name, dto.rejectionReason);
+    void emailService.sendVenueRejectedEmail(
+      ownerEmail,
+      venue.name,
+      dto.rejectionReason,
+      editDeadline,
+      rejectionEntry.submissionNumber
+    );
   }
+
+  // Log activity
+  const { logModerationAction } = await import('../moderation/moderationActivity.service.js');
+  await logModerationAction(adminId, 'reject_venue', venueId, 'venue', dto.rejectionReason, {
+    submissionNumber: rejectionEntry.submissionNumber,
+    editDeadline,
+    isExtended: !!dto.extendedDeadline,
+    actor: 'admin',
+  });
 
   return updated;
 }
 
-export async function suspendVenue(venueId: string, adminId: string, dto: SuspendVenueDTO): Promise<IVenue> {
+export async function suspendVenue(
+  venueId: string,
+  adminId: string,
+  dto: SuspendVenueDTO
+): Promise<IVenue> {
   const venue = await repo.findVenueById(venueId);
   if (!venue) throw new NotFoundError('Venue not found');
 
@@ -386,10 +541,84 @@ export async function unsuspendVenue(venueId: string, adminId: string): Promise<
   return updated;
 }
 
+export async function extendVenueEditDeadline(
+  venueId: string,
+  superAdminId: string,
+  newDeadline: Date
+): Promise<IVenue> {
+  const venue = await repo.findVenueById(venueId);
+  if (!venue) throw new NotFoundError('Venue not found');
+
+  // Must be in Rejected status with active deadline
+  if (venue.status !== 'Rejected') {
+    throw new ValidationError('Can only extend deadline for rejected venues');
+  }
+  if (!venue.currentEditDeadline || venue.currentEditDeadline < new Date()) {
+    throw new ValidationError('No active edit deadline to extend (already expired or suspended)');
+  }
+
+  // Validate new deadline
+  const minDeadline = new Date(); // must be in future
+  const maxDeadline = new Date(
+    Date.now() + VENUE_CONSTANTS.MAX_EXTENDED_DAYS * 24 * 60 * 60 * 1000
+  );
+
+  if (newDeadline <= minDeadline || newDeadline > maxDeadline) {
+    throw new ValidationError(
+      `New deadline must be in the future and within ${String(VENUE_CONSTANTS.MAX_EXTENDED_DAYS)} days`
+    );
+  }
+  if (newDeadline <= venue.currentEditDeadline) {
+    throw new ValidationError('New deadline must be later than current deadline');
+  }
+
+  // Update latest rejection history entry
+  const latestRejection = venue.rejectionHistory[venue.rejectionHistory.length - 1];
+
+  const updated = await VenueModel.findByIdAndUpdate(
+    venueId,
+    {
+      $set: {
+        currentEditDeadline: newDeadline,
+        'rejectionHistory.$[elem].editDeadline': newDeadline,
+        'rejectionHistory.$[elem].extendedAt': new Date(),
+        'rejectionHistory.$[elem].extendedBy': new mongoose.Types.ObjectId(superAdminId),
+        updatedBy: new mongoose.Types.ObjectId(superAdminId),
+      },
+    },
+    {
+      arrayFilters: [{ 'elem._id': latestRejection._id }],
+      new: true,
+    }
+  ).exec();
+
+  if (!updated) throw new NotFoundError('Venue not found');
+
+  // Log activity
+  const { logModerationAction } = await import('../moderation/moderationActivity.service.js');
+  const previousDeadline = venue.currentEditDeadline.toISOString();
+  await logModerationAction(
+    superAdminId,
+    'extend_venue_deadline',
+    venueId,
+    'venue',
+    `Extended edit deadline from ${previousDeadline} to ${newDeadline.toISOString()}`,
+    { actor: 'system (superadmin)', previousDeadline: venue.currentEditDeadline, newDeadline }
+  );
+
+  // Email owner about extension
+  const ownerEmail = await findUserEmailById(venue.ownerUserId.toString());
+  if (ownerEmail) {
+    void emailService.sendVenueDeadlineExtendedEmail(ownerEmail, venue.name, newDeadline);
+  }
+
+  return updated;
+}
+
 export async function featureVenue(venueId: string, durationDays: number | null): Promise<void> {
   const venue = await repo.findVenueById(venueId);
   if (!venue) throw new NotFoundError('Venue not found');
-  
+
   if (venue.status !== 'Approved') {
     throw new ConflictError('Only approved venues can be featured');
   }
@@ -397,7 +626,9 @@ export async function featureVenue(venueId: string, durationDays: number | null)
   await repo.upsertFeaturedVenue(venueId, durationDays);
 }
 
-export async function getFeaturedVenues(): Promise<(IVenue & { featuredExpiresAt?: Date | null })[]> {
+export async function getFeaturedVenues(): Promise<
+  (IVenue & { featuredExpiresAt?: Date | null })[]
+> {
   return repo.getFeaturedVenues();
 }
 

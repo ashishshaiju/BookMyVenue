@@ -51,9 +51,7 @@ export const checkOverlap = (
   slotEnd: number,
   conflicts: { start: number; end: number }[]
 ): boolean => {
-  return conflicts.some(
-    (conflict) => slotStart < conflict.end && slotEnd > conflict.start
-  );
+  return conflicts.some((conflict) => slotStart < conflict.end && slotEnd > conflict.start);
 };
 
 export const toLocalDateString = (date: Date): string => {

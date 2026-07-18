@@ -109,8 +109,6 @@ router
     controller.saveBookerDetails
   );
 
-
-
 /**
  * @openapi
  * /bookings/verify-payment:

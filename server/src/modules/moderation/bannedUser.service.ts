@@ -3,6 +3,7 @@ import { getUserRole } from '../../services/roles.service';
 import { ForbiddenError, NotFoundError, ValidationError } from '../../utils/errors';
 import type { IBannedUser, BanScope } from './bannedUser.model';
 import { UserModel } from '../user/user.models';
+import { VenueModel } from '../venue/venue.model';
 
 export async function banUser(
   adminId: string,
@@ -44,7 +45,22 @@ export async function banUser(
   }
 
   const ban = await repo.createBan(userId, scope, reason, adminId, options);
-  
+
+  // Send email notification
+  const venueName = options?.venueId
+    ? await VenueModel.findById(options.venueId)
+        .select('name')
+        .lean()
+        .then((v) => v?.name)
+    : undefined;
+  const { emailService } = await import('../../services/email.service.js');
+  void emailService.sendUserBannedEmail(targetUser.email, {
+    scope,
+    reason,
+    expiresAt: options?.expiresAt ?? null,
+    venueName,
+  });
+
   // Log activity
   const { logModerationAction } = await import('./moderationActivity.service.js');
   await logModerationAction(adminId, 'ban_user', userId, 'user', reason, { scope, ...options });
@@ -58,9 +74,18 @@ export async function liftBan(adminId: string, banRecordId: string): Promise<IBa
     throw new NotFoundError('Ban record not found');
   }
 
+  // Send email notification
+  const { emailService } = await import('../../services/email.service.js');
+  const user = await UserModel.findById(updated.userId).select('email').lean();
+  if (user?.email) {
+    void emailService.sendUserUnbannedEmail(user.email);
+  }
+
   // Log activity
   const { logModerationAction } = await import('./moderationActivity.service.js');
-  await logModerationAction(adminId, 'unban_user', updated.userId.toString(), 'user', undefined, { banRecordId });
+  await logModerationAction(adminId, 'unban_user', updated.userId.toString(), 'user', undefined, {
+    banRecordId,
+  });
 
   return updated;
 }
@@ -72,13 +97,17 @@ export async function liftAllBansForUser(adminId: string, userId: string): Promi
   }
 
   const count = await repo.liftAllBansForUser(userId, adminId);
-  
+
   if (count > 0) {
+    // Send email notification
+    const { emailService } = await import('../../services/email.service.js');
+    void emailService.sendUserUnbannedEmail(targetUser.email);
+
     // Log activity
     const { logModerationAction } = await import('./moderationActivity.service.js');
     await logModerationAction(adminId, 'unban_user', userId, 'user', undefined, { count });
   }
-  
+
   return count;
 }
 

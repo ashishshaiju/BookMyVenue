@@ -28,14 +28,18 @@ const router: Router = Router();
  */
 router
   .route('/summary')
-  .get(verifyAccessToken, requireRole('admin'), async (_req: Request, res: Response): Promise<void> => {
-    try {
-      const summary = await getModerationSummary();
-      ResponseUtil.success(res, 'Moderation summary retrieved', summary);
-    } catch (err) {
-      handleError(res, err, 'getModerationSummary');
+  .get(
+    verifyAccessToken,
+    requireRole('admin'),
+    async (_req: Request, res: Response): Promise<void> => {
+      try {
+        const summary = await getModerationSummary();
+        ResponseUtil.success(res, 'Moderation summary retrieved', summary);
+      } catch (err) {
+        handleError(res, err, 'getModerationSummary');
+      }
     }
-  });
+  );
 
 /**
  * @openapi
@@ -66,19 +70,23 @@ router
  */
 router
   .route('/logs')
-  .get(verifyAccessToken, requireRole('superAdmin'), async (req: Request, res: Response): Promise<void> => {
-    try {
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 20;
-      const { logs, total } = await getModerationLogs(page, limit);
-      ResponseUtil.success(res, 'Moderation logs retrieved', {
-        logs,
-        pagination: { total, page, limit, totalPages: Math.ceil(total / limit) }
-      });
-    } catch (err) {
-      handleError(res, err, 'getModerationLogs');
+  .get(
+    verifyAccessToken,
+    requireRole('superAdmin'),
+    async (req: Request, res: Response): Promise<void> => {
+      try {
+        const page = parseInt(req.query.page as string) || 1;
+        const limit = parseInt(req.query.limit as string) || 20;
+        const { logs, total } = await getModerationLogs(page, limit);
+        ResponseUtil.success(res, 'Moderation logs retrieved', {
+          logs,
+          pagination: { total, page, limit, totalPages: Math.ceil(total / limit) },
+        });
+      } catch (err) {
+        handleError(res, err, 'getModerationLogs');
+      }
     }
-  });
+  );
 
 router.use('/bans', bannedUserRouter);
 

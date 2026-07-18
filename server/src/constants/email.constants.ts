@@ -15,6 +15,10 @@ export const EmailIntent = {
   VENUE_REJECTED: 'venue_rejected',
   VENUE_SUSPENDED: 'venue_suspended',
   VENUE_UNSUSPENDED: 'venue_unsuspended',
+  USER_BANNED: 'user_banned',
+  USER_UNBANNED: 'user_unbanned',
+  REVIEW_REMOVED: 'review_removed',
+  REVIEW_RESTORED: 'review_restored',
 } as const;
 
 export const EmailTaskStatus = {

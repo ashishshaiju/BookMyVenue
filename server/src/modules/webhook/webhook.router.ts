@@ -58,12 +58,10 @@ const router: Router = Router();
  *       500:
  *         description: Internal error while processing the event
  */
-router
-  .route('/razorpay')
-  .post(
-    // Capture raw bytes BEFORE any JSON parsing
-    express.raw({ type: 'application/json' }),
-    handleRazorpayWebhook
-  );
+router.route('/razorpay').post(
+  // Capture raw bytes BEFORE any JSON parsing
+  express.raw({ type: 'application/json' }),
+  handleRazorpayWebhook
+);
 
 export { router as webhookRouter };

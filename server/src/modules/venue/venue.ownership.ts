@@ -7,7 +7,7 @@ export function assertVenueOwner(venue: IVenue, userId: string): void {
     throw new ForbiddenError('You do not have permission to modify this venue');
   }
 }
- 
+
 export async function requireOwnVenue(venueId: string, userId: string): Promise<IVenue> {
   const venue = await findVenueById(venueId);
 
@@ -20,7 +20,9 @@ export async function requireOwnVenue(venueId: string, userId: string): Promise<
   const { isBannedForScope } = await import('../moderation/bannedUser.service.js');
   const isBanned = await isBannedForScope(userId, 'owner_dashboard', venueId);
   if (isBanned) {
-    throw new ForbiddenError('You are currently banned from accessing the owner dashboard for this venue.');
+    throw new ForbiddenError(
+      'You are currently banned from accessing the owner dashboard for this venue.'
+    );
   }
 
   return venue;

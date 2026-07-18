@@ -64,13 +64,18 @@ router.get('/json', devOnly, basicAuth, (_req, res) => {
 
 // Mount the Swagger UI
 router.use('/', devOnly, basicAuth, swaggerUi.serve);
-router.get('/', devOnly, basicAuth, swaggerUi.setup(openapiDocument, {
-  customSiteTitle: 'BookMyVenue API Docs',
-  swaggerOptions: {
-    persistAuthorization: true,
-    filter: true,
-    displayRequestDuration: true,
-  },
-}));
+router.get(
+  '/',
+  devOnly,
+  basicAuth,
+  swaggerUi.setup(openapiDocument, {
+    customSiteTitle: 'BookMyVenue API Docs',
+    swaggerOptions: {
+      persistAuthorization: true,
+      filter: true,
+      displayRequestDuration: true,
+    },
+  })
+);
 
 export { router as swaggerRouter };

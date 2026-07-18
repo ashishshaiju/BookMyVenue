@@ -8,7 +8,11 @@ import { VenueModel } from '../venue/venue.model';
 import { ConflictError, NotFoundError, ValidationError } from '../../utils/errors';
 import { logError } from '../../utils/logger';
 
-export async function submitReview(userId: string, venueId: string, dto: { rating?: number; comment?: string }): Promise<IReviewModel> {
+export async function submitReview(
+  userId: string,
+  venueId: string,
+  dto: { rating?: number; comment?: string }
+): Promise<IReviewModel> {
   if (!dto.rating && !dto.comment) {
     throw new ValidationError('Must provide either a rating or a comment');
   }
@@ -47,7 +51,11 @@ export async function submitReview(userId: string, venueId: string, dto: { ratin
   return review;
 }
 
-export async function upsertRating(userId: string, venueId: string, rating: number): Promise<IReviewModel> {
+export async function upsertRating(
+  userId: string,
+  venueId: string,
+  rating: number
+): Promise<IReviewModel> {
   if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
     throw new ValidationError('Rating must be an integer between 1 and 5');
   }
@@ -56,7 +64,11 @@ export async function upsertRating(userId: string, venueId: string, rating: numb
   return review;
 }
 
-export async function addComment(userId: string, venueId: string, comment: string): Promise<IReviewModel> {
+export async function addComment(
+  userId: string,
+  venueId: string,
+  comment: string
+): Promise<IReviewModel> {
   if (!comment.trim()) {
     throw new ValidationError('Comment cannot be empty');
   }
@@ -75,7 +87,12 @@ export async function getMyRating(userId: string, venueId: string): Promise<numb
   return ratings.get(userId) ?? null;
 }
 
-export async function updateReview(userId: string, reviewId: string, dto: UpdateReviewDTO, requesterRole?: string): Promise<IReviewModel> {
+export async function updateReview(
+  userId: string,
+  reviewId: string,
+  dto: UpdateReviewDTO,
+  requesterRole?: string
+): Promise<IReviewModel> {
   const review = await repo.findReviewById(reviewId);
   if (!review) {
     throw new NotFoundError('Review not found');
@@ -115,7 +132,11 @@ export async function updateReview(userId: string, reviewId: string, dto: Update
   return updated;
 }
 
-export async function deleteReview(userId: string, reviewId: string, requesterRole?: string): Promise<void> {
+export async function deleteReview(
+  userId: string,
+  reviewId: string,
+  requesterRole?: string
+): Promise<void> {
   const review = await repo.findReviewById(reviewId);
   if (!review) {
     throw new NotFoundError('Review not found');
@@ -159,7 +180,7 @@ export async function getVenueReviews(
   const result = await repo.findVenueReviews(venueId, paginationParams);
 
   // Batch-fetch verified status and reviewer ratings
-  const userIds = result.reviews.map(r => extractUserId(r.userId));
+  const userIds = result.reviews.map((r) => extractUserId(r.userId));
   const [verifiedUserIds, reviewerRatings] = await Promise.all([
     bookingRepo.findVerifiedUserIds(venueId, userIds),
     repo.findRatingsForUsers(venueId, userIds),
@@ -207,9 +228,17 @@ export async function moderateReview(
     throw new NotFoundError('Review not found');
   }
 
-  const updated = dto.action === 'approve_hide' || dto.action === 'reject_hide'
-    ? await repo.resolveHideRequest(reviewId, dto.action === 'approve_hide' ? 'approve' : 'reject', moderatorId)
-    : await repo.moderateReview(reviewId, dto, moderatorId);
+  const venue = await VenueModel.findById(review.venueId).select('name').lean().exec();
+  const venueName = venue?.name ?? 'Unknown Venue';
+
+  const updated =
+    dto.action === 'approve_hide' || dto.action === 'reject_hide'
+      ? await repo.resolveHideRequest(
+          reviewId,
+          dto.action === 'approve_hide' ? 'approve' : 'reject',
+          moderatorId
+        )
+      : await repo.moderateReview(reviewId, dto, moderatorId);
 
   if (!updated) {
     throw new NotFoundError('Review not found');
@@ -220,13 +249,25 @@ export async function moderateReview(
     await recomputeVenueRating(updated.venueId.toString());
   }
 
+  // Send email notifications to review author
+  if (dto.action === 'remove' || dto.action === 'approve_hide') {
+    const { emailService } = await import('../../services/email.service.js');
+    void emailService.sendReviewRemovedEmail(updated.userId.toString(), {
+      venueName,
+      reason: dto.reason ?? 'No reason provided',
+    });
+  } else if (dto.action === 'restore') {
+    const { emailService } = await import('../../services/email.service.js');
+    void emailService.sendReviewRestoredEmail(updated.userId.toString(), venueName);
+  }
+
   // Log activity
   if (dto.action === 'remove' || dto.action === 'restore' || dto.action === 'approve_hide') {
     const { logModerationAction } = await import('../moderation/moderationActivity.service.js');
     const actionType = dto.action === 'restore' ? 'restore_review' : 'remove_review';
-    await logModerationAction(moderatorId, actionType, reviewId, 'review', dto.reason, { 
-      venueId: updated.venueId.toString(), 
-      userId: updated.userId.toString() 
+    await logModerationAction(moderatorId, actionType, reviewId, 'review', dto.reason, {
+      venueId: updated.venueId.toString(),
+      userId: updated.userId.toString(),
     });
   }
 
@@ -270,7 +311,7 @@ export async function replyToReview(
 ): Promise<IReviewModel> {
   const review = await repo.findReviewById(reviewId);
   if (!review) throw new NotFoundError('Review not found');
-  
+
   const { isBannedForScope } = await import('../moderation/bannedUser.service.js');
   const venue = await VenueModel.findById(venueId);
   if (venue) {

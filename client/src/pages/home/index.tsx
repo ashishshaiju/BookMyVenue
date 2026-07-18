@@ -51,7 +51,7 @@ const HomePage = () => {
     navigate(`/explore?venueTypes=${encodeURIComponent(category)}`);
   };
 
-  const { data: featuredVenues = [], isLoading } = useApiQuery<PublicVenue[]>(['featured-venues'], {
+  const { data: featuredVenues = [], isLoading, isSuccess } = useApiQuery<PublicVenue[]>(['featured-venues'], {
     method: 'GET',
     url: API_ENDPOINTS.FEATURED_VENUES,
   });
@@ -150,13 +150,15 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* Featured Venues Section */}
-      <FeaturedVenues
-        isLoading={isLoading}
-        featuredVenues={featuredVenues}
-        togglingVenues={togglingVenues}
-        handleToggleWishlist={handleToggleWishlist}
-      />
+      {/* Featured Venues Section — only shown when API succeeded with results */}
+      {(isLoading || (isSuccess && featuredVenues.length > 0)) && (
+        <FeaturedVenues
+          isLoading={isLoading}
+          featuredVenues={featuredVenues}
+          togglingVenues={togglingVenues}
+          handleToggleWishlist={handleToggleWishlist}
+        />
+      )}
 
       {/* Become a Host Section */}
       <section className="px-6 py-16 bg-[var(--bg-tertiary)] border-y border-[var(--bg-grey)]">

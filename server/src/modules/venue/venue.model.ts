@@ -89,6 +89,20 @@ const CancellationSchema = new Schema<ICancellation>(
   { _id: false }
 );
 
+const RejectionEntrySchema = new Schema(
+  {
+    reason: { type: String, required: true, maxlength: 500 },
+    rejectedAt: { type: Date, default: Date.now },
+    rejectedBy: { type: Schema.Types.ObjectId, ref: 'Users', required: true },
+    submissionNumber: { type: Number, required: true },
+    editDeadline: { type: Date, required: true },
+    extendedAt: { type: Date },
+    extendedBy: { type: Schema.Types.ObjectId, ref: 'Users' },
+    originalDeadline: { type: Date },
+  },
+  { _id: true }
+);
+
 const VenueSchema = new Schema<IVenue>(
   {
     // Basic Info
@@ -152,7 +166,17 @@ const VenueSchema = new Schema<IVenue>(
       default: 'Draft',
     },
     ownerUserId: { type: Schema.Types.ObjectId, ref: 'Users', required: true },
-    rejectionReason: { type: String },
+    rejectionHistory: {
+      type: [RejectionEntrySchema],
+      default: [],
+      validate: {
+        validator: (v: unknown[]): boolean => v.length <= 10,
+        message: 'Maximum 10 submission attempts exceeded',
+      },
+    },
+    submissionCount: { type: Number, default: 0 },
+    lastSubmittedAt: { type: Date },
+    currentEditDeadline: { type: Date },
     suspensionReason: { type: String, default: null },
 
     // Audit
@@ -184,5 +208,8 @@ VenueSchema.index({ ownerUserId: 1, status: 1, deleted: 1 }, { name: 'idx_owner_
 
 // Future geo-search readiness (2dsphere on the nested GeoJSON Point)
 VenueSchema.index({ location: '2dsphere' }, { name: 'idx_location_geo' });
+
+// For auto-suspend job query
+VenueSchema.index({ status: 1, currentEditDeadline: 1 }, { name: 'idx_status_edit_deadline' });
 
 export const VenueModel = mongoose.model<IVenue>('Venues', VenueSchema, 'Venues');

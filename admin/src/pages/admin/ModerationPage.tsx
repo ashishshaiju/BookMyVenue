@@ -2,8 +2,9 @@ import { useState } from "react";
 import { useApiQuery } from "@/hooks/useApi";
 import { API_ENDPOINTS } from "@/constants";
 import { QUERY_KEYS } from "@/config/queryKeys";
+import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { AlertCircle, AlertTriangle } from "lucide-react";
+import { AlertCircle, AlertTriangle, Ban, UserX } from "lucide-react";
 // Extracted hooks and components
 import { useModeration } from "@/hooks/useModeration";
 import { FlaggedReviewsTable } from "@/components/moderation/FlaggedReviewsTable";
@@ -61,18 +62,16 @@ const ModerationPage = () => {
               <AlertCircle className="mr-2 text-yellow-500" size={20} />
               Flagged Reviews
             </h2>
-            <span className="bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-yellow-900 dark:text-yellow-300">
+            <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-300">
               {flaggedReviews.length} Action
               {flaggedReviews.length !== 1 ? "s" : ""} Needed
-            </span>
+            </Badge>
           </div>
-          <div className="rounded-md border border-[var(--bg-grey)]">
-            <FlaggedReviewsTable
-              flaggedReviews={flaggedReviews}
-              setReviewDialog={setReviewDialog}
-              moderateReviewMutation={moderateReviewMutation}
-            />
-          </div>
+          <FlaggedReviewsTable
+            flaggedReviews={flaggedReviews}
+            setReviewDialog={setReviewDialog}
+            moderateReviewMutation={moderateReviewMutation}
+          />
         </Card>
 
         <Card className="p-6 border-[var(--bg-grey)] bg-[var(--bg-primary)] shadow-sm">
@@ -81,51 +80,41 @@ const ModerationPage = () => {
               <AlertTriangle className="mr-2 text-orange-500" size={20} />
               Hide Requests
             </h2>
-            <span className="bg-orange-100 text-orange-800 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-orange-900 dark:text-orange-300">
-              {hideRequests.length} Pending
-            </span>
+            <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-300">{hideRequests.length} Pending</Badge>
           </div>
-          <div className="rounded-md border border-[var(--bg-grey)]">
-            <HideRequestsTable
-              hideRequests={hideRequests}
-              setReviewDialog={setReviewDialog}
-              moderateReviewMutation={moderateReviewMutation}
-            />
-          </div>
+          <HideRequestsTable
+            hideRequests={hideRequests}
+            setReviewDialog={setReviewDialog}
+            moderateReviewMutation={moderateReviewMutation}
+          />
         </Card>
 
         <Card className="p-6 border-[var(--bg-grey)] bg-[var(--bg-primary)] shadow-sm">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-[var(--text-primary)]">
+            <h2 className="text-lg font-semibold flex items-center text-[var(--text-primary)]">
+              <Ban className="mr-2 text-gray-500" size={20} />
               Suspended Venues
             </h2>
-            <span className="bg-gray-100 text-gray-800 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-gray-700 dark:text-gray-300">
-              {suspendedVenues.length} Total
-            </span>
+            <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-300">{suspendedVenues.length} Total</Badge>
           </div>
-          <div className="rounded-md border border-[var(--bg-grey)]">
-            <SuspendedVenuesTable
-              suspendedVenues={suspendedVenues}
-              unsuspendVenueMutation={unsuspendVenueMutation}
-            />
-          </div>
+          <SuspendedVenuesTable
+            suspendedVenues={suspendedVenues}
+            unsuspendVenueMutation={unsuspendVenueMutation}
+          />
         </Card>
 
         <Card className="p-6 border-[var(--bg-grey)] bg-[var(--bg-primary)] shadow-sm">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-[var(--text-primary)]">
+            <h2 className="text-lg font-semibold flex items-center text-[var(--text-primary)]">
+              <UserX className="mr-2 text-red-500" size={20} />
               Banned Users
             </h2>
-            <span className="bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-red-900 dark:text-red-300">
-              {bannedUsers.length} Total
-            </span>
+            <Badge variant="outline" className="bg-red-50 text-red-700 border-red-300">{bannedUsers.length} Total</Badge>
           </div>
-          <div className="rounded-md border border-[var(--bg-grey)]">
-            <BannedUsersTable
-              bannedUsers={bannedUsers}
-              unbanUserMutation={unbanUserMutation}
-            />
-          </div>
+          <BannedUsersTable
+            bannedUsers={bannedUsers}
+            unbanUserMutation={unbanUserMutation}
+          />
         </Card>
       </div>
 

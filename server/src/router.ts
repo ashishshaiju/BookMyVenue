@@ -45,4 +45,3 @@ router.use('/reviews', reviewRouter);
 router.use('/moderation', moderationRouter);
 
 export default router;
-

@@ -34,7 +34,9 @@ export async function demoteAdmin(userId: string): Promise<void> {
   await repo.updateUserRoleStatus(existing, false, true);
 }
 
-export async function getAdmins(paginationParams: PaginationParams): Promise<PaginatedResponse<Record<string, unknown>, 'admins'>> {
+export async function getAdmins(
+  paginationParams: PaginationParams
+): Promise<PaginatedResponse<Record<string, unknown>, 'admins'>> {
   const adminRole = await repo.findRoleByName('admin');
   if (!adminRole) throw new Error('Admin role not found in system');
 

@@ -66,7 +66,10 @@ export async function findUserWishlist(
   };
 }
 
-export async function getWishlistedVenueIds(userId: string, venueIds: string[]): Promise<Set<string>> {
+export async function getWishlistedVenueIds(
+  userId: string,
+  venueIds: string[]
+): Promise<Set<string>> {
   const wishlisted = await WishlistModel.find({
     userId: toObjectId(userId),
     venueId: { $in: venueIds.map(toObjectId) },

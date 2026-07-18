@@ -8,7 +8,11 @@ const toObjectId = (id: string): mongoose.Types.ObjectId => {
   return new mongoose.Types.ObjectId(id);
 };
 
-export async function upsertRating(userId: string, venueId: string, rating: number): Promise<IReview> {
+export async function upsertRating(
+  userId: string,
+  venueId: string,
+  rating: number
+): Promise<IReview> {
   const review = await ReviewModel.findOneAndUpdate(
     { userId: toObjectId(userId), venueId: toObjectId(venueId), rating: { $exists: true } },
     { rating, editedAt: new Date() },
@@ -17,7 +21,11 @@ export async function upsertRating(userId: string, venueId: string, rating: numb
   return review;
 }
 
-export async function createComment(userId: string, venueId: string, comment: string): Promise<IReview> {
+export async function createComment(
+  userId: string,
+  venueId: string,
+  comment: string
+): Promise<IReview> {
   const review = new ReviewModel({
     userId: toObjectId(userId),
     venueId: toObjectId(venueId),
@@ -27,12 +35,15 @@ export async function createComment(userId: string, venueId: string, comment: st
   return review.save();
 }
 
-export async function findRatingsForUsers(venueId: string, userIds: string[]): Promise<Map<string, number>> {
+export async function findRatingsForUsers(
+  venueId: string,
+  userIds: string[]
+): Promise<Map<string, number>> {
   if (userIds.length === 0) {
     return new Map();
   }
 
-  const validUserIds = userIds.filter(id => {
+  const validUserIds = userIds.filter((id) => {
     try {
       toObjectId(id);
       return true;
@@ -50,21 +61,29 @@ export async function findRatingsForUsers(venueId: string, userIds: string[]): P
     userId: { $in: validUserIds.map(toObjectId) },
     rating: { $exists: true },
     status: 'visible',
-  }).select('userId rating').exec();
+  })
+    .select('userId rating')
+    .exec();
 
   const map = new Map<string, number>();
-  ratings.forEach(r => {
+  ratings.forEach((r) => {
     if (r.rating) map.set(r.userId.toString(), r.rating);
   });
   return map;
 }
 
-export async function updateReview(reviewId: string, dto: UpdateReviewDTO): Promise<IReview | null> {
+export async function updateReview(
+  reviewId: string,
+  dto: UpdateReviewDTO
+): Promise<IReview | null> {
   const updates: Record<string, unknown> = { editedAt: new Date() };
   if (dto.rating !== undefined) updates.rating = dto.rating;
   if (dto.comment !== undefined) updates.comment = dto.comment;
 
-  return ReviewModel.findByIdAndUpdate(toObjectId(reviewId), updates, { new: true, runValidators: true }).exec();
+  return ReviewModel.findByIdAndUpdate(toObjectId(reviewId), updates, {
+    new: true,
+    runValidators: true,
+  }).exec();
 }
 
 export async function deleteReview(reviewId: string): Promise<void> {
@@ -102,7 +121,9 @@ export async function findVenueReviews(
   };
 }
 
-export async function getVenueRatingAggregate(venueId: string): Promise<{ avgRating: number; reviewCount: number }> {
+export async function getVenueRatingAggregate(
+  venueId: string
+): Promise<{ avgRating: number; reviewCount: number }> {
   const result = await ReviewModel.aggregate([
     {
       $match: {
@@ -187,15 +208,20 @@ export async function findFlaggedReviews(
 }
 
 export async function findUserReviewedBookings(userId: string): Promise<Set<string>> {
-  const reviews = await ReviewModel.find({ userId: toObjectId(userId), bookingId: { $exists: true } })
+  const reviews = await ReviewModel.find({
+    userId: toObjectId(userId),
+    bookingId: { $exists: true },
+  })
     .select('bookingId')
     .lean()
     .exec();
 
-  const bookingIds = reviews.map((r) => {
-    if (r.bookingId) return r.bookingId.toString();
-    return null;
-  }).filter((id): id is string => id !== null);
+  const bookingIds = reviews
+    .map((r) => {
+      if (r.bookingId) return r.bookingId.toString();
+      return null;
+    })
+    .filter((id): id is string => id !== null);
   return new Set(bookingIds);
 }
 

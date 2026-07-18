@@ -142,12 +142,9 @@ router.route('/profile/picture').delete(verifyAccessToken, controller.deleteProf
  *       403:
  *         description: Forbidden
  */
-router.route('/all').get(
-  verifyAccessToken,
-  requireRole('admin'),
-  paginationMiddleware(),
-  controller.getAllUsers
-);
+router
+  .route('/all')
+  .get(verifyAccessToken, requireRole('admin'), paginationMiddleware(), controller.getAllUsers);
 
 /**
  * @openapi
@@ -171,11 +168,9 @@ router.route('/all').get(
  *       403:
  *         description: SuperAdmin role required
  */
-router.route('/:userId/toggle-status').patch(
-  verifyAccessToken,
-  requireRole('superAdmin'),
-  controller.toggleUserStatus
-);
+router
+  .route('/:userId/toggle-status')
+  .patch(verifyAccessToken, requireRole('superAdmin'), controller.toggleUserStatus);
 
 /**
  * @openapi
@@ -199,11 +194,9 @@ router.route('/:userId/toggle-status').patch(
  *       403:
  *         description: SuperAdmin role required
  */
-router.route('/:userId/reset-password').post(
-  verifyAccessToken,
-  requireRole('superAdmin'),
-  controller.resetUserPassword
-);
+router
+  .route('/:userId/reset-password')
+  .post(verifyAccessToken, requireRole('superAdmin'), controller.resetUserPassword);
 
 /**
  * @openapi
@@ -236,11 +229,7 @@ router.route('/:userId/reset-password').post(
  *       403:
  *         description: Admin role required
  */
-router.route('/:userId/ban').post(
-  verifyAccessToken,
-  requireRole('admin'),
-  controller.banUser
-);
+router.route('/:userId/ban').post(verifyAccessToken, requireRole('admin'), controller.banUser);
 
 /**
  * @openapi
@@ -264,10 +253,6 @@ router.route('/:userId/ban').post(
  *       403:
  *         description: Admin role required
  */
-router.route('/:userId/unban').post(
-  verifyAccessToken,
-  requireRole('admin'),
-  controller.unbanUser
-);
+router.route('/:userId/unban').post(verifyAccessToken, requireRole('admin'), controller.unbanUser);
 
 export { router as userRouter };

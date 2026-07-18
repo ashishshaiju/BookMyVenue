@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { KERALA_DISTRICTS } from '../../constants/venue.constants';
+import { VENUE_CONSTANTS } from '../../constants/venue.constants';
 
 // Shared sub-schemas
 
@@ -43,7 +44,15 @@ const venueIdSchema = z
   .trim()
   .regex(/^[a-f\d]{24}$/i, 'Invalid venue ID');
 
-const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] as const;
+const DAYS_OF_WEEK = [
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+  'Sunday',
+] as const;
 
 const fixedPackageSchema = z.object({
   slotName: z.string().trim().min(1, 'Slot name is required'),
@@ -111,11 +120,13 @@ export const createVenueSchema = z
         bufferTime: z.coerce.number().int().min(0).default(0),
       })
       .optional(),
-    pricing: z.object({
-      pricingType: z.enum(['fixedPricing', 'timeBasedPricing']),
-      basePrice: z.coerce.number().min(0, 'Base price must be 0 or higher'),
-      pricingRules: z.array(pricingRuleSchema).default([]),
-    }).optional(),
+    pricing: z
+      .object({
+        pricingType: z.enum(['fixedPricing', 'timeBasedPricing']),
+        basePrice: z.coerce.number().min(0, 'Base price must be 0 or higher'),
+        pricingRules: z.array(pricingRuleSchema).default([]),
+      })
+      .optional(),
     blockedTimes: z.array(blockedTimeSchema).default([]),
     blockedDates: z.array(z.coerce.date()).default([]),
 
@@ -212,9 +223,11 @@ export const createVenueSchema = z
         });
       }
 
-
       // Time-based pricing: must have at least one pricing rule
-      if (data.pricing.pricingType === 'timeBasedPricing' && data.pricing.pricingRules.length === 0) {
+      if (
+        data.pricing.pricingType === 'timeBasedPricing' &&
+        data.pricing.pricingRules.length === 0
+      ) {
         ctx.addIssue({
           code: 'custom',
           message: 'At least one pricing rule is required for time-based pricing',
@@ -330,11 +343,13 @@ export const updateVenueSchema = z
       slotDuration: z.coerce.number().int().positive(),
       bufferTime: z.coerce.number().int().min(0),
     }),
-    pricing: z.object({
-      pricingType: z.enum(['fixedPricing', 'timeBasedPricing']),
-      basePrice: z.coerce.number().min(0),
-      pricingRules: z.array(pricingRuleSchema).default([]),
-    }).optional(),
+    pricing: z
+      .object({
+        pricingType: z.enum(['fixedPricing', 'timeBasedPricing']),
+        basePrice: z.coerce.number().min(0),
+        pricingRules: z.array(pricingRuleSchema).default([]),
+      })
+      .optional(),
     blockedTimes: z.array(blockedTimeSchema),
     blockedDates: z.array(z.coerce.date()),
     amenities: z.array(z.string()),
@@ -361,16 +376,40 @@ export const updateVenueSchema = z
 
 export type UpdateVenueDTO = z.infer<typeof updateVenueSchema>;
 
-// Admin review
+// Reject venue with optional extended deadline
 export const rejectVenueSchema = z.object({
   rejectionReason: z
     .string()
     .trim()
     .max(500, 'Rejection reason must be under 500 characters')
     .optional(),
+  extendedDeadline: z.coerce
+    .date()
+    .optional()
+    .refine(
+      (date) =>
+        !date ||
+        (date > new Date(Date.now() + VENUE_CONSTANTS.EDIT_WINDOW_DAYS * 24 * 60 * 60 * 1000) &&
+          date <= new Date(Date.now() + VENUE_CONSTANTS.MAX_EXTENDED_DAYS * 24 * 60 * 60 * 1000)),
+      `Extended deadline must be between ${String(VENUE_CONSTANTS.EDIT_WINDOW_DAYS)} and ${String(VENUE_CONSTANTS.MAX_EXTENDED_DAYS)} days`
+    ),
 });
 
 export type RejectVenueDTO = z.infer<typeof rejectVenueSchema>;
+
+// Extend venue deadline
+export const extendVenueDeadlineSchema = z.object({
+  newDeadline: z.coerce
+    .date()
+    .refine(
+      (date) =>
+        date > new Date() &&
+        date <= new Date(Date.now() + VENUE_CONSTANTS.MAX_EXTENDED_DAYS * 24 * 60 * 60 * 1000),
+      `New deadline must be in the future and within ${String(VENUE_CONSTANTS.MAX_EXTENDED_DAYS)} days`
+    ),
+});
+
+export type ExtendVenueDeadlineDTO = z.infer<typeof extendVenueDeadlineSchema>;
 
 export const suspendVenueSchema = z.object({
   suspensionReason: z

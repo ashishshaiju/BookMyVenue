@@ -100,6 +100,10 @@ export interface AddVenueFormValues {
   samePrice?: number | string;
   amenities: string[];
   venuePhotos: File[];
+  existingImages: {
+    coverImage: string;
+    galleryImages: string[];
+  };
 
   contact: {
     name: string;
@@ -120,12 +124,29 @@ export interface MyVenue {
   _id: string;
   name: string;
   city: string;
+  district: string;
   state: string;
   venueType: string;
   coverImage: string;
   status: VenueStatus;
   rejectionReason?: string;
+  rejectionHistory?: RejectionEntry[];
+  submissionCount?: number;
+  currentEditDeadline?: string;
+  suspensionReason?: string;
   createdAt: string;
+  isFeatured?: boolean;
+}
+
+export interface RejectionEntry {
+  reason: string;
+  rejectedAt: string;
+  rejectedBy?: string;
+  submissionNumber: number;
+  editDeadline: string;
+  extendedAt?: string;
+  extendedBy?: string;
+  originalDeadline?: string;
 }
 
 export interface VenueDetail {
@@ -135,9 +156,13 @@ export interface VenueDetail {
   venueType: string;
   address: string;
   city: string;
+  state: string;
   district: string;
   pincode: string;
   googleMapsUrl?: string;
+  location?: {
+    coordinates: [number, number];
+  };
   spaceAttributes: string[];
   seatingConfigurations: string[];
   maxCapacity?: number;
@@ -153,6 +178,7 @@ export interface VenueDetail {
     bufferTime: number;
   };
   pricing: IPricing;
+  blockedTimes?: IBlockedTime[];
   amenities: string[];
   coverImage: string;
   galleryImages: string[];

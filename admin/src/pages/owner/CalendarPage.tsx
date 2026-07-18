@@ -1,7 +1,5 @@
 import { useState, useMemo } from "react";
 import { useParams } from "react-router";
-import { DayPicker } from "react-day-picker";
-import "react-day-picker/style.css";
 import { CalendarDays } from "lucide-react";
 import { useToast } from "@/hooks/useToast";
 import { DEFAULT_PAGE_LIMIT } from "@/constants/pagination";
@@ -12,19 +10,12 @@ import {
   useBlockDates,
   useUnblockDates,
 } from "@/services/api/useVenues";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import type { BlockedDate } from "@/types/models";
 
-// Extracted Components
+import { VenueCalendar } from "@/components/calendar/VenueCalendar";
+import { CalendarLegend } from "@/components/calendar/CalendarLegend";
 import { BlockedDatesTable } from "@/components/calendar/BlockedDatesTable";
+import { BlockDateDialog } from "@/components/calendar/BlockDateDialog";
 import { toLocalDateStr } from "@/utils/dateUtils";
 
 export default function CalendarPage() {
@@ -153,135 +144,69 @@ export default function CalendarPage() {
     }
   };
 
+  const isCurrentlyBlocked = selectedDate ? isBlocked(selectedDate) : false;
+
   return (
-    <div className="space-y-8 p-8 max-w-7xl mx-auto">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight text-[var(--text-primary)]">
-          Calendar & Availability
-        </h1>
-        <p className="text-[var(--text-secondary)] mt-1">
-          Manage your venue's schedule, view bookings, and block off unavailable
-          dates.
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        <div className="lg:col-span-5 bg-[var(--bg-primary)] p-6 rounded-xl border border-[var(--bg-grey)] shadow-sm flex flex-col items-center">
-          <div className="w-full flex items-center justify-between mb-6 pb-4 border-b border-[var(--bg-grey)]">
-            <h2 className="text-lg font-semibold flex items-center gap-2 text-[var(--text-primary)]">
-              <CalendarDays className="h-5 w-5 text-primary" />
-              Select Dates
-            </h2>
-            <div className="flex gap-4 text-xs font-medium">
-              <div className="flex items-center gap-1.5">
-                <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
-                <span>Booked</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                <span>Blocked</span>
-              </div>
-            </div>
-          </div>
-
-          <DayPicker
-            mode="single"
-            selected={selectedDate || undefined}
-            onDayClick={handleDayClick}
-            disabled={isDisabledDay}
-            modifiers={{
-              booked: (d) => isBooked(d),
-              blocked: (d) => isBlocked(d),
-            }}
-            modifiersStyles={{
-              booked: {
-                backgroundColor: "#10b981",
-                color: "white",
-                fontWeight: "bold",
-              },
-              blocked: {
-                backgroundColor: "#ef4444",
-                color: "white",
-                fontWeight: "bold",
-                textDecoration: "line-through",
-              },
-            }}
-            className="border-none p-0"
-            classNames={{
-              day: "h-12 w-12 text-sm font-medium hover:bg-[var(--bg-grey)] hover:text-[var(--text-primary)] rounded-lg transition-colors focus:bg-primary focus:text-primary-foreground focus:outline-none aria-selected:bg-primary aria-selected:text-primary-foreground",
-            }}
-          />
+    <div className="space-y-6 p-8 max-w-4xl mx-auto">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Calendar</h1>
+          <p className="text-muted-foreground mt-1">
+            Manage availability — block dates to prevent new bookings.
+          </p>
         </div>
-
-        <div className="lg:col-span-7 bg-[var(--bg-primary)] rounded-xl border border-[var(--bg-grey)] shadow-sm overflow-hidden flex flex-col h-full min-h-[500px]">
-          <div className="p-6 border-b border-[var(--bg-grey)] bg-muted/20">
-            <h2 className="text-lg font-semibold text-[var(--text-primary)]">
-              Blocked Dates Management
-            </h2>
-            <p className="text-sm text-[var(--text-secondary)] mt-1">
-              Review and unblock previously restricted dates.
-            </p>
-          </div>
-
-          <BlockedDatesTable
-            tablePage={tablePage}
-            setTablePage={setTablePage}
-            paginatedData={paginatedData as BlockedDate[]}
-            totalPages={totalPages}
-            isLoading={isLoading}
-            unblockMutation={unblockMutation}
-          />
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-900">
+          <CalendarDays className="h-5 w-5 text-white" />
         </div>
       </div>
 
-      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>
-              {selectedDate && isBlocked(selectedDate)
-                ? "Unblock Date"
-                : "Block Date"}
-            </DialogTitle>
-            <DialogDescription>
-              {selectedDate && isBlocked(selectedDate)
-                ? `Are you sure you want to unblock ${selectedDate.toLocaleDateString()}? This will allow customers to book this date.`
-                : `Are you sure you want to block ${selectedDate?.toLocaleDateString()}? Customers will not be able to book this date.`}
-            </DialogDescription>
-          </DialogHeader>
+      {/* Legend */}
+      <CalendarLegend />
 
-          {conflictMessage && (
-            <div className="bg-red-50 text-red-700 p-3 rounded-md text-sm mb-4 border border-red-100">
-              {conflictMessage}
-            </div>
-          )}
+      {/* Calendar */}
+      <VenueCalendar
+        isLoading={isLoading}
+        handleDayClick={handleDayClick}
+        isDisabledDay={isDisabledDay}
+        isBooked={isBooked}
+        isBlocked={isBlocked}
+        isPast={isPast}
+        isTooFar={isTooFar}
+        isNonWorkingDay={isNonWorkingDay}
+      />
 
-          <DialogFooter className="mt-6 gap-2 sm:gap-0">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setConfirmOpen(false);
-                setConflictMessage(null);
-              }}
-              disabled={blockMutation.isPending || unblockMutation.isPending}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant={
-                selectedDate && isBlocked(selectedDate)
-                  ? "default"
-                  : "destructive"
-              }
-              onClick={handleConfirmAction}
-              disabled={blockMutation.isPending || unblockMutation.isPending}
-            >
-              {blockMutation.isPending || unblockMutation.isPending
-                ? "Processing..."
-                : "Confirm Action"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Blocked Dates Data Table */}
+      <div className="mt-8">
+        <h2 className="text-xl font-bold tracking-tight mb-4">Blocked Dates List</h2>
+        <BlockedDatesTable
+          tablePage={tablePage}
+          setTablePage={setTablePage}
+          paginatedData={paginatedData as BlockedDate[]}
+          totalPages={totalPages}
+          isLoading={isLoading}
+          unblockMutation={unblockMutation}
+        />
+      </div>
+
+      {/* Conflict error banner */}
+      {conflictMessage && (
+        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <strong>Conflict:</strong> {conflictMessage}
+        </div>
+      )}
+
+      {/* Block/Unblock Confirmation Dialog */}
+      <BlockDateDialog
+        confirmOpen={confirmOpen}
+        setConfirmOpen={setConfirmOpen}
+        selectedDate={selectedDate}
+        setSelectedDate={setSelectedDate}
+        isCurrentlyBlocked={isCurrentlyBlocked}
+        handleConfirmAction={handleConfirmAction}
+        blockPending={blockMutation.isPending}
+        unblockPending={unblockMutation.isPending}
+      />
     </div>
   );
 }

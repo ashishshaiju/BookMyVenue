@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useParams } from "react-router";
 import { Plus } from "lucide-react";
 import { useToast } from "@/hooks/useToast";
+import { useModal } from "@/hooks/useModal";
 
 import {
   useOwnerBookings,
@@ -31,8 +32,10 @@ export default function OwnerBookingsPage() {
   const [form, setForm] = useState<OfflineForm>(EMPTY_FORM);
 
   const { data, isLoading } = useOwnerBookings(venueId!, page);
+
   const offlineMutation = useCreateOfflineBooking();
   const { success, error } = useToast();
+  const { openModal } = useModal();
 
   const handleSubmit = () => {
     if (
@@ -78,7 +81,7 @@ export default function OwnerBookingsPage() {
     );
   };
 
-  const columns = useOwnerBookingColumns();
+  const columns = useOwnerBookingColumns({ openModal });
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
@@ -100,17 +103,15 @@ export default function OwnerBookingsPage() {
         </Button>
       </div>
 
-      <div className="rounded-md border border-[var(--bg-grey)] bg-[var(--bg-primary)] overflow-hidden shadow-sm">
-        <DataTable
-          columns={columns}
-          data={data?.bookings ?? []}
-          page={page}
-          totalPages={data?.pagination?.totalPages ?? 0}
-          onPageChange={setPage}
-          isLoading={isLoading}
-          emptyMessage="No bookings found for this venue."
-        />
-      </div>
+      <DataTable
+        columns={columns}
+        data={data?.bookings ?? []}
+        page={page}
+        totalPages={data?.pagination?.totalPages ?? 0}
+        onPageChange={setPage}
+        isLoading={isLoading}
+        emptyMessage="No bookings found for this venue."
+      />
 
       <OfflineBookingDialog
         offlineOpen={offlineOpen}

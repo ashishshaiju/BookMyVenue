@@ -176,10 +176,7 @@ export function verifyPaymentSignature(params: VerifyPaymentParams): boolean {
 
   try {
     const payload = `${params.orderId}|${params.paymentId}`;
-    const expectedSignature = crypto
-      .createHmac('sha256', keySecret)
-      .update(payload)
-      .digest('hex');
+    const expectedSignature = crypto.createHmac('sha256', keySecret).update(payload).digest('hex');
 
     const expectedBuffer = Buffer.from(expectedSignature, 'utf8');
     const receivedBuffer = Buffer.from(params.signature, 'utf8');

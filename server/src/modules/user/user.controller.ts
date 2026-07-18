@@ -89,7 +89,7 @@ export const getAllUsers = async (req: Request, res: Response): Promise<void> =>
 export const toggleUserStatus = async (req: Request, res: Response): Promise<void> => {
   try {
     const { userId } = req.params;
-    
+
     // Prevent modifying own status
     if (req.user?.userId === userId) {
       ResponseUtil.badRequest(res, 'You cannot toggle your own status');
@@ -101,7 +101,9 @@ export const toggleUserStatus = async (req: Request, res: Response): Promise<voi
       return;
     }
 
-    ResponseUtil.success(res, `User is now ${user.active ? 'active' : 'inactive'}`, { active: user.active });
+    ResponseUtil.success(res, `User is now ${user.active ? 'active' : 'inactive'}`, {
+      active: user.active,
+    });
   } catch (e) {
     handleError(res, e, 'toggleUserStatus');
   }
@@ -140,7 +142,10 @@ export const banUser = async (req: Request, res: Response): Promise<void> => {
     }
 
     const user = await service.banUser(userId, adminId, banReason);
-    ResponseUtil.success(res, 'User banned successfully', { username: user.username, isBanned: user.isBanned });
+    ResponseUtil.success(res, 'User banned successfully', {
+      username: user.username,
+      isBanned: user.isBanned,
+    });
   } catch (e) {
     handleError(res, e, 'banUser');
   }

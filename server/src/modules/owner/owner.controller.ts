@@ -2,7 +2,13 @@ import type { z } from 'zod';
 import type { Request, Response } from 'express';
 import { ResponseUtil } from '../../utils/responseUtils';
 import { handleError } from '../../utils/errors';
-import type { blockDatesSchema, unblockDatesSchema, offlineBookingSchema, ownerReplySchema, requestHideSchema } from './owner.validator';
+import type {
+  blockDatesSchema,
+  unblockDatesSchema,
+  offlineBookingSchema,
+  ownerReplySchema,
+  requestHideSchema,
+} from './owner.validator';
 import * as service from './owner.service';
 import * as workflow from './owner.workflow';
 import * as reviewService from '../review/review.service';
@@ -40,7 +46,7 @@ export const createOfflineBooking = async (req: Request, res: Response): Promise
       return;
     }
     const dto = req.validated?.body as z.infer<typeof offlineBookingSchema>;
-    
+
     const result = await service.createOfflineBookingService(req.user.userId, dto);
 
     ResponseUtil.created(res, 'Offline booking created', result);
@@ -100,8 +106,19 @@ export const getVenueReviews = async (req: Request, res: Response): Promise<void
     const venueId = req.params.venueId as string;
     const { page, limit, skip } = req.pagination ?? { page: 1, limit: 10, skip: 0, sort: '' };
 
-    const result = await reviewService.getOwnerVenueReviews(venueId, { page, limit, skip, sort: '' });
-    ResponseUtil.paginated(res, 'Venue reviews retrieved', result.reviews, result.pagination, 'reviews');
+    const result = await reviewService.getOwnerVenueReviews(venueId, {
+      page,
+      limit,
+      skip,
+      sort: '',
+    });
+    ResponseUtil.paginated(
+      res,
+      'Venue reviews retrieved',
+      result.reviews,
+      result.pagination,
+      'reviews'
+    );
   } catch (e) {
     handleError(res, e, 'getVenueReviews');
   }

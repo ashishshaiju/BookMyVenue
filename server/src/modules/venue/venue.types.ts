@@ -17,7 +17,7 @@ export interface IGeoPoint {
 export interface IFixedPackage {
   slotName: string;
   startTime: string; // 09:00
-  endTime: string;   // 13:00
+  endTime: string; // 13:00
   price: number;
 }
 
@@ -55,8 +55,19 @@ export interface ICancellation {
   refundRules: IRefundRule[];
 }
 
-// Main Interface
+export interface IRejectionEntry {
+  _id: mongoose.Types.ObjectId;
+  reason: string;
+  rejectedAt: Date;
+  rejectedBy: mongoose.Types.ObjectId;
+  submissionNumber: number;
+  editDeadline: Date;
+  extendedAt?: Date;
+  extendedBy?: mongoose.Types.ObjectId;
+  originalDeadline?: Date;
+}
 
+// Main Interface
 export interface IVenue extends Document {
   // Basic Info
   name: string;
@@ -114,7 +125,10 @@ export interface IVenue extends Document {
   // Operational
   status: VenueStatus;
   ownerUserId: mongoose.Types.ObjectId;
-  rejectionReason?: string;
+  rejectionHistory: IRejectionEntry[];
+  submissionCount: number;
+  lastSubmittedAt?: Date;
+  currentEditDeadline?: Date;
   suspensionReason?: string;
 
   // Audit
@@ -136,7 +150,10 @@ export type CreateVenueData = Omit<
   | 'updatedAt'
   | 'active'
   | 'deleted'
-  | 'rejectionReason'
+  | 'rejectionHistory'
+  | 'submissionCount'
+  | 'lastSubmittedAt'
+  | 'currentEditDeadline'
   | 'suspensionReason'
 >;
 

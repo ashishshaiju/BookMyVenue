@@ -32,7 +32,12 @@ const router: Router = Router();
  */
 router
   .route('/promote')
-  .post(verifyAccessToken, requireSuperAdmin, validateBody(validator.promoteUserSchema), roleController.promoteToAdmin);
+  .post(
+    verifyAccessToken,
+    requireSuperAdmin,
+    validateBody(validator.promoteUserSchema),
+    roleController.promoteToAdmin
+  );
 
 /**
  * @openapi
@@ -58,7 +63,12 @@ router
  */
 router
   .route('/demote')
-  .post(verifyAccessToken, requireSuperAdmin, validateBody(validator.demoteUserSchema), roleController.demoteAdmin);
+  .post(
+    verifyAccessToken,
+    requireSuperAdmin,
+    validateBody(validator.demoteUserSchema),
+    roleController.demoteAdmin
+  );
 
 /**
  * @openapi
@@ -83,6 +93,12 @@ router
  */
 router
   .route('/admins')
-  .get(verifyAccessToken, requireSuperAdmin, validateQuery(validator.getAdminsQuerySchema), paginationMiddleware(), roleController.getAdmins);
+  .get(
+    verifyAccessToken,
+    requireSuperAdmin,
+    validateQuery(validator.getAdminsQuerySchema),
+    paginationMiddleware(),
+    roleController.getAdmins
+  );
 
 export { router as roleRouter };

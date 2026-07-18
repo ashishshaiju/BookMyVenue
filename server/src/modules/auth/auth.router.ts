@@ -98,7 +98,9 @@ router.route('/register').post(validateBody(authValidator.registerSchema), contr
  *       429:
  *         description: Too many requests
  */
-router.route('/login').post(loginRateLimiter, validateBody(authValidator.loginSchema), controller.login);
+router
+  .route('/login')
+  .post(loginRateLimiter, validateBody(authValidator.loginSchema), controller.login);
 
 /**
  * @openapi
@@ -229,12 +231,7 @@ router
  *       401:
  *         description: Unauthorized
  */
-router
-  .route('/change-password')
-  .patch(
-    verifyAccessToken,
-    controller.changePassword
-  );
+router.route('/change-password').patch(verifyAccessToken, controller.changePassword);
 
 /**
  * @openapi
