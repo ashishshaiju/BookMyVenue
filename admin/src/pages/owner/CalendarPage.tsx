@@ -49,8 +49,36 @@ export default function CalendarPage() {
     return d;
   }, [today]);
 
+  const dateRangeSet = useMemo(() => {
+    return (fromStr: string | null | undefined): Set<string> => {
+      if (!fromStr) return new Set();
+      const from = new Date(`${fromStr}T00:00:00Z`);
+      const start = from > today ? from : today;
+      if (start > sixMonthsFromNow) return new Set();
+      const set = new Set<string>();
+      const cursor = new Date(start);
+      while (cursor <= sixMonthsFromNow) {
+        set.add(toLocalDateStr(cursor));
+        cursor.setDate(cursor.getDate() + 1);
+      }
+      return set;
+    };
+  }, [today, sixMonthsFromNow]);
+
+  const tempBlockedSet = useMemo(
+    () => dateRangeSet(data?.temporaryBlockAfterDate),
+    [data?.temporaryBlockAfterDate, dateRangeSet],
+  );
+
+  const inactivityBlockedSet = useMemo(
+    () => dateRangeSet(data?.inactivityBlockedAfterDate),
+    [data?.inactivityBlockedAfterDate, dateRangeSet],
+  );
+
   const isBooked = (date: Date) => bookedSet.has(toLocalDateStr(date));
   const isBlocked = (date: Date) => blockedSet.has(toLocalDateStr(date));
+  const isTempBlocked = (date: Date) => tempBlockedSet.has(toLocalDateStr(date));
+  const isInactivityBlocked = (date: Date) => inactivityBlockedSet.has(toLocalDateStr(date));
   const isPast = (date: Date) => date < today;
   const isTooFar = (date: Date) => date > sixMonthsFromNow;
   const isNonWorkingDay = (date: Date) => {
@@ -59,7 +87,7 @@ export default function CalendarPage() {
     return !workingDaysSet.has(dayName);
   };
   const isDisabledDay = (date: Date) =>
-    isPast(date) || isTooFar(date) || isBooked(date) || isNonWorkingDay(date);
+    isPast(date) || isTooFar(date) || isBooked(date) || isNonWorkingDay(date) || isTempBlocked(date) || isInactivityBlocked(date);
 
   const [tablePage, setTablePage] = useState(1);
 
@@ -162,7 +190,10 @@ export default function CalendarPage() {
       </div>
 
       {/* Legend */}
-      <CalendarLegend />
+      <CalendarLegend
+        hasTempBlock={!!data?.temporaryBlockAfterDate}
+        hasInactivityBlock={!!data?.inactivityBlockedAfterDate}
+      />
 
       {/* Calendar */}
       <VenueCalendar
@@ -171,6 +202,8 @@ export default function CalendarPage() {
         isDisabledDay={isDisabledDay}
         isBooked={isBooked}
         isBlocked={isBlocked}
+        isTempBlocked={isTempBlocked}
+        isInactivityBlocked={isInactivityBlocked}
         isPast={isPast}
         isTooFar={isTooFar}
         isNonWorkingDay={isNonWorkingDay}

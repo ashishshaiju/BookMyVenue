@@ -8,6 +8,8 @@ export function VenueCalendar({
   isDisabledDay,
   isBooked,
   isBlocked,
+  isTempBlocked,
+  isInactivityBlocked,
   isPast,
   isTooFar,
   isNonWorkingDay,
@@ -17,6 +19,8 @@ export function VenueCalendar({
   isDisabledDay: (date: Date) => boolean;
   isBooked: (date: Date) => boolean;
   isBlocked: (date: Date) => boolean;
+  isTempBlocked: (date: Date) => boolean;
+  isInactivityBlocked: (date: Date) => boolean;
   isPast: (date: Date) => boolean;
   isTooFar: (date: Date) => boolean;
   isNonWorkingDay: (date: Date) => boolean;
@@ -36,12 +40,16 @@ export function VenueCalendar({
               modifiers={{
                 booked: (date) => isBooked(date),
                 blocked: (date) => isBlocked(date),
+                tempBlocked: (date) => isTempBlocked(date),
+                inactivityBlocked: (date) => isInactivityBlocked(date),
                 unavailable: (date) =>
                   isPast(date) || isTooFar(date) || isNonWorkingDay(date),
               }}
               modifiersClassNames={{
                 booked: "rdp-day--booked",
                 blocked: "rdp-day--blocked",
+                tempBlocked: "rdp-day--temp-blocked",
+                inactivityBlocked: "rdp-day--inactivity-blocked",
                 unavailable: "rdp-day--unavailable",
               }}
               styles={{
@@ -75,6 +83,22 @@ export function VenueCalendar({
           color: #a1a1aa !important;
           opacity: 0.5;
           cursor: not-allowed !important;
+        }
+        .rdp-day--temp-blocked {
+          background-color: #fef3c7 !important;
+          color: #d97706 !important;
+          cursor: not-allowed !important;
+        }
+        .rdp-day--temp-blocked:hover {
+          background-color: #fde68a !important;
+        }
+        .rdp-day--inactivity-blocked {
+          background-color: #f3e8ff !important;
+          color: #9333ea !important;
+          cursor: not-allowed !important;
+        }
+        .rdp-day--inactivity-blocked:hover {
+          background-color: #e9d5ff !important;
         }
       `}</style>
     </>

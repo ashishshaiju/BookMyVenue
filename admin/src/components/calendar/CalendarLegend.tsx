@@ -1,4 +1,10 @@
-export function CalendarLegend() {
+export function CalendarLegend({
+  hasTempBlock,
+  hasInactivityBlock,
+}: {
+  hasTempBlock?: boolean;
+  hasInactivityBlock?: boolean;
+}) {
   return (
     <div className="flex flex-wrap gap-4 text-sm">
       {[
@@ -11,6 +17,22 @@ export function CalendarLegend() {
           color: "bg-red-100 border border-red-300",
           label: "Blocked by you",
         },
+        ...(hasTempBlock
+          ? [
+              {
+                color: "bg-amber-100 border border-amber-300",
+                label: "Temporarily blocked",
+              },
+            ]
+          : []),
+        ...(hasInactivityBlock
+          ? [
+              {
+                color: "bg-purple-100 border border-purple-300",
+                label: "Inactive period",
+              },
+            ]
+          : []),
         { color: "bg-white border border-zinc-300", label: "Available" },
       ].map(({ color, label }) => (
         <div key={label} className="flex items-center gap-2">
