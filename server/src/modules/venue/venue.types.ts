@@ -1,6 +1,6 @@
 import type mongoose from 'mongoose';
 import type { Document } from 'mongoose';
-import type { VenueStatusEnum, VenueFields } from '../../constants/venue.constants';
+import type { VenueStatusEnum, VenueFields, ReviewIntentType } from '../../constants/venue.constants';
 
 export type VenueStatus = (typeof VenueStatusEnum)[number];
 
@@ -69,6 +69,7 @@ export interface IRejectionEntry {
 
 // Main Interface
 export interface IVenue extends Document {
+  __v?: number;
   // Basic Info
   name: string;
   description: string;
@@ -121,6 +122,27 @@ export interface IVenue extends Document {
   // Ratings & Reviews
   avgRating: number;
   reviewCount: number;
+
+  pendingReview?: {
+    intent: ReviewIntentType;
+    requestedAt: Date;
+    details: {
+      changedFields?: string[];
+      previousSnapshot?: Record<string, unknown>;
+      reason?: string;
+    };
+  };
+
+  inactivity?: {
+    requestedAt?: Date;
+    approvedAt?: Date;
+    blockedAfterDate?: Date;
+    inactiveAt?: Date;
+    lastInactiveAt?: Date;
+    withdrawalRequestedAt?: Date;
+  };
+
+  temporaryBlockAfterDate?: Date;
 
   // Operational
   status: VenueStatus;

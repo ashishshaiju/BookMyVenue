@@ -28,6 +28,7 @@ export default function ReviewsPage() {
     open: false,
   });
   const [reportReason, setReportReason] = useState("");
+  const [reportAction, setReportAction] = useState<"hide" | "flag">("hide");
 
   const { data, isLoading } = useReviews(venueId!, page);
 
@@ -64,12 +65,14 @@ export default function ReviewsPage() {
         venueId: venueId!,
         reviewId: reportDialog.reviewId,
         reason: reportReason,
+        action: reportAction,
       },
       {
         onSuccess: () => {
-          success("Review reported to admins");
+          success("Review reported successfully");
           setReportDialog({ open: false });
           setReportReason("");
+          setReportAction("hide");
         },
         onError: (e: unknown) => {
           const err = e as import("axios").AxiosError<{ message: string }>;
@@ -122,6 +125,8 @@ export default function ReviewsPage() {
         setReportDialog={setReportDialog}
         reportReason={reportReason}
         setReportReason={setReportReason}
+        reportAction={reportAction}
+        setReportAction={setReportAction}
         handleReport={handleReport}
         isPending={reportMutation.isPending}
       />

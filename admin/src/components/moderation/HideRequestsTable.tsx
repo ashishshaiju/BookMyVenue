@@ -1,6 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
 import { StarRating } from "@/components/common/StarRating";
+import { Check, X, ExternalLink } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { CLIENT_APP_URL } from "@/constants";
 import type { ModerationSummary } from "@/types";
 import type { ReviewActionDialogState } from "@/types/ui";
 import type { UseMutationResult } from "@tanstack/react-query";
@@ -55,12 +58,22 @@ export function HideRequestsTable({
       }: {
         row: { original: ModerationSummary["hideRequests"][0] };
       }) => (
-        <div>
-          <StarRating rating={row.original.rating} />
-          <p className="text-sm text-[var(--text-primary)] line-clamp-2 max-w-xs">
-            {row.original.comment}
-          </p>
-        </div>
+        <TooltipProvider>
+          <Tooltip delayDuration={300}>
+            <TooltipTrigger asChild>
+              <div className="cursor-pointer">
+                <StarRating rating={row.original.rating} />
+                <p className="text-sm text-[var(--text-primary)] line-clamp-2 max-w-xs">
+                  {row.original.comment}
+                </p>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent className="max-w-md whitespace-pre-wrap p-3">
+              <StarRating rating={row.original.rating} />
+              <p className="mt-2 text-sm">{row.original.comment}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       ),
     },
     {
@@ -71,7 +84,10 @@ export function HideRequestsTable({
       }: {
         row: { original: ModerationSummary["hideRequests"][0] };
       }) => (
-        <p className="text-sm text-orange-600 dark:text-orange-400 max-w-xs line-clamp-2">
+        <p 
+          className="text-sm text-orange-600 dark:text-orange-400 max-w-xs truncate cursor-help"
+          title={row.original.hideRequestReason}
+        >
           {row.original.hideRequestReason}
         </p>
       ),
@@ -85,34 +101,70 @@ export function HideRequestsTable({
         row: { original: ModerationSummary["hideRequests"][0] };
       }) => (
         <div className="flex gap-2">
-          <Button
-            size="sm"
-            variant="outline"
-            className="text-green-600 border-green-300 hover:bg-green-50 dark:hover:bg-green-950"
-            onClick={() =>
-              setReviewDialog({
-                open: true,
-                action: "approve_hide",
-                reviewId: row.original._id,
-              })
-            }
-            disabled={moderateReviewMutation.isPending}
-          >
-            Approve
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() =>
-              moderateReviewMutation.mutate({
-                reviewId: row.original._id,
-                action: "reject_hide",
-              })
-            }
-            disabled={moderateReviewMutation.isPending}
-          >
-            Reject
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  size="icon"
+                  variant="outline"
+                  className="text-green-600 border-green-300 hover:bg-green-50 dark:hover:bg-green-950"
+                  onClick={() =>
+                    setReviewDialog({
+                      open: true,
+                      action: "approve_hide",
+                      reviewId: row.original._id,
+                    })
+                  }
+                  disabled={moderateReviewMutation.isPending}
+                >
+                  <Check size={16} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Approve</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  size="icon"
+                  variant="outline"
+                  onClick={() =>
+                    moderateReviewMutation.mutate({
+                      reviewId: row.original._id,
+                      action: "reject_hide",
+                    })
+                  }
+                  disabled={moderateReviewMutation.isPending}
+                >
+                  <X size={16} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Reject</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button size="icon" variant="outline" asChild>
+                  <a
+                    href={`${CLIENT_APP_URL}/venue/${row.original.venueId}#review-${row.original._id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <ExternalLink size={16} />
+                  </a>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>View on site</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       ),
     },

@@ -184,14 +184,13 @@ export const reportReview = async (req: Request, res: Response): Promise<void> =
       return;
     }
 
-    const venueId = Array.isArray(req.params.venueId) ? req.params.venueId[0] : req.params.venueId;
     const reviewId = Array.isArray(req.params.reviewId)
       ? req.params.reviewId[0]
       : req.params.reviewId;
     const { reason } = req.body as { reason: string };
 
-    const review = await service.requestHideForReview(venueId, reviewId, userId, reason);
-    ResponseUtil.success(res, 'Report submitted to admin', review);
+    const review = await service.flagReview(reviewId, reason);
+    ResponseUtil.success(res, 'Review flagged successfully', review);
   } catch (err) {
     handleError(res, err, 'reportReview');
   }

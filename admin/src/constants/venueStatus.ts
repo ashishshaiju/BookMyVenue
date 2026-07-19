@@ -4,6 +4,7 @@ export const VENUE_STATUS = {
   APPROVED: "Approved",
   REJECTED: "Rejected",
   SUSPENDED: "Suspended",
+  INACTIVE: "Inactive",
 } as const;
 
 export const ADMIN_VENUE_STATUS = {

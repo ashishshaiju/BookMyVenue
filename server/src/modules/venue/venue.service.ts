@@ -5,13 +5,12 @@ import type {
   UpdateVenueData,
   AdminVenueFilters,
   IVenue,
-  VenueKey,
   PublicVenueFilters,
 } from './venue.types';
 import type { IVenueDraft } from './venueDraft.model';
 import { requireOwnVenue } from './venue.ownership';
 import * as workflow from './venue.workflow';
-import { NotFoundError, ConflictError, ValidationError } from '../../utils/errors';
+import { NotFoundError, ConflictError, ValidationError, WorkflowError } from '../../utils/errors';
 import type {
   CreateVenueDTO,
   UpdateVenueDTO,
@@ -19,7 +18,7 @@ import type {
   SuspendVenueDTO,
   AdminVenueFiltersDTO,
 } from './venue.validator';
-import { VenueFields } from '../../constants/venue.constants';
+import { VenueFields, ReviewIntent } from '../../constants/venue.constants';
 import { VENUE_CONSTANTS } from '../../constants/venue.constants';
 import { VenueModel } from './venue.model';
 import { RoleModel } from '../../models/role.model';
@@ -29,6 +28,8 @@ import { getUserRole } from '../../services/roles.service';
 import { emailService } from '../../services/email.service';
 import mongoose from 'mongoose';
 import { logError } from '../../utils/logger';
+import { BookingModel } from '../booking/models/booking.model';
+import { BookingStatus } from '../../constants/booking.constants';
 
 // Google Maps URL Resolution & Transformation
 
@@ -261,6 +262,29 @@ export async function getVenueById(
   return venue;
 }
 
+const CRITICAL_FIELDS = new Set([
+  'name', 'contact', 'address', 'city', 'district', 'pincode', 'venueType', 'bookingType',
+]);
+
+function buildPatch(
+  _venue: IVenue,
+  dto: Record<string, unknown>,
+  userId: string,
+  excludeFields?: string[]
+): Record<string, unknown> {
+  const patch: Record<string, unknown> = { updatedBy: userId };
+  for (const key of VenueFields) {
+    if (excludeFields?.includes(key)) continue;
+    if (dto[key] !== undefined) {
+      patch[key] = dto[key];
+    }
+  }
+  if (dto.coordinates !== undefined) {
+    patch.location = { type: 'Point', coordinates: dto.coordinates };
+  }
+  return patch;
+}
+
 export async function updateVenue(
   venueId: string,
   userId: string,
@@ -268,7 +292,10 @@ export async function updateVenue(
 ): Promise<IVenue> {
   const venue = await requireOwnVenue(venueId, userId);
 
-  workflow.canEdit(venue);
+  // Optimistic concurrency check
+  if (dto.expectedVersion !== undefined && venue.__v !== dto.expectedVersion) {
+    throw new ConflictError('Venue has been modified by another request. Please reload and try again.');
+  }
 
   if (dto.name && dto.name !== venue.name) {
     const nameExists = await repo.existsByOwnerAndName(userId, dto.name, venueId);
@@ -285,22 +312,57 @@ export async function updateVenue(
       (await resolveAndTransformGoogleMapsUrl(sanitizedDto.googleMapsUrl)) ?? undefined;
   }
 
-  const patch: UpdateVenueData = {
-    updatedBy: userId,
-    ...(Object.fromEntries(
-      VenueFields.filter((key) => sanitizedDto[key] !== undefined).map((key) => [
-        key,
-        sanitizedDto[key],
-      ])
-    ) as Pick<UpdateVenueData, VenueKey>),
-    ...(sanitizedDto.coordinates !== undefined && {
-      location: { type: 'Point', coordinates: sanitizedDto.coordinates },
-    }),
-  };
+  // Status-gated dispatch
+  if (venue.status === 'Draft' || venue.status === 'Rejected') {
+    const patch = buildPatch(venue, sanitizedDto, userId);
+    const updated = await repo.updateVenue(venueId, patch as unknown as UpdateVenueData);
+    if (!updated) throw new NotFoundError('Venue not found');
+    return updated;
+  }
 
-  const updated = await repo.updateVenue(venueId, patch);
-  if (!updated) throw new NotFoundError('Venue not found');
-  return updated;
+  if (venue.status === 'Approved' || venue.status === 'Inactive') {
+    const dtoAny = sanitizedDto as unknown as Record<string, unknown>;
+    const venueAny = venue as unknown as Record<string, unknown>;
+    const changedCritical: string[] = [];
+    const snapshot: Record<string, unknown> = {};
+
+    for (const field of CRITICAL_FIELDS) {
+      if (dtoAny[field] !== undefined && dtoAny[field] !== venueAny[field]) {
+        changedCritical.push(field);
+        snapshot[field] = venueAny[field];
+      }
+    }
+
+    if (changedCritical.length > 0) {
+      // Apply all fields immediately (Option B — snapshot is for rollback on reject)
+      const patch = buildPatch(venue, dtoAny, userId);
+    const updated = await repo.updateVenue(venueId, patch as UpdateVenueData);
+      if (!updated) throw new NotFoundError('Venue not found');
+
+      // Mark pending review with snapshot
+      await VenueModel.findByIdAndUpdate(venueId, {
+        $set: {
+          'pendingReview.intent': ReviewIntent.VENUE_EDIT,
+          'pendingReview.requestedAt': new Date(),
+          'pendingReview.details.changedFields': changedCritical,
+          'pendingReview.details.previousSnapshot': snapshot,
+        },
+      }).exec();
+
+      // Re-fetch to include pendingReview
+      const withReview = await repo.findVenueById(venueId);
+      if (!withReview) throw new NotFoundError('Venue not found');
+      return withReview;
+    }
+
+    // Only non-critical fields — apply full patch immediately
+    const patch = buildPatch(venue, dtoAny, userId);
+    const updated = await repo.updateVenue(venueId, patch as unknown as UpdateVenueData);
+    if (!updated) throw new NotFoundError('Venue not found');
+    return updated;
+  }
+
+  throw new WorkflowError(venue.status, 'edit');
 }
 
 export async function deleteVenue(venueId: string, userId: string): Promise<void> {
@@ -637,4 +699,152 @@ export async function unfeatureVenue(venueId: string): Promise<void> {
   if (!venue) throw new NotFoundError('Venue not found');
 
   await repo.removeFeaturedVenue(venueId);
+}
+
+// Review Management (admin)
+
+export async function getReviewsList(): Promise<IVenue[]> {
+  return VenueModel.find({
+    'pendingReview': { $exists: true, $ne: null },
+    deleted: false,
+  })
+    .select('name city status pendingReview inactivity ownerUserId')
+    .populate('ownerUserId', 'username email')
+    .sort({ 'pendingReview.requestedAt': -1 })
+    .lean()
+    .exec();
+}
+
+export async function approveReview(
+  venueId: string,
+  adminId: string,
+  _note?: string
+): Promise<IVenue> {
+  const venue = await repo.findVenueById(venueId);
+  if (!venue) throw new NotFoundError('Venue not found');
+  if (!venue.pendingReview) throw new ConflictError('Venue has no pending review');
+
+  const adminObjectId = new mongoose.Types.ObjectId(adminId);
+
+  switch (venue.pendingReview.intent) {
+    case ReviewIntent.VENUE_EDIT: {
+      // Changes are already applied. Just clear pendingReview.
+      const updated = await VenueModel.findByIdAndUpdate(
+        venueId,
+        {
+          $unset: { pendingReview: '' },
+          $set: { updatedBy: adminObjectId },
+        },
+        { new: true }
+      ).exec();
+      if (!updated) throw new NotFoundError('Venue not found');
+      return updated;
+    }
+
+    case ReviewIntent.INACTIVITY_REQUEST: {
+      const lastFutureBooking = await BookingModel.findOne({
+        venueId: new mongoose.Types.ObjectId(venueId),
+        status: BookingStatus.CONFIRMED,
+        date: { $gte: new Date().toISOString().split('T')[0] },
+      })
+        .sort({ date: -1 })
+        .lean()
+        .exec();
+
+      let blockedAfterDate: Date;
+      if (lastFutureBooking) {
+        blockedAfterDate = new Date(lastFutureBooking.date);
+        blockedAfterDate.setDate(blockedAfterDate.getDate() + 1);
+      } else {
+        blockedAfterDate = new Date();
+      }
+
+      const updated = await VenueModel.findByIdAndUpdate(
+        venueId,
+        {
+          $set: {
+            status: 'Inactive',
+            'inactivity.approvedAt': new Date(),
+            'inactivity.blockedAfterDate': blockedAfterDate,
+            'inactivity.inactiveAt': new Date(),
+            updatedBy: adminObjectId,
+          },
+          $unset: { pendingReview: '' },
+        },
+        { new: true }
+      ).exec();
+      if (!updated) throw new NotFoundError('Venue not found');
+      return updated;
+    }
+
+    case ReviewIntent.INACTIVITY_WITHDRAWAL: {
+      const updated = await VenueModel.findByIdAndUpdate(
+        venueId,
+        {
+          $unset: {
+            pendingReview: '',
+            'inactivity.requestedAt': '',
+            'inactivity.approvedAt': '',
+            'inactivity.blockedAfterDate': '',
+            'inactivity.withdrawalRequestedAt': '',
+          },
+          $set: { updatedBy: adminObjectId },
+        },
+        { new: true }
+      ).exec();
+      if (!updated) throw new NotFoundError('Venue not found');
+      return updated;
+    }
+
+    case ReviewIntent.DELETION_REQUEST: {
+      const deleted = await repo.softDeleteVenue(venueId, adminId);
+      if (!deleted) throw new NotFoundError('Venue not found');
+      const updated = await repo.findVenueById(venueId);
+      if (!updated) throw new NotFoundError('Venue not found');
+      return updated;
+    }
+
+    default:
+      throw new ValidationError(`Cannot approve review with intent "${venue.pendingReview.intent}"`);
+  }
+}
+
+export async function rejectReview(
+  venueId: string,
+  adminId: string,
+  _note: string
+): Promise<IVenue> {
+  const venue = await repo.findVenueById(venueId);
+  if (!venue) throw new NotFoundError('Venue not found');
+  if (!venue.pendingReview) throw new ConflictError('Venue has no pending review');
+
+  const adminObjectId = new mongoose.Types.ObjectId(adminId);
+
+  if (venue.pendingReview.intent === ReviewIntent.VENUE_EDIT) {
+    const snapshot = venue.pendingReview.details.previousSnapshot;
+    if (snapshot && Object.keys(snapshot).length > 0) {
+      const updated = await VenueModel.findByIdAndUpdate(
+        venueId,
+        {
+          $set: { ...snapshot, updatedBy: adminObjectId },
+          $unset: { pendingReview: '' },
+        },
+        { new: true }
+      ).exec();
+      if (!updated) throw new NotFoundError('Venue not found');
+      return updated;
+    }
+  }
+
+  // For all other intents (and VENUE_EDIT without snapshot): just clear pendingReview
+  const updated = await VenueModel.findByIdAndUpdate(
+    venueId,
+    {
+      $unset: { pendingReview: '' },
+      $set: { updatedBy: adminObjectId },
+    },
+    { new: true }
+  ).exec();
+  if (!updated) throw new NotFoundError('Venue not found');
+  return updated;
 }

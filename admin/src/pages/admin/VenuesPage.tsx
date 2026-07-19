@@ -28,6 +28,8 @@ import { RejectVenueDialog } from "@/components/venues/RejectVenueDialog";
 import { SuspendVenueDialog } from "@/components/venues/SuspendVenueDialog";
 import { FeatureVenueDialog } from "@/components/venues/FeatureVenueDialog";
 import { ExtendDeadlineDialog } from "@/components/venues/ExtendDeadlineDialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ReviewsTabContent } from "@/components/reviews/ReviewsTabContent";
 
 export default function VenuesPage() {
   const [page, setPage] = useState(1);
@@ -209,57 +211,70 @@ export default function VenuesPage() {
         </div>
       </div>
 
-      <DataTable
-        columns={columns}
-        data={data?.venues ?? []}
-        page={page}
-        totalPages={data?.pagination?.totalPages ?? 0}
-        onPageChange={setPage}
-        isLoading={isLoading}
-        emptyMessage={
-          statusFilter === "All"
-            ? "No venues found."
-            : `No ${statusFilter === "PendingReview" ? "pending review" : statusFilter.toLowerCase()} venues found.`
-        }
-      />
+      <Tabs defaultValue="all">
+        <TabsList>
+          <TabsTrigger value="all">All Venues</TabsTrigger>
+          <TabsTrigger value="reviews">Reviews</TabsTrigger>
+        </TabsList>
 
-      <RejectVenueDialog
-        open={rejectDialog.open}
-        setOpen={(open) => setRejectDialog({ ...rejectDialog, open })}
-        rejectReason={rejectReason}
-        setRejectReason={setRejectReason}
-        handleReject={handleReject}
-        isPending={rejectMutation.isPending}
-        extendedDeadline={extendedDeadline}
-        setExtendedDeadline={setExtendedDeadline}
-      />
+        <TabsContent value="all">
+          <DataTable
+            columns={columns}
+            data={data?.venues ?? []}
+            page={page}
+            totalPages={data?.pagination?.totalPages ?? 0}
+            onPageChange={setPage}
+            isLoading={isLoading}
+            emptyMessage={
+              statusFilter === "All"
+                ? "No venues found."
+                : `No ${statusFilter === "PendingReview" ? "pending review" : statusFilter.toLowerCase()} venues found.`
+            }
+          />
 
-      <SuspendVenueDialog
-        open={suspendDialog.open}
-        setOpen={(open) => setSuspendDialog({ ...suspendDialog, open })}
-        suspensionReason={suspensionReason}
-        setSuspensionReason={setSuspensionReason}
-        handleSuspend={handleSuspend}
-        isPending={suspendMutation.isPending}
-      />
+          <RejectVenueDialog
+            open={rejectDialog.open}
+            setOpen={(open) => setRejectDialog({ ...rejectDialog, open })}
+            rejectReason={rejectReason}
+            setRejectReason={setRejectReason}
+            handleReject={handleReject}
+            isPending={rejectMutation.isPending}
+            extendedDeadline={extendedDeadline}
+            setExtendedDeadline={setExtendedDeadline}
+          />
 
-      <FeatureVenueDialog
-        open={featureDialog.open}
-        setOpen={(open) => setFeatureDialog({ ...featureDialog, open })}
-        featureDuration={featureDuration}
-        setFeatureDuration={setFeatureDuration}
-        handleFeature={handleFeature}
-        isPending={featureMutation.isPending}
-      />
+          <SuspendVenueDialog
+            open={suspendDialog.open}
+            setOpen={(open) => setSuspendDialog({ ...suspendDialog, open })}
+            suspensionReason={suspensionReason}
+            setSuspensionReason={setSuspensionReason}
+            handleSuspend={handleSuspend}
+            isPending={suspendMutation.isPending}
+          />
 
-<ExtendDeadlineDialog
-        open={extendDeadlineDialog.open}
-        setOpen={(open) => setExtendDeadlineDialog((prev) => ({ ...prev, open }))}
-        venueId={extendDeadlineDialog.venueId}
-        currentDeadline={extendDeadlineDialog.currentDeadline}
-        onExtend={handleExtendDeadline}
-        isPending={extendDeadlineMutation.isPending}
-      />
+          <FeatureVenueDialog
+            open={featureDialog.open}
+            setOpen={(open) => setFeatureDialog({ ...featureDialog, open })}
+            featureDuration={featureDuration}
+            setFeatureDuration={setFeatureDuration}
+            handleFeature={handleFeature}
+            isPending={featureMutation.isPending}
+          />
+
+          <ExtendDeadlineDialog
+            open={extendDeadlineDialog.open}
+            setOpen={(open) => setExtendDeadlineDialog((prev) => ({ ...prev, open }))}
+            venueId={extendDeadlineDialog.venueId}
+            currentDeadline={extendDeadlineDialog.currentDeadline}
+            onExtend={handleExtendDeadline}
+            isPending={extendDeadlineMutation.isPending}
+          />
+        </TabsContent>
+
+        <TabsContent value="reviews">
+          <ReviewsTabContent />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

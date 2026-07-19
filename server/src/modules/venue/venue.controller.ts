@@ -13,6 +13,8 @@ import type {
   publicVenueFiltersSchema,
   featureVenueSchema,
   extendVenueDeadlineSchema,
+  approveReviewSchema,
+  rejectReviewSchema,
 } from './venue.validator';
 import type { PlainVenue } from './venue.types';
 import { handleError } from '../../utils/errors';
@@ -212,7 +214,11 @@ export const updateVenue = async (req: Request, res: Response): Promise<void> =>
     }
     const dto = req.validated?.body as z.infer<typeof updateVenueSchema>;
     const venue = await service.updateVenue(id, userId, dto);
-    ResponseUtil.success(res, 'Venue updated successfully', venue);
+    const requiresReview = venue.pendingReview?.intent === 'venue_edit';
+    const msg = requiresReview
+      ? 'Changes saved. Critical updates submitted for admin review.'
+      : 'Venue updated successfully';
+    ResponseUtil.success(res, msg, venue);
   } catch (e) {
     handleError(res, e, 'updateVenue');
   }
@@ -392,6 +398,47 @@ export const unfeatureVenue = async (req: Request, res: Response): Promise<void>
     ResponseUtil.success(res, 'Venue removed from featured successfully');
   } catch (e) {
     handleError(res, e, 'unfeatureVenue');
+  }
+};
+
+export const getReviewsList = async (_req: Request, res: Response): Promise<void> => {
+  try {
+    const venues = await service.getReviewsList();
+    ResponseUtil.success(res, 'Review list retrieved successfully', { count: venues.length, venues });
+  } catch (e) {
+    handleError(res, e, 'getReviewsList');
+  }
+};
+
+export const approveReview = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.validated?.params as z.infer<typeof venueIdParamSchema>;
+    const adminId = req.user?.userId;
+    if (!adminId) {
+      ResponseUtil.unauthorized(res, 'Unauthorized');
+      return;
+    }
+    const dto = req.validated?.body as z.infer<typeof approveReviewSchema> | undefined;
+    const venue = await service.approveReview(id, adminId, dto?.note);
+    ResponseUtil.success(res, 'Review approved successfully', venue);
+  } catch (e) {
+    handleError(res, e, 'approveReview');
+  }
+};
+
+export const rejectReview = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.validated?.params as z.infer<typeof venueIdParamSchema>;
+    const adminId = req.user?.userId;
+    if (!adminId) {
+      ResponseUtil.unauthorized(res, 'Unauthorized');
+      return;
+    }
+    const dto = req.validated?.body as z.infer<typeof rejectReviewSchema>;
+    const venue = await service.rejectReview(id, adminId, dto.note);
+    ResponseUtil.success(res, 'Review rejected', venue);
+  } catch (e) {
+    handleError(res, e, 'rejectReview');
   }
 };
 

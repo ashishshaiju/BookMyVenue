@@ -13,4 +13,6 @@ export const QUERY_KEYS = {
     ["owner", "availability", venueId] as const,
   MODERATION_SUMMARY: ["moderation-summary"] as const,
   MODERATION_LOGS: ["moderation-logs"] as const,
+  ADMIN_REVIEWS: ["admin", "reviews"] as const,
+  OWNER_VENUE_SETTINGS: ["owner", "venue-settings"] as const,
 } as const;

@@ -283,6 +283,20 @@ export async function requestHideReview(
   ).exec();
 }
 
+export async function flagReview(
+  reviewId: string,
+  reason: string
+): Promise<IReview | null> {
+  return ReviewModel.findByIdAndUpdate(
+    toObjectId(reviewId),
+    {
+      status: 'flagged',
+      moderationReason: reason,
+    },
+    { new: true }
+  ).exec();
+}
+
 export async function findPendingHideRequests(
   paginationParams: PaginationParams
 ): Promise<PaginatedResponse<IReview, 'reviews'>> {

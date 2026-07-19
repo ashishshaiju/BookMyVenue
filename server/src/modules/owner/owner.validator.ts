@@ -55,6 +55,15 @@ export const ownerReplySchema = z.object({
   text: z.string().trim().min(1, 'Reply cannot be empty').max(500, 'Reply too long'),
 });
 
-export const requestHideSchema = z.object({
+export const reportReviewSchema = z.object({
+  action: z.enum(['hide', 'flag']),
   reason: z.string().trim().min(10, 'Reason must be at least 10 characters').max(500),
+});
+
+export const inactivityRequestSchema = z.object({
+  reason: z.string().trim().min(10).max(500).optional(),
+});
+
+export const deleteRequestSchema = z.object({
+  reason: z.string().trim().min(10).max(500),
 });

@@ -1,5 +1,5 @@
 import type { IVenue, VenueStatus } from './venue.types';
-import { SUBMISSION_REQUIRED_FIELDS } from '../../constants/venue.constants';
+import { INACTIVITY_COOLDOWN_DAYS, SUBMISSION_REQUIRED_FIELDS } from '../../constants/venue.constants';
 import { WorkflowError, ValidationError } from '../../utils/errors';
 import { timeStringToMinutes } from '../../utils/timeUtils';
 
@@ -12,8 +12,11 @@ import { timeStringToMinutes } from '../../utils/timeUtils';
  *   PendingReview  → Approved        (admin approves)
  *   PendingReview  → Rejected        (admin rejects)
  *   Approved       → Suspended       (admin deactivates)
+ *   Approved       → Inactive        (owner requests inactivity)
  *   Rejected       → PendingReview   (owner re-submits after editing)
+ *   Rejected       → Suspended       (admin deactivates)
  *   Suspended      → Approved        (admin reactivates)
+ *   Inactive       → Approved        (owner or admin reactivates)
  */
 
 type TransitionMap = Partial<Record<VenueStatus, VenueStatus[]>>;
@@ -21,9 +24,10 @@ type TransitionMap = Partial<Record<VenueStatus, VenueStatus[]>>;
 const ALLOWED_TRANSITIONS: TransitionMap = {
   Draft: ['PendingReview'],
   PendingReview: ['Approved', 'Rejected'],
-  Approved: ['Suspended'],
-  Rejected: ['PendingReview'],
+  Approved: ['Suspended', 'Inactive'],
+  Rejected: ['PendingReview', 'Suspended'],
   Suspended: ['Approved'],
+  Inactive: ['Approved'],
 };
 
 // Core Guard
@@ -164,13 +168,41 @@ export function canActivate(venue: IVenue): void {
 export function canEdit(venue: IVenue): void {
   const editableStatuses: VenueStatus[] = ['Draft', 'Rejected'];
   if (!editableStatuses.includes(venue.status)) {
-    throw new WorkflowError(venue.status, 'edit — only Draft or Rejected venues can be edited');
+    throw new WorkflowError(venue.status, 'edit -- only Draft or Rejected venues can be directly edited');
   }
 }
 
 export function canDelete(venue: IVenue): void {
   const deletableStatuses: VenueStatus[] = ['Draft', 'Rejected'];
   if (!deletableStatuses.includes(venue.status)) {
-    throw new WorkflowError(venue.status, 'delete — only Draft or Rejected venues can be deleted');
+    throw new WorkflowError(venue.status, 'delete -- only Draft or Rejected venues can be directly deleted');
+  }
+}
+
+export function canReactivate(venue: IVenue): void {
+  if (venue.status !== 'Inactive') {
+    throw new WorkflowError(venue.status, 'reactivate -- only Inactive venues can be reactivated');
+  }
+}
+
+export function canRequestInactivity(venue: IVenue): void {
+  if (venue.status !== 'Approved') {
+    throw new WorkflowError(venue.status, 'inactivity request -- only Approved venues');
+  }
+
+  if (venue.inactivity?.lastInactiveAt) {
+    const cooldownEnd = new Date(venue.inactivity.lastInactiveAt);
+    cooldownEnd.setDate(cooldownEnd.getDate() + INACTIVITY_COOLDOWN_DAYS);
+    if (new Date() < cooldownEnd) {
+      throw new ValidationError(
+        `Inactivity cooldown active. You can request again after ${cooldownEnd.toISOString().split('T')[0]}.`
+      );
+    }
+  }
+}
+
+export function canRequestDelete(venue: IVenue): void {
+  if (venue.deleted) {
+    throw new WorkflowError('Deleted', 'delete request -- venue already deleted');
   }
 }

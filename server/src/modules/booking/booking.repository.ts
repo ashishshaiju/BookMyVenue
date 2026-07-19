@@ -8,7 +8,7 @@ import { ProcessedWebhookModel } from './models/processedWebhook.model';
 import { VenueModel } from '../venue/venue.model';
 import type { IVenue, IRefundRule } from '../venue/venue.types';
 import type { IBooking } from './booking.types';
-import type { ILock } from './lock.types';
+import type { ILock, IContractSnapshot } from './lock.types';
 import type { PaginationParams, PaginatedResponse } from '../../types/pagination.types';
 import { minutesToTimeString } from '../../utils/timeUtils';
 
@@ -32,6 +32,35 @@ function resolveRefundPct(venueRaw: unknown, bookingDate: string): { pct: number
 
   const matchedRule = sortedRules.find((rule) => daysUntilBooking >= rule.daysBefore);
 
+  if (matchedRule) {
+    return {
+      pct: matchedRule.refundPercentage,
+      label: `Refundable (${String(matchedRule.refundPercentage)}% up to ${String(matchedRule.daysBefore)} days before)`,
+    };
+  }
+
+  return { pct: 0, label: 'Non-refundable' };
+}
+
+export function resolveRefundPctFromSnapshot(
+  cancellation: IContractSnapshot['cancellation'],
+  bookingDate: string
+): { pct: number; label: string } {
+  if (cancellation.policy !== 'refundable') {
+    return { pct: 0, label: 'Non-refundable' };
+  }
+
+  const rules = cancellation.refundRules;
+  if (rules.length === 0) {
+    return { pct: 0, label: 'Non-refundable' };
+  }
+
+  const sortedRules = [...rules].sort((a, b) => b.daysBefore - a.daysBefore);
+  const nowMs = Date.now();
+  const bookingDateMs = new Date(`${bookingDate}T00:00:00`).getTime();
+  const daysUntilBooking = Math.floor((bookingDateMs - nowMs) / (1000 * 60 * 60 * 24));
+
+  const matchedRule = sortedRules.find((rule) => daysUntilBooking >= rule.daysBefore);
   if (matchedRule) {
     return {
       pct: matchedRule.refundPercentage,
@@ -67,6 +96,7 @@ export interface AggregatedBooking {
   createdAt: Date;
   updatedAt: Date;
   venue: IVenue & { _id: Types.ObjectId };
+  contractSnapshot?: IContractSnapshot;
 }
 
 export async function fetchMyBookings(
@@ -224,8 +254,12 @@ export async function fetchBookingById(
     contactEmail: booking.venue.contact.email,
     googleMapsUrl: booking.venue.googleMapsUrl,
     amenities: booking.venue.amenities,
-    cancellationPolicy: resolveRefundPct(booking.venue, booking.date).label,
-    cancellationRefundPct: resolveRefundPct(booking.venue, booking.date).pct,
+    cancellationPolicy: booking.contractSnapshot
+      ? resolveRefundPctFromSnapshot(booking.contractSnapshot.cancellation, booking.date).label
+      : resolveRefundPct(booking.venue, booking.date).label,
+    cancellationRefundPct: booking.contractSnapshot
+      ? resolveRefundPctFromSnapshot(booking.contractSnapshot.cancellation, booking.date).pct
+      : resolveRefundPct(booking.venue, booking.date).pct,
     paymentReference: booking.paymentReference,
     bookerInfo: booking.bookerInfo,
   };
@@ -301,6 +335,7 @@ export interface CreateBookingData {
   paymentMethod?: string;
   advancePaid?: number;
   remainingAmount?: number;
+  contractSnapshot?: IContractSnapshot;
 }
 
 export async function createBooking(data: CreateBookingData): Promise<IBooking> {
@@ -319,6 +354,7 @@ export async function createBooking(data: CreateBookingData): Promise<IBooking> 
     paymentMethod: data.paymentMethod,
     advancePaid: data.advancePaid,
     remainingAmount: data.remainingAmount,
+    contractSnapshot: data.contractSnapshot,
   });
   return booking;
 }

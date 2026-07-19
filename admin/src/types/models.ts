@@ -32,7 +32,7 @@ export interface Venue {
   name: string;
   venueType: string;
   maxCapacity: number;
-  status: "Draft" | "PendingReview" | "Approved" | "Rejected" | "Suspended";
+  status: "Draft" | "PendingReview" | "Approved" | "Rejected" | "Suspended" | "Inactive";
   city: string;
   ownerUserId: {
     _id: string;
@@ -63,6 +63,24 @@ export interface Venue {
     extendedBy?: string;
     originalDeadline?: string;
   }>;
+  pendingReview?: {
+    intent: string;
+    requestedAt: string;
+    details?: {
+      changedFields?: string[];
+      previousSnapshot?: Record<string, unknown>;
+      reason?: string;
+    };
+  };
+  inactivity?: {
+    requestedAt?: string;
+    approvedAt?: string;
+    blockedAfterDate?: string;
+    inactiveAt?: string;
+    lastInactiveAt?: string;
+    withdrawalRequestedAt?: string;
+  };
+  temporaryBlockAfterDate?: string;
 }
 
 export interface MyVenue {

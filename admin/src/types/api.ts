@@ -69,4 +69,6 @@ export interface AvailabilityResponse {
   bookedDates: string[];
   blockedDates: string[];
   workingDays: string[];
+  temporaryBlockAfterDate?: string | null;
+  inactivityBlockedAfterDate?: string | null;
 }

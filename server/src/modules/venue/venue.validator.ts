@@ -320,6 +320,7 @@ export type CreateVenueDTO = z.infer<typeof createVenueSchema>;
 // PUT /venues/:id
 export const updateVenueSchema = z
   .object({
+    expectedVersion: z.number().int().optional(),
     name: z.string().trim().min(3, 'Name must be at least 3 characters').max(100),
     description: z.string().trim().min(10, 'Description must be at least 10 characters'),
     venueType: z.string().trim().min(1, 'Venue type is required'),
@@ -476,6 +477,20 @@ export const publicVenueFiltersSchema = z
   );
 
 export type PublicVenueFiltersDTO = z.infer<typeof publicVenueFiltersSchema>;
+
+// Review schemas
+
+export const approveReviewSchema = z.object({
+  note: z.string().trim().max(500).optional(),
+});
+
+export type ApproveReviewDTO = z.infer<typeof approveReviewSchema>;
+
+export const rejectReviewSchema = z.object({
+  note: z.string().trim().min(1).max(500),
+});
+
+export type RejectReviewDTO = z.infer<typeof rejectReviewSchema>;
 
 // Route param
 

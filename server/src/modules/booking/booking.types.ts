@@ -65,6 +65,7 @@ export interface AggregatedBooking {
   remainingAmount?: number;
   createdAt: Date;
   updatedAt: Date;
+  contractSnapshot?: IContractSnapshot;
   venue: {
     _id: Types.ObjectId;
     name: string;

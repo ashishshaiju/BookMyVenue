@@ -18,6 +18,7 @@ const LockSchema = new Schema<ILock>({
     place: { type: String, required: false, trim: true },
     note: { type: String, required: false, trim: true },
   },
+  contractSnapshot: { type: Schema.Types.Mixed }, // typed via ILock, Mixed avoids subdoc casting issues
   createdAt: { type: Date, default: Date.now, expires: 600 }, // 600s = 10 minutes
 });
 

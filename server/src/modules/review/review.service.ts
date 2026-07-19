@@ -355,6 +355,28 @@ export async function requestHideForReview(
   return updated;
 }
 
+export async function flagReview(
+  reviewId: string,
+  reason: string
+): Promise<IReviewModel> {
+  const review = await repo.findReviewById(reviewId);
+  if (!review) {
+    throw new NotFoundError('Review not found');
+  }
+
+  const updated = await repo.flagReview(reviewId, reason);
+  if (!updated) {
+    throw new NotFoundError('Review not found');
+  }
+
+  // Recompute venue rating since the review is hidden
+  if (review.rating) {
+    await recomputeVenueRating(updated.venueId.toString());
+  }
+
+  return updated;
+}
+
 export async function getPendingHideRequests(
   paginationParams: PaginationParams
 ): Promise<PaginatedResponse<IReviewModel, 'reviews'>> {

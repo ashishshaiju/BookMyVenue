@@ -122,6 +122,20 @@ export const getBookableDates = (venue: IVenue): BookableDatesResponse => {
   const maxDateObj = new Date(today);
   maxDateObj.setDate(maxDateObj.getDate() + 90);
 
+  // Apply blockedAfterDate (tightest date wins)
+  if (venue.temporaryBlockAfterDate) {
+    const blockDate = new Date(venue.temporaryBlockAfterDate);
+    if (blockDate < maxDateObj) {
+      maxDateObj.setTime(blockDate.getTime());
+    }
+  }
+  if (venue.inactivity?.blockedAfterDate) {
+    const blockDate = new Date(venue.inactivity.blockedAfterDate);
+    if (blockDate < maxDateObj) {
+      maxDateObj.setTime(blockDate.getTime());
+    }
+  }
+
   const bookableDates: string[] = [];
   const disabledDates: string[] = [];
 

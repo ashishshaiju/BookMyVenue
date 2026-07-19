@@ -16,8 +16,8 @@ export async function getVenueAnalyticsData(venueId: string): Promise<Record<str
     {
       $group: {
         _id: {
-          year: { $substr: ['$date', 0, 4] },
-          month: { $substr: ['$date', 5, 2] },
+          year: { $substrCP: ['$date', 0, 4] },
+          month: { $substrCP: ['$date', 5, 2] },
         },
         revenue: { $sum: '$price' },
         count: { $sum: 1 },
@@ -84,7 +84,7 @@ export async function createOfflineBookingRecord(
 }
 
 export async function getVenueBlockedDatesAndWorkingDays(venueId: string): Promise<IVenue | null> {
-  return VenueModel.findById(venueId).select('blockedDates workingDays').lean().exec();
+  return VenueModel.findById(venueId).select('blockedDates workingDays temporaryBlockAfterDate inactivity.blockedAfterDate').lean().exec();
 }
 
 export async function getConfirmedBookingsAfterDate(

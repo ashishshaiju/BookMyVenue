@@ -4,6 +4,7 @@ import { requirePermission } from '../../middlewares/rbac.middleware';
 import { ownerTenantMiddleware } from '../../middlewares/ownerTenant.middleware';
 import { validateBody, validateParams } from '../../middlewares/validation.middleware';
 import { paginationMiddleware } from '../../middlewares/pagination.middleware';
+import { idempotencyMiddleware } from '../../middlewares/idempotency.middleware';
 import { PERMISSIONS as P } from '../../constants/permissions';
 import * as controller from './owner.controller';
 import * as validator from './owner.validator';
@@ -378,9 +379,255 @@ router.post(
   verifyAccessToken,
   requirePermission(P.reviews.update),
   validateParams(validator.reviewParamsSchema),
-  validateBody(validator.requestHideSchema),
+  validateBody(validator.reportReviewSchema),
   ownerTenantMiddleware,
   controller.reportReview
+);
+
+/**
+ * @openapi
+ * /owner/venue/{venueId}/settings:
+ *   get:
+ *     tags: [Owner]
+ *     summary: Get venue settings
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: venueId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Venue settings data
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Insufficient permissions
+ */
+router.get(
+  '/venue/:venueId/settings',
+  verifyAccessToken,
+  requirePermission(P.venues.read),
+  validateParams(validator.analyticsParamsSchema),
+  ownerTenantMiddleware,
+  controller.getVenueSettings
+);
+
+/**
+ * @openapi
+ * /owner/venue/{venueId}/request-inactivity:
+ *   post:
+ *     tags: [Owner]
+ *     summary: Request venue inactivity (requires admin approval)
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: venueId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               reason:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Inactivity request submitted
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Insufficient permissions
+ */
+router.post(
+  '/venue/:venueId/request-inactivity',
+  verifyAccessToken,
+  requirePermission(P.venues.update),
+  validateParams(validator.analyticsParamsSchema),
+  validateBody(validator.inactivityRequestSchema),
+  ownerTenantMiddleware,
+  idempotencyMiddleware(),
+  controller.requestInactivity
+);
+
+/**
+ * @openapi
+ * /owner/venue/{venueId}/request-inactivity:
+ *   delete:
+ *     tags: [Owner]
+ *     summary: Withdraw inactivity request
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: venueId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Inactivity request withdrawn
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Insufficient permissions
+ */
+router.delete(
+  '/venue/:venueId/request-inactivity',
+  verifyAccessToken,
+  requirePermission(P.venues.update),
+  validateParams(validator.analyticsParamsSchema),
+  ownerTenantMiddleware,
+  idempotencyMiddleware(),
+  controller.withdrawInactivity
+);
+
+/**
+ * @openapi
+ * /owner/venue/{venueId}/block-bookings:
+ *   post:
+ *     tags: [Owner]
+ *     summary: Block bookings for a venue (no approval needed)
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: venueId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Bookings blocked successfully
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Insufficient permissions
+ */
+router.post(
+  '/venue/:venueId/block-bookings',
+  verifyAccessToken,
+  requirePermission(P.venues.update),
+  validateParams(validator.analyticsParamsSchema),
+  ownerTenantMiddleware,
+  idempotencyMiddleware(),
+  controller.blockBookings
+);
+
+/**
+ * @openapi
+ * /owner/venue/{venueId}/block-bookings:
+ *   delete:
+ *     tags: [Owner]
+ *     summary: Remove temporary booking block
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: venueId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Booking block removed
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Insufficient permissions
+ */
+router.delete(
+  '/venue/:venueId/block-bookings',
+  verifyAccessToken,
+  requirePermission(P.venues.update),
+  validateParams(validator.analyticsParamsSchema),
+  ownerTenantMiddleware,
+  idempotencyMiddleware(),
+  controller.unblockBookings
+);
+
+/**
+ * @openapi
+ * /owner/venue/{venueId}/activate:
+ *   post:
+ *     tags: [Owner]
+ *     summary: Reactivate venue from Inactive to Approved
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: venueId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Venue reactivated successfully
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Insufficient permissions
+ */
+router.post(
+  '/venue/:venueId/activate',
+  verifyAccessToken,
+  requirePermission(P.venues.update),
+  validateParams(validator.analyticsParamsSchema),
+  ownerTenantMiddleware,
+  idempotencyMiddleware(),
+  controller.activateVenue
+);
+
+/**
+ * @openapi
+ * /owner/venue/{venueId}/delete-request:
+ *   post:
+ *     tags: [Owner]
+ *     summary: Request venue deletion (requires admin approval)
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: venueId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [reason]
+ *             properties:
+ *               reason:
+ *                 type: string
+ *                 minLength: 10
+ *                 maxLength: 500
+ *     responses:
+ *       200:
+ *         description: Deletion request submitted
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Insufficient permissions
+ */
+router.post(
+  '/venue/:venueId/delete-request',
+  verifyAccessToken,
+  requirePermission(P.venues.update),
+  validateParams(validator.analyticsParamsSchema),
+  validateBody(validator.deleteRequestSchema),
+  ownerTenantMiddleware,
+  idempotencyMiddleware(),
+  controller.requestDeleteVenue
 );
 
 export default router;

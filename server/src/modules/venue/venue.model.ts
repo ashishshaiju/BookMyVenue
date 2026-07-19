@@ -1,5 +1,5 @@
 import mongoose, { Schema } from 'mongoose';
-import { VenueStatusEnum } from '../../constants/venue.constants';
+import { VenueStatusEnum, ReviewIntent } from '../../constants/venue.constants';
 import type {
   IGeoPoint,
   IFixedPackage,
@@ -157,6 +157,36 @@ const VenueSchema = new Schema<IVenue>(
     // Ratings & Reviews
     avgRating: { type: Number, default: 0, min: 0, max: 5 },
     reviewCount: { type: Number, default: 0, min: 0 },
+
+    pendingReview: {
+      type: {
+        intent: { type: String, enum: Object.values(ReviewIntent) },
+        requestedAt: { type: Date },
+        details: {
+          type: {
+            changedFields: [{ type: String }],
+            previousSnapshot: { type: Schema.Types.Mixed },
+            reason: { type: String },
+          },
+          default: {},
+        },
+      },
+      default: undefined,
+    },
+
+    inactivity: {
+      type: {
+        requestedAt: { type: Date },
+        approvedAt: { type: Date },
+        blockedAfterDate: { type: Date },
+        inactiveAt: { type: Date },
+        lastInactiveAt: { type: Date },
+        withdrawalRequestedAt: { type: Date },
+      },
+      default: undefined,
+    },
+
+    temporaryBlockAfterDate: { type: Date, default: undefined },
 
     // Operational
     status: {

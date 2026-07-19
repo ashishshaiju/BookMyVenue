@@ -1,3 +1,4 @@
+import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router";
 // import HomePage from "./pages/home";
 import DashboardPage from "./pages/dashboard";
@@ -23,6 +24,7 @@ import ReportsPage from "./pages/owner/ReportsPage";
 import OwnerBookingsPage from "./pages/owner/OwnerBookingsPage";
 import ReviewsPage from "./pages/owner/ReviewsPage";
 import CalendarPage from "./pages/owner/CalendarPage";
+const VenueSettingsPage = React.lazy(() => import("@/pages/owner/VenueSettingsPage"));
 
 export function AppRouter() {
   return (
@@ -44,6 +46,7 @@ export function AppRouter() {
                 <Route path="bookings" element={<OwnerBookingsPage />} />
                 <Route path="reviews" element={<ReviewsPage />} />
                 <Route path="calendar" element={<CalendarPage />} />
+                <Route path="settings" element={<VenueSettingsPage />} />
               </Route>
             </Route>
 

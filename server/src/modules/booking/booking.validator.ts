@@ -42,7 +42,8 @@ export function validateDateForVenue(
   venue: IVenue,
   date: string
 ): { valid: boolean; reason?: string } {
-  const dayOfWeek = new Date(date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long' });
+  const dateObj = new Date(date + 'T00:00:00');
+  const dayOfWeek = dateObj.toLocaleDateString('en-US', { weekday: 'long' });
 
   if (!venue.workingDays.includes(dayOfWeek)) {
     return { valid: false, reason: `Venue is not open on ${dayOfWeek}s.` };
@@ -53,6 +54,26 @@ export function validateDateForVenue(
   );
   if (isBlocked) {
     return { valid: false, reason: 'This date is blocked by the venue.' };
+  }
+
+  // Check temporary block
+  if (venue.temporaryBlockAfterDate) {
+    const blockDate = new Date(venue.temporaryBlockAfterDate);
+    dateObj.setHours(0, 0, 0, 0);
+    blockDate.setHours(0, 0, 0, 0);
+    if (dateObj >= blockDate) {
+      return { valid: false, reason: 'This date is after the venue\'s temporary booking block' };
+    }
+  }
+
+  // Check inactivity block
+  if (venue.inactivity?.blockedAfterDate) {
+    const blockDate = new Date(venue.inactivity.blockedAfterDate);
+    dateObj.setHours(0, 0, 0, 0);
+    blockDate.setHours(0, 0, 0, 0);
+    if (dateObj >= blockDate) {
+      return { valid: false, reason: 'This date falls within the venue\'s closing period' };
+    }
   }
 
   return { valid: true };

@@ -2,7 +2,7 @@ import crypto from 'crypto';
 import { Types } from 'mongoose';
 import { runInTransaction } from '../../utils/dbUtils';
 import { acquireSlotMutex, releaseSlotMutex } from '../../utils/mutex';
-import { checkOverlap } from '../../utils/timeUtils';
+import { checkOverlap, timeStringToMinutes } from '../../utils/timeUtils';
 import { logInfo, logWarn, logError } from '../../utils/logger';
 
 import * as repo from './booking.repository';
@@ -17,9 +17,85 @@ import { EmailIntent, EmailTaskStatus } from '../../constants/email.constants';
 import { enqueueEmailTask } from '../../services/email.repository';
 import { findUserEmailById } from '../user/user.repository';
 import { BookingStatus } from '../../constants/booking.constants';
+import type { IContractSnapshot, IContractPackage } from './lock.types';
 
 const LOCK_TTL_SECONDS = 600;
 const CHECKOUT_BUFFER_MS = 60 * 1000;
+
+function buildContractSnapshot(
+  venue: { name: string; city: string; district: string; bookingType: string; fixedPackages?: { slotName: string; startTime: string; endTime: string; price: number }[]; pricing?: { basePrice: number; pricingType: string; pricingRules: { fromTime: string; toTime: string; price: number }[] }; cancellation?: { policy: 'refundable' | 'nonRefundable'; refundType?: 'fullRefund' | 'timeBasedRefund'; refundRules: { daysBefore: number; refundPercentage: number }[] } },
+  selectedSlots: { startTime: number; endTime: number }[],
+  serverPrice: number
+): IContractSnapshot {
+  const packages: IContractPackage[] = [];
+
+  if (venue.bookingType === 'fixedBooking') {
+    for (const slot of selectedSlots) {
+      const pkg = (venue.fixedPackages ?? []).find(
+        (p) =>
+          timeStringToMinutes(p.startTime) === slot.startTime &&
+          timeStringToMinutes(p.endTime) === slot.endTime
+      );
+      packages.push({
+        pkgName: pkg?.slotName ?? `${String(slot.startTime)}-${String(slot.endTime)}`,
+        pkgType: 'fixed',
+        startTime: slot.startTime,
+        endTime: slot.endTime,
+        price: pkg?.price ?? 0,
+      });
+    }
+  } else {
+    if (!venue.pricing) {
+      throw new Error('Pricing configuration is missing for flexible booking venue');
+    }
+    for (const slot of selectedSlots) {
+      let price = venue.pricing.basePrice;
+      if (venue.pricing.pricingType === 'timeBasedPricing') {
+        for (const rule of venue.pricing.pricingRules) {
+          const ruleStart = timeStringToMinutes(rule.fromTime);
+          const ruleEnd = timeStringToMinutes(rule.toTime);
+          if (slot.startTime >= ruleStart && slot.startTime < ruleEnd) {
+            price = rule.price;
+            break;
+          }
+        }
+      }
+      packages.push({
+        pkgName: `${String(slot.startTime)}-${String(slot.endTime)}`,
+        pkgType: 'flexible',
+        startTime: slot.startTime,
+        endTime: slot.endTime,
+        price,
+      });
+    }
+  }
+
+  if (!venue.cancellation) {
+    logError('Venue missing cancellation policy', {
+      module: 'booking.workflow.ts/buildContractSnapshot',
+      venueName: venue.name,
+    });
+  }
+
+  return {
+    venue: {
+      name: venue.name,
+      city: venue.city,
+      district: venue.district,
+    },
+    packages,
+    financial: {
+      basePrice: serverPrice,
+      taxes: 0,
+      platformFee: 0,
+      totalPaid: serverPrice,
+    },
+    cancellation: venue.cancellation ?? {
+      policy: 'nonRefundable' as const,
+      refundRules: [],
+    },
+  };
+}
 
 export async function blockSlotWorkflow(
   venueId: string,
@@ -49,6 +125,8 @@ export async function blockSlotWorkflow(
   if (!priceCheck.valid) {
     throw new Error(priceCheck.reason ?? 'Price mismatch');
   }
+
+  const contractSnapshot = buildContractSnapshot(venue, selectedSlots, serverPrice);
 
   const sortedSlots = [...selectedSlots].sort((a, b) => a.startTime - b.startTime);
   const effectiveStart = sortedSlots[0].startTime;
@@ -100,6 +178,7 @@ export async function blockSlotWorkflow(
             endTime: effectiveEnd,
             price: serverPrice,
             sessionTokenHash,
+            contractSnapshot,
             createdAt: new Date(),
           },
         ],
@@ -238,6 +317,15 @@ export async function cancelBookingWorkflow(
   const bookingDetails = await repo.fetchBookingById(booking._id.toString(), userId);
   if (!bookingDetails || (bookingDetails.cancellationRefundPct as number) === 0) {
     throw new Error('Cancellation window passed or non-refundable venue');
+  }
+
+  const hasSnapshot = bookingDetails.contractSnapshot !== undefined;
+  if (!hasSnapshot) {
+    logWarn('Booking missing contractSnapshot — falling back to live venue data', {
+      module: 'booking.workflow.ts/cancelBookingWorkflow',
+      bookingId: booking._id.toString(),
+      userId,
+    });
   }
 
   // Atomic guard: only one concurrent cancellation request can ever pass
