@@ -18,7 +18,16 @@ export function useOwnerBookingColumns({
       cell: ({ row }) => {
         const id: string = row.original._id;
         return (
-          <span className="font-mono text-sm font-medium">
+          <span
+            className="font-mono text-sm font-medium cursor-pointer text-primary hover:underline"
+            onClick={() => openModal({
+              title: `Booking Details`,
+              size: "xl",
+              component: BookingDetailPanel,
+              data: row.original,
+              actions: [],
+            })}
+          >
             <span className="inline-flex items-center gap-1">
               BMV-{id.slice(-6).toUpperCase()}
               {row.original.paymentMethod === "offline" && (
