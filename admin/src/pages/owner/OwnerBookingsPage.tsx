@@ -11,6 +11,9 @@ import {
 import type { OfflineForm } from "@/types/ui";
 import { DataTable } from "@/components/ui/data-table";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { useAppStore } from "@/store/useAppStore";
+import { VENUE_STATUS } from "@/constants/venueStatus";
 
 // Extracted Components
 import { useOwnerBookingColumns } from "@/components/bookings/useOwnerBookingColumns";
@@ -27,6 +30,8 @@ const EMPTY_FORM: OfflineForm = {
 
 export default function OwnerBookingsPage() {
   const { venueId } = useParams<{ venueId: string }>();
+  const { activeVenueStatus } = useAppStore();
+  const isInactive = activeVenueStatus === VENUE_STATUS.INACTIVE;
   const [page, setPage] = useState(1);
   const [offlineOpen, setOfflineOpen] = useState(false);
   const [form, setForm] = useState<OfflineForm>(EMPTY_FORM);
@@ -94,13 +99,24 @@ export default function OwnerBookingsPage() {
             Manage your online and offline bookings
           </p>
         </div>
-        <Button
-          onClick={() => setOfflineOpen(true)}
-          className="bg-primary text-primary-foreground shadow-sm hover:bg-primary/90"
-        >
-          <Plus size={18} className="mr-2" />
-          Add Offline Booking
-        </Button>
+        <div className="relative group">
+          <Button
+            onClick={() => setOfflineOpen(true)}
+            disabled={isInactive}
+            className={cn(
+              "bg-primary text-primary-foreground shadow-sm",
+              isInactive ? "opacity-50 cursor-not-allowed" : "hover:bg-primary/90"
+            )}
+          >
+            <Plus size={18} className="mr-2" />
+            Add Offline Booking
+          </Button>
+          {isInactive && (
+            <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-zinc-900 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+              Cannot create bookings while venue is inactive
+            </div>
+          )}
+        </div>
       </div>
 
       <DataTable

@@ -16,7 +16,7 @@ interface MyVenue {
   city: string;
   venueType: string;
   coverImage: string;
-  status: "Draft" | "PendingReview" | "Approved" | "Rejected" | "Suspended";
+  status: "Draft" | "PendingReview" | "Approved" | "Rejected" | "Suspended" | "Inactive";
   rejectionReason?: string;
   suspensionReason?: string;
   isFeatured?: boolean;
@@ -59,20 +59,26 @@ const getStatusBadge = (status: MyVenue['status']) => {
           Suspended
         </span>
       );
+    case 'Inactive':
+      return (
+        <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-800">
+          Inactive
+        </span>
+      );
     default:
       return null;
   }
 };
 
 const VenueCardItem = ({ venue, onClick }: { venue: MyVenue, onClick: () => void }) => {
-  const isApproved = venue.status === VENUE_STATUS.APPROVED;
+  const isAccessible = venue.status === VENUE_STATUS.APPROVED || venue.status === VENUE_STATUS.INACTIVE;
   
   return (
     <div
       onClick={onClick}
       className={cn(
         "bg-card rounded-2xl border border-border overflow-hidden shadow-sm transition-all duration-200 flex flex-col h-full group",
-        isApproved
+        isAccessible
           ? "cursor-pointer hover:border-primary/30 hover:shadow-md hover:-translate-y-1"
           : "cursor-not-allowed"
       )}
@@ -84,7 +90,7 @@ const VenueCardItem = ({ venue, onClick }: { venue: MyVenue, onClick: () => void
             alt={venue.name}
             className={cn(
               "w-full h-full object-cover transition-transform duration-700",
-              isApproved ? "group-hover:scale-105" : "" 
+              isAccessible ? "group-hover:scale-105" : "" 
             )}
             loading="lazy"
           />
@@ -114,7 +120,7 @@ const VenueCardItem = ({ venue, onClick }: { venue: MyVenue, onClick: () => void
           </span>
         </div>
 
-        {!isApproved && (
+        {!isAccessible && (
           <div className="mt-auto space-y-2 pt-2">
             {venue.status === VENUE_STATUS.REJECTED && venue.rejectionReason && (
               <div className="flex gap-2.5 items-start bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 p-3 rounded-lg text-xs leading-relaxed border border-red-100 dark:border-red-900">
@@ -136,6 +142,14 @@ const VenueCardItem = ({ venue, onClick }: { venue: MyVenue, onClick: () => void
             )}
           </div>
         )}
+        {venue.status === VENUE_STATUS.INACTIVE && (
+          <div className="mt-auto pt-2">
+            <div className="flex gap-2.5 items-start bg-purple-50 dark:bg-purple-950/30 text-purple-700 dark:text-purple-400 p-3 rounded-lg text-xs leading-relaxed border border-purple-100 dark:border-purple-900">
+              <Info className="w-4 h-4 shrink-0 mt-0.5" />
+              <span>This venue is inactive. You can manage settings and reactivate from the dashboard.</span>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -155,31 +169,27 @@ export default function VenueSelectorPage() {
   const venues = useMemo(() => data?.venues || [], [data?.venues]);
   
   const approvedVenues = useMemo(
-    () => venues.filter((v) => v.status === VENUE_STATUS.APPROVED),
+    () => venues.filter((v) => v.status === VENUE_STATUS.APPROVED || v.status === VENUE_STATUS.INACTIVE),
     [venues],
   );
   
   const flaggedVenues = useMemo(
-    () => venues.filter((v) => v.status !== VENUE_STATUS.APPROVED),
+    () => venues.filter((v) => v.status !== VENUE_STATUS.APPROVED && v.status !== VENUE_STATUS.INACTIVE),
     [venues],
   );
 
   useEffect(() => {
-    if (
-      venues.length > 0 &&
-      approvedVenues.length === 1 &&
-      venues.length === 1
-    ) {
+    if (venues.length === 1 && approvedVenues.length === 1) {
       const v = approvedVenues[0];
-      setActiveVenue(v._id, v.name);
-      navigate(`/dashboard/venue/${v._id}/reports`, { replace: true });
+      setActiveVenue(v._id, v.name, v.status);
+      navigate(`/dashboard/venue/${v._id}/bookings`, { replace: true });
     }
   }, [venues, approvedVenues, navigate, setActiveVenue]);
 
   const handleCardClick = (venue: MyVenue) => {
-    if (venue.status === VENUE_STATUS.APPROVED) {
-      setActiveVenue(venue._id, venue.name);
-      navigate(`/dashboard/venue/${venue._id}/reports`);
+    if (venue.status === VENUE_STATUS.APPROVED || venue.status === VENUE_STATUS.INACTIVE) {
+      setActiveVenue(venue._id, venue.name, venue.status);
+      navigate(`/dashboard/venue/${venue._id}/bookings`);
     } else {
       info(`This venue is currently ${venue.status === VENUE_STATUS.PENDING_REVIEW ? 'under review' : venue.status.toLowerCase()}. You can only manage approved venues.`);
     }

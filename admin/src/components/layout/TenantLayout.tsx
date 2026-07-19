@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { Outlet, useNavigate, useParams } from "react-router";
+import { Outlet, useLocation, useNavigate, useParams } from "react-router";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/useToast";
 import { useAppStore } from "@/store/useAppStore";
@@ -15,7 +15,7 @@ interface MyVenue {
   city: string;
   venueType: string;
   coverImage: string;
-  status: "Draft" | "PendingReview" | "Approved" | "Rejected" | "Suspended";
+  status: "Draft" | "PendingReview" | "Approved" | "Rejected" | "Suspended" | "Inactive";
   rejectionReason?: string;
 }
 
@@ -26,10 +26,13 @@ interface MyVenuesResponse {
 
 export function TenantLayout() {
   const { venueId } = useParams<{ venueId: string }>();
+  const location = useLocation();
   const navigate = useNavigate();
-  const { setActiveVenue } = useAppStore();
+  const { setActiveVenue, setLastVenueSubRoute } = useAppStore();
   const handledFailRef = useRef<string | null>(null);
   const { error } = useToast();
+
+  const venueSubRoute = location.pathname.split("/").pop() ?? "reports";
 
   const {
     data: myVenues,
@@ -46,18 +49,23 @@ export function TenantLayout() {
       ? myVenues.venues.find((v) => v._id === venueId)
       : undefined;
 
+  const isInactive = venue?.status === VENUE_STATUS.INACTIVE;
+
   const isAccessDenied =
     !isLoading &&
     !isError &&
     !!myVenues &&
     !!venueId &&
-    (!venue || venue.status !== VENUE_STATUS.APPROVED);
+    !venue;
+  const isBlockedStatus =
+    venue &&
+    venue.status !== VENUE_STATUS.APPROVED &&
+    venue.status !== VENUE_STATUS.INACTIVE;
 
   useEffect(() => {
     if (!venueId || isLoading || isError || !myVenues) return;
 
-    if (!venue || venue.status !== VENUE_STATUS.APPROVED) {
-      // Avoid toast/navigate spam on re-renders for the same venueId
+    if (!venue || isBlockedStatus) {
       if (handledFailRef.current === venueId) return;
       handledFailRef.current = venueId;
 
@@ -71,10 +79,11 @@ export function TenantLayout() {
     }
 
     handledFailRef.current = null;
-    setActiveVenue(venueId, venue.name);
+    setActiveVenue(venueId, venue.name, venue.status);
   }, [
     venueId,
     venue,
+    isBlockedStatus,
     myVenues,
     isLoading,
     isError,
@@ -82,6 +91,12 @@ export function TenantLayout() {
     setActiveVenue,
     error,
   ]);
+
+  useEffect(() => {
+    if (venue && venueSubRoute) {
+      setLastVenueSubRoute(venueSubRoute);
+    }
+  }, [venueSubRoute, venue, setLastVenueSubRoute]);
 
   if (isLoading) {
     return (
@@ -109,5 +124,14 @@ export function TenantLayout() {
     );
   }
 
-  return <Outlet />;
+  return (
+    <>
+      {isInactive && (
+        <div className="flex items-center justify-center bg-purple-100 px-4 py-1.5 text-xs text-purple-700 rounded-md mb-4">
+          This venue is currently inactive. New bookings are blocked.
+        </div>
+      )}
+      <Outlet />
+    </>
+  );
 }

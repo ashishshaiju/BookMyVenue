@@ -11,6 +11,7 @@ import {
   LogOut,
   Star,
   ActivitySquare,
+  Settings,
 } from "lucide-react";
 import { useApiQuery } from "@/hooks/useApi";
 import { QUERY_KEYS } from "@/config/queryKeys";
@@ -53,6 +54,12 @@ interface MyVenuesResponse {
 const NAV_CONFIG: NavItem[] = [
   // owner
   {
+    label: "My Venues",
+    path: "/dashboard/select-venue",
+    icon: Building2,
+    roles: [ROLES.OWNER],
+  },
+  {
     label: "Bookings",
     path: (venueId) => `/dashboard/venue/${venueId}/bookings`,
     icon: CalendarCheck,
@@ -74,6 +81,12 @@ const NAV_CONFIG: NavItem[] = [
     label: "Reports",
     path: (venueId) => `/dashboard/venue/${venueId}/reports`,
     icon: BarChart2,
+    roles: [ROLES.OWNER],
+  },
+  {
+    label: "Settings",
+    path: (venueId) => `/dashboard/venue/${venueId}/settings`,
+    icon: Settings,
     roles: [ROLES.OWNER],
   },
   // admin
@@ -124,7 +137,7 @@ const NAV_CONFIG: NavItem[] = [
 
 export function Sidebar() {
   const navigate = useNavigate();
-  const { activeVenueId, setActiveVenue } = useAppStore();
+  const { activeVenueId, lastVenueSubRoute, setActiveVenue } = useAppStore();
 
   const { data: profile } = useApiQuery<UserProfile>(
     QUERY_KEYS.PROFILE,
@@ -174,7 +187,8 @@ export function Sidebar() {
       <nav className="flex-1 space-y-1 px-4 py-4">
         {navItems.map((item) => {
           const isOwner = profile?.role === ROLES.OWNER;
-          const isDisabled = isOwner && !activeVenueId;
+          const isMyVenues = item.label === "My Venues";
+          const isDisabled = isOwner && !activeVenueId && !isMyVenues;
           const toPath =
             typeof item.path === "function"
               ? item.path(activeVenueId)
@@ -184,6 +198,11 @@ export function Sidebar() {
             <NavLink
               key={item.label}
               to={isDisabled ? "#" : toPath}
+              onClick={() => {
+                if (isMyVenues) {
+                  setActiveVenue(null, null);
+                }
+              }}
               className={({ isActive }) =>
                 cn(
                   "group flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors",
@@ -211,7 +230,7 @@ export function Sidebar() {
               const venue = venues.find((v) => v._id === newId);
               if (venue) {
                 setActiveVenue(newId, venue.name);
-                navigate(`/dashboard/venue/${newId}/reports`);
+                navigate(`/dashboard/venue/${newId}/${lastVenueSubRoute}`);
               }
             }}
           >
@@ -223,7 +242,7 @@ export function Sidebar() {
                 <SelectItem
                   key={venue._id}
                   value={venue._id}
-                  disabled={venue.status !== VENUE_STATUS.APPROVED}
+                  disabled={venue.status !== VENUE_STATUS.APPROVED && venue.status !== VENUE_STATUS.INACTIVE}
                 >
                   {venue.name}{" "}
                   {venue.status !== VENUE_STATUS.APPROVED
