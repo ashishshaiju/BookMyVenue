@@ -49,8 +49,10 @@ jobs:
           cache-dependency-path: admin/pnpm-lock.yaml
 
       - run: pnpm install --no-frozen-lockfile
+      - run: pnpm exec tsc --noEmit
       - run: pnpm run lint
       - run: pnpm run build
+      - run: pnpm run test
 
   build-client:
     needs: changes
@@ -70,5 +72,7 @@ jobs:
           cache-dependency-path: client/pnpm-lock.yaml
 
       - run: pnpm install --no-frozen-lockfile
+      - run: pnpm exec tsc --noEmit
       - run: pnpm run lint
       - run: pnpm run build
+      - run: pnpm run test

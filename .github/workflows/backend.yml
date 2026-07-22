@@ -32,3 +32,6 @@ jobs:
         
       - name: Build
         run: pnpm --filter server run build
+
+      - name: Test
+        run: pnpm --filter server run test
