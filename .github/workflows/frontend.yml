@@ -51,8 +51,8 @@ jobs:
       - run: pnpm install --no-frozen-lockfile
       - run: pnpm exec tsc --noEmit
       - run: pnpm run lint
-      - run: pnpm run build
       - run: pnpm run test
+      - run: pnpm run build
 
   build-client:
     needs: changes
@@ -74,5 +74,5 @@ jobs:
       - run: pnpm install --no-frozen-lockfile
       - run: pnpm exec tsc --noEmit
       - run: pnpm run lint
-      - run: pnpm run build
       - run: pnpm run test
+      - run: pnpm run build
