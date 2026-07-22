@@ -1,30 +1,29 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router';
-import {
-  Loader2,
-  Building2,
-  Mail,
-  Lock,
-  Eye,
-  EyeOff,
-} from 'lucide-react';
+import { useState } from "react";
+import { useNavigate, useLocation } from "react-router";
+import { Loader2, Building2, Mail, Lock, Eye, EyeOff } from "lucide-react";
 
-import { Button } from '../../components/ui/button';
-import { useApiMutation } from '../../hooks/useApi';
-import { API_ENDPOINTS } from '../../constants';
-import { queryClient } from '../../config/queryClient';
-import { QUERY_KEYS } from '../../config/queryKeys';
+import { Button } from "@/components/ui/button";
+import { useApiMutation } from "@/hooks/useApi";
+import { API_ENDPOINTS } from "@/constants";
+import { ROUTES } from "@/constants/routes";
+import { queryClient } from "@/config/queryClient";
+import { QUERY_KEYS } from "@/config/queryKeys";
+import { getSafeRedirectUrl } from "@/utils/redirect";
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const searchParams = new URLSearchParams(location.search);
+  const redirectParam = searchParams.get("redirect");
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
   const { mutate, isPending, error } = useApiMutation(
     {
-      method: 'POST',
+      method: "POST",
       url: API_ENDPOINTS.LOGIN,
     },
     {
@@ -33,9 +32,26 @@ export default function LoginPage() {
           queryKey: QUERY_KEYS.PROFILE,
         });
 
-        navigate('/dashboard');
+        const localRedirect = localStorage.getItem("redirectUrl");
+        let finalRedirect: string = ROUTES.DASHBOARD;
+
+        if (redirectParam && localRedirect && redirectParam === localRedirect) {
+          finalRedirect = getSafeRedirectUrl(redirectParam, ROUTES.DASHBOARD);
+        } else if (redirectParam) {
+          finalRedirect = getSafeRedirectUrl(redirectParam, ROUTES.DASHBOARD);
+        } else if (localRedirect) {
+          finalRedirect = getSafeRedirectUrl(localRedirect, ROUTES.DASHBOARD);
+        }
+
+        try {
+          localStorage.removeItem("redirectUrl");
+        } catch {
+          // Ignore localStorage errors
+        }
+
+        navigate(finalRedirect);
       },
-    }
+    },
   );
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -66,15 +82,12 @@ export default function LoginPage() {
 
           <div className="mt-12 space-y-5">
             {[
-              'Manage multiple venues',
-              'Track bookings in real time',
-              'Customer & event management',
-              'Powerful analytics dashboard',
+              "Manage multiple venues",
+              "Track bookings in real time",
+              "Customer & event management",
+              "Powerful analytics dashboard",
             ].map((item) => (
-              <div
-                key={item}
-                className="flex items-center gap-3 text-zinc-700"
-              >
+              <div key={item} className="flex items-center gap-3 text-zinc-700">
                 <div className="h-2.5 w-2.5 rounded-full bg-black" />
                 <span>{item}</span>
               </div>
@@ -138,7 +151,7 @@ export default function LoginPage() {
 
                   <input
                     id="password"
-                    type={showPassword ? 'text' : 'password'}
+                    type={showPassword ? "text" : "password"}
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -181,9 +194,7 @@ export default function LoginPage() {
               {/* Error */}
               {error && (
                 <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3">
-                  <p className="text-sm text-red-600">
-                    {error.message}
-                  </p>
+                  <p className="text-sm text-red-600">{error.message}</p>
                 </div>
               )}
 
@@ -193,11 +204,9 @@ export default function LoginPage() {
                 disabled={isPending}
                 className="mt-3 h-12 w-full rounded-xl bg-black text-base font-medium shadow-lg transition-all hover:-translate-y-0.5 hover:bg-zinc-800 hover:shadow-xl active:translate-y-0 disabled:pointer-events-none"
               >
-                {isPending && (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                )}
+                {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
 
-                {isPending ? 'Signing In...' : 'Sign In'}
+                {isPending ? "Signing In..." : "Sign In"}
               </Button>
             </form>
 

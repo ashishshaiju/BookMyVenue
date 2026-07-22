@@ -45,7 +45,7 @@ export class ForbiddenError extends AppError {
   }
 }
 
-// 409 — uniqueness violation 
+// 409 — uniqueness violation
 export class ConflictError extends AppError {
   constructor(message = 'Conflict') {
     super(message, 409, 'CONFLICT');
@@ -87,17 +87,37 @@ export function handleError(res: Response, error: unknown, context: string): voi
   }
   if (error instanceof AppError) {
     switch (error.statusCode) {
-      case 400: ResponseUtil.badRequest(res, error.message); return;
-      case 401: ResponseUtil.unauthorized(res, error.message); return;
-      case 403: ResponseUtil.forbidden(res, error.message); return;
-      case 404: ResponseUtil.notFound(res, error.message); return;
-      case 409: ResponseUtil.conflict(res, error.message); return;
-      case 422: ResponseUtil.validationError(res, error.message); return;
-      case 429: ResponseUtil.rateLimitExceeded(res, error.message); return;
-      default:  ResponseUtil.error(res, error.message, undefined, error.statusCode); return;
+      case 400:
+        ResponseUtil.badRequest(res, error.message);
+        return;
+      case 401:
+        ResponseUtil.unauthorized(res, error.message);
+        return;
+      case 403:
+        ResponseUtil.forbidden(res, error.message);
+        return;
+      case 404:
+        ResponseUtil.notFound(res, error.message);
+        return;
+      case 409:
+        ResponseUtil.conflict(res, error.message);
+        return;
+      case 422:
+        ResponseUtil.validationError(res, error.message);
+        return;
+      case 429:
+        ResponseUtil.rateLimitExceeded(res, error.message);
+        return;
+      default:
+        ResponseUtil.error(res, error.message, undefined, error.statusCode);
+        return;
     }
   }
   const err = error as Error;
-  logError(`${context}: unexpected error`, { module: "errorUtils.ts/handleError",error: err.message, stack: err.stack });
+  logError(`${context}: unexpected error`, {
+    module: 'errorUtils.ts/handleError',
+    error: err.message,
+    stack: err.stack,
+  });
   ResponseUtil.internalServerError(res, 'Server error');
 }

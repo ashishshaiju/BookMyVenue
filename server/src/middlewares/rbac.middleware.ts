@@ -82,7 +82,11 @@ export const requirePermission = (...required: IPermission[]) => {
       next();
     } catch (e) {
       const error = e as Error;
-      logError('requirePermission: unexpected error', { module: "rbac.middleware.ts/requirePermission", error: error.message, userId });
+      logError('requirePermission: unexpected error', {
+        module: 'rbac.middleware.ts/requirePermission',
+        error: error.message,
+        userId,
+      });
       ResponseUtil.internalServerError(res, 'Server error');
     }
   };
@@ -113,7 +117,11 @@ export const requireSuperAdmin = async (
     next();
   } catch (e) {
     const error = e as Error;
-    logError('requireSuperAdmin: unexpected error', { module: "rbac.middleware.ts/requireSuperAdmin", error: error.message, userId });
+    logError('requireSuperAdmin: unexpected error', {
+      module: 'rbac.middleware.ts/requireSuperAdmin',
+      error: error.message,
+      userId,
+    });
     ResponseUtil.internalServerError(res, 'Server error');
   }
 };
@@ -162,7 +170,11 @@ export const requireRole = (...allowedRoles: string[]) => {
       next();
     } catch (e) {
       const error = e as Error;
-      logError('requireRole: unexpected error', { module: 'rbac.middleware.ts/requireRole', error: error.message, userId });
+      logError('requireRole: unexpected error', {
+        module: 'rbac.middleware.ts/requireRole',
+        error: error.message,
+        userId,
+      });
       ResponseUtil.internalServerError(res, 'Server error');
     }
   };

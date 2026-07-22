@@ -188,7 +188,7 @@ export async function createEmailTask(
   },
   session?: mongoose.ClientSession
 ): Promise<void> {
-  await EmailTaskModel.create([data], { session });
+  await EmailTaskModel.create([{ ...data, retryAfter: new Date() }], { session });
 }
 
 export async function markPasswordResetTokenAsUsed(
@@ -287,6 +287,36 @@ export async function findSessionByRootTokenId(
     rootTokenId,
     deleted: false,
   }).exec();
+}
+
+export async function getActiveSessionsForUser(
+  userId: mongoose.Types.ObjectId | string
+): Promise<ISession[]> {
+  return SessionModel.find({ userId, active: true, deleted: false }).sort({ createdAt: -1 }).exec();
+}
+
+export async function findActiveSessionByIdForUser(
+  sessionId: mongoose.Types.ObjectId | string,
+  userId: mongoose.Types.ObjectId | string
+): Promise<ISession | null> {
+  return SessionModel.findOne({
+    _id: sessionId,
+    userId,
+    active: true,
+    deleted: false,
+  }).exec();
+}
+
+export async function deactivateSessionById(
+  sessionId: mongoose.Types.ObjectId | string,
+  userId: mongoose.Types.ObjectId | string,
+  session?: mongoose.ClientSession
+): Promise<void> {
+  await SessionModel.updateOne(
+    { _id: sessionId, userId, active: true },
+    { $set: { active: false } },
+    { session }
+  ).exec();
 }
 
 export async function createRefreshToken(

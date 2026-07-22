@@ -1,5 +1,10 @@
 import type { IVenue } from '../venue/venue.types';
-import { timeStringToMinutes, minutesToTimeString, checkOverlap, toLocalDateString } from '../../utils/timeUtils';
+import {
+  timeStringToMinutes,
+  minutesToTimeString,
+  checkOverlap,
+  toLocalDateString,
+} from '../../utils/timeUtils';
 
 interface AvailabilitySlot {
   slotId: string;
@@ -110,23 +115,37 @@ export interface BookableDatesResponse {
 export const getBookableDates = (venue: IVenue): BookableDatesResponse => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  
+
   const tomorrow = new Date(today);
   tomorrow.setDate(tomorrow.getDate() + 1);
-  
+
   const maxDateObj = new Date(today);
   maxDateObj.setDate(maxDateObj.getDate() + 90);
-  
+
+  // Apply blockedAfterDate (tightest date wins)
+  if (venue.temporaryBlockAfterDate) {
+    const blockDate = new Date(venue.temporaryBlockAfterDate);
+    if (blockDate < maxDateObj) {
+      maxDateObj.setTime(blockDate.getTime());
+    }
+  }
+  if (venue.inactivity?.blockedAfterDate) {
+    const blockDate = new Date(venue.inactivity.blockedAfterDate);
+    if (blockDate < maxDateObj) {
+      maxDateObj.setTime(blockDate.getTime());
+    }
+  }
+
   const bookableDates: string[] = [];
   const disabledDates: string[] = [];
-  
+
   const blockedDatesStr = venue.blockedDates.map((d) => d.toISOString().split('T')[0]);
-  
+
   const workingDays = venue.workingDays;
 
   for (let d = new Date(today); d <= maxDateObj; d.setDate(d.getDate() + 1)) {
     const dateStr = toLocalDateString(d);
-    
+
     if (d < tomorrow) {
       disabledDates.push(dateStr);
       continue;

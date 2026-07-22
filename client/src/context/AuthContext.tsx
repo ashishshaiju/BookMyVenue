@@ -1,14 +1,16 @@
 import React, { createContext, useState, useEffect, type ReactNode } from 'react';
-import { axiosInstance } from '../config/axios';
-import { API_ENDPOINTS, STORAGE_KEYS } from '../constants';
-import { showSuccess, showError } from '../utils/toast';
-import { clearDraft, clearDraftSession } from '../utils/venueDraft';
-import { queryClient } from '../config/queryClient';
+import { axiosInstance } from '@/config/axios';
+import { API_ENDPOINTS, STORAGE_KEYS } from '@/constants';
+import { useToast } from '@/hooks/useToast';
+import { clearDraft, clearDraftSession } from '@/utils/venueDraft';
+import { queryClient } from '@/config/queryClient';
+import { resetProfileGreeting } from '@/utils/profileGreeting';
 
 export interface User {
   id: string;
   username: string;
   email: string;
+  profilePicture?: string;
 }
 
 interface AuthContextType {
@@ -19,24 +21,27 @@ interface AuthContextType {
   register: (username: string, email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   verifySession: () => Promise<void>;
+  updateUser: (patch: Partial<User>) => void;
+  clearSession: () => void;
 }
-
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const clearAuthData = (setUser: React.Dispatch<React.SetStateAction<User | null>>) => {
   setUser(null);
   queryClient.clear();
-  localStorage.removeItem('x-session-token');
+  localStorage.removeItem(STORAGE_KEYS.SESSION_TOKEN);
   localStorage.removeItem(STORAGE_KEYS.IS_LOGGED_IN);
   localStorage.removeItem(STORAGE_KEYS.USER_ID);
   localStorage.removeItem(STORAGE_KEYS.USER_NAME);
   localStorage.removeItem(STORAGE_KEYS.USER_ROLE);
+  resetProfileGreeting();
 };
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const { success: showSuccess, error: showError } = useToast();
 
   const isAuthenticated = !!user;
 
@@ -47,13 +52,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         const response = await axiosInstance.get(API_ENDPOINTS.PROFILE);
         const userData = response.data?.data || response.data;
         if (userData) {
+          const username = userData.username ?? userData.name;
           setUser({
             id: userData._id || userData.id,
-            username: userData.username,
+            username,
             email: userData.email,
+            profilePicture: userData.profilePicture,
           });
           localStorage.setItem(STORAGE_KEYS.USER_ID, userData._id || userData.id);
-          localStorage.setItem(STORAGE_KEYS.USER_NAME, userData.username);
+          localStorage.setItem(STORAGE_KEYS.USER_NAME, username);
         } else {
           throw new Error('No user data returned');
         }
@@ -97,6 +104,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     });
     const data = response.data?.data || response.data;
     if (data) {
+      resetProfileGreeting();
       setUser({
         id: data.userId || data.id,
         username: data.username,
@@ -108,12 +116,24 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const updateUser = (patch: Partial<User>) => {
+    setUser((prev) => (prev ? { ...prev, ...patch } : prev));
+  };
+
   const register = async (username: string, email: string, password: string) => {
     await axiosInstance.post(API_ENDPOINTS.REGISTER, {
       username,
       email,
       password,
     });
+  };
+
+  const clearSession = () => {
+    if (user?.id) {
+      clearDraft(user.id);
+      clearDraftSession(user.id);
+    }
+    clearAuthData(setUser);
   };
 
   const logout = async () => {
@@ -141,6 +161,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         register,
         logout,
         verifySession,
+        updateUser,
+        clearSession,
       }}
     >
       {children}

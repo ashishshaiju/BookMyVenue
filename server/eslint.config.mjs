@@ -76,5 +76,23 @@ export default tseslint.config(
       // mechanism for augmenting Express Request types — namespace is required here.
       '@typescript-eslint/no-namespace': 'off',
     },
-  }
+  },
+  // Test files — disable type-aware linting (test patterns like supertest chaining,
+  // mock data, and dynamic assertions conflict with strict type-checked rules).
+  {
+    files: ['tests/**/*.ts', 'vitest.config.ts'],
+    languageOptions: {
+      parserOptions: {
+        projectService: null,
+      },
+    },
+    rules: {
+      // Disable all type-aware rules inherited from strictTypeChecked + stylisticTypeChecked
+      ...Object.fromEntries(
+        Object.entries(tseslint.configs.disableTypeChecked.rules).map(([key]) => [key, 'off'])
+      ),
+      // Also disable non-type-aware strict rules that fight test patterns
+      '@typescript-eslint/explicit-function-return-type': 'off',
+    },
+  },
 );

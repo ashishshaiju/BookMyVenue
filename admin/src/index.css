@@ -18,7 +18,7 @@
     --muted-foreground: 240 3.8% 46.1%;
     --accent: 240 4.8% 95.9%;
     --accent-foreground: 240 5.9% 10%;
-    --destructive: 0 84.2% 60.2%;
+    --destructive: 0 95.2% 50.2%;
     --destructive-foreground: 0 0% 98%;
     --border: 240 5.9% 90%;
     --input: 240 5.9% 90%;
@@ -27,6 +27,12 @@
 
     /* Custom design tokens */
     --bg-primary: #f4f4f4;
+    --bg-secondary: #000000;
+    --bg-tertiary: #ffffff;
+    --bg-green: #2b6953;
+    --bg-grey: #e3e4e4;
+    --text-primary: #000000;
+    --text-secondary: #7a7a80;
     --sidebar-bg: #18181b;
     --sidebar-border: #27272a;
     --sidebar-text: #71717a;

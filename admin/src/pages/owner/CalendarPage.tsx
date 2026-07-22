@@ -1,111 +1,41 @@
-import { useState, useMemo } from 'react';
-import { useParams } from 'react-router';
-import { useQueryClient } from '@tanstack/react-query';
-import { DayPicker } from 'react-day-picker';
-import 'react-day-picker/style.css';
-import { CalendarDays, Lock, Unlock } from 'lucide-react';
-import toast from 'react-hot-toast';
-import { AxiosError } from 'axios';
+import { useState, useMemo } from "react";
+import { useParams } from "react-router";
+import { CalendarDays } from "lucide-react";
+import { useToast } from "@/hooks/useToast";
+import { DEFAULT_PAGE_LIMIT } from "@/constants/pagination";
+import { AxiosError } from "axios";
 
-import { useApiQuery, useApiMutation } from '../../hooks/useApi';
-import { QUERY_KEYS } from '../../config/queryKeys';
-import { API_ENDPOINTS } from '../../constants';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '../../components/ui/dialog';
-import { Button } from '../../components/ui/button';
-import { Badge } from '../../components/ui/badge';
-import { DataTable } from '../../components/ui/data-table';
-import type { ColumnDef } from '@tanstack/react-table';
+  useOwnerAvailability,
+  useBlockDates,
+  useUnblockDates,
+} from "@/services/api/useVenues";
+import type { BlockedDate } from "@/types/models";
 
-import 'react-day-picker/dist/style.css';
-
-// Types
-interface AvailabilityResponse {
-  bookedDates: string[];   // YYYY-MM-DD
-  blockedDates: string[];  // YYYY-MM-DD
-  workingDays: string[];   // e.g. ["Monday", "Tuesday"]
-}
-
-function toLocalDateStr(date: Date): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-}
+import { VenueCalendar } from "@/components/calendar/VenueCalendar";
+import { CalendarLegend } from "@/components/calendar/CalendarLegend";
+import { BlockedDatesTable } from "@/components/calendar/BlockedDatesTable";
+import { BlockDateDialog } from "@/components/calendar/BlockDateDialog";
+import { toLocalDateStr } from "@/utils/dateUtils";
 
 export default function CalendarPage() {
   const { venueId } = useParams<{ venueId: string }>();
-  const queryClient = useQueryClient();
 
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [conflictMessage, setConflictMessage] = useState<string | null>(null);
 
-  const { data, isLoading } = useApiQuery<AvailabilityResponse>(
-    QUERY_KEYS.OWNER_AVAILABILITY(venueId!),
-    { method: 'GET', url: `${API_ENDPOINTS.OWNER_VENUE_BOOKINGS}/${venueId!}/availability-calendar` },
-    { staleTime: 0, enabled: !!venueId }
-  );
+  const { data, isLoading } = useOwnerAvailability(venueId!);
+  const blockMutation = useBlockDates();
+  const unblockMutation = useUnblockDates();
+  const { success, error } = useToast();
 
-  const blockMutation = useApiMutation<unknown, { dates: string[] }>(
-    (vars) => ({
-      method: 'POST',
-      url: `${API_ENDPOINTS.OWNER_BLOCK_DATES}/${venueId!}/block-dates`,
-      data: vars,
-    }),
-    {
-      onSuccess: () => {
-        toast.success('Date blocked successfully');
-        void queryClient.invalidateQueries({ queryKey: ['owner', 'availability', venueId!] });
-        setConfirmOpen(false);
-        setSelectedDate(null);
-        setConflictMessage(null);
-      },
-      onError: (err) => {
-        setConfirmOpen(false);
-        if (err instanceof AxiosError && err.response?.status === 409) {
-          const msg = (err.response.data as { message?: string })?.message ??
-            'This date was just booked by a customer and cannot be blocked.';
-          setConflictMessage(msg);
-          toast.error(msg, { duration: 6000 });
-        } else {
-          toast.error('Failed to block date. Please try again.');
-        }
-      },
-    }
-  );
-
-  const unblockMutation = useApiMutation<unknown, { dates: string[] }>(
-    (vars) => ({
-      method: 'POST',
-      url: `/owner/${venueId!}/unblock-dates`,
-      data: vars,
-    }),
-    {
-      onSuccess: () => {
-        toast.success('Date unblocked successfully');
-        void queryClient.invalidateQueries({ queryKey: ['owner', 'availability', venueId!] });
-        setConfirmOpen(false);
-        setSelectedDate(null);
-        setConflictMessage(null);
-      },
-      onError: () => {
-        setConfirmOpen(false);
-        toast.error('Failed to unblock date. Please try again.');
-      },
-    }
-  );
-
-  // Derived sets
   const bookedSet = useMemo(() => new Set(data?.bookedDates ?? []), [data]);
   const blockedSet = useMemo(() => new Set(data?.blockedDates ?? []), [data]);
-  const workingDaysSet = useMemo(() => new Set(data?.workingDays ?? []), [data]);
+  const workingDaysSet = useMemo(
+    () => new Set(data?.workingDays ?? []),
+    [data],
+  );
 
   const today = useMemo(() => {
     const d = new Date();
@@ -119,78 +49,78 @@ export default function CalendarPage() {
     return d;
   }, [today]);
 
+  const dateRangeSet = useMemo(() => {
+    return (fromStr: string | null | undefined): Set<string> => {
+      if (!fromStr) return new Set();
+      const from = new Date(`${fromStr}T00:00:00Z`);
+      const start = from > today ? from : today;
+      if (start > sixMonthsFromNow) return new Set();
+      const set = new Set<string>();
+      const cursor = new Date(start);
+      while (cursor <= sixMonthsFromNow) {
+        set.add(toLocalDateStr(cursor));
+        cursor.setDate(cursor.getDate() + 1);
+      }
+      return set;
+    };
+  }, [today, sixMonthsFromNow]);
+
+  const tempBlockedSet = useMemo(
+    () => dateRangeSet(data?.temporaryBlockAfterDate),
+    [data?.temporaryBlockAfterDate, dateRangeSet],
+  );
+
+  const inactivityBlockedSet = useMemo(
+    () => dateRangeSet(data?.inactivityBlockedAfterDate),
+    [data?.inactivityBlockedAfterDate, dateRangeSet],
+  );
+
   const isBooked = (date: Date) => bookedSet.has(toLocalDateStr(date));
   const isBlocked = (date: Date) => blockedSet.has(toLocalDateStr(date));
+  const isTempBlocked = (date: Date) => tempBlockedSet.has(toLocalDateStr(date));
+  const isInactivityBlocked = (date: Date) => inactivityBlockedSet.has(toLocalDateStr(date));
   const isPast = (date: Date) => date < today;
   const isTooFar = (date: Date) => date > sixMonthsFromNow;
   const isNonWorkingDay = (date: Date) => {
     if (workingDaysSet.size === 0) return false;
-    const dayName = date.toLocaleDateString('en-US', { weekday: 'long' });
+    const dayName = date.toLocaleDateString("en-US", { weekday: "long" });
     return !workingDaysSet.has(dayName);
   };
-  const isDisabledDay = (date: Date) => isPast(date) || isTooFar(date) || isBooked(date) || isNonWorkingDay(date);
+  const isDisabledDay = (date: Date) =>
+    isPast(date) || isTooFar(date) || isBooked(date) || isNonWorkingDay(date) || isTempBlocked(date) || isInactivityBlocked(date);
 
   const [tablePage, setTablePage] = useState(1);
 
   const blockedDatesArray = useMemo(() => {
     if (!data?.blockedDates) return [];
-    return data.blockedDates.map(dateStr => {
-      const d = new Date(`${dateStr}T00:00:00Z`);
-      const localD = new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
-      return {
-        date: dateStr,
-        dateObj: localD,
-        isPast: localD < today
-      };
-    }).sort((a, b) => b.dateObj.getTime() - a.dateObj.getTime());
-  }, [data, today]);
+    return data.blockedDates
+      .map((dateStr) => {
+        const d = new Date(`${dateStr}T00:00:00Z`);
+        const localD = new Date(
+          d.getUTCFullYear(),
+          d.getUTCMonth(),
+          d.getUTCDate(),
+        );
+        return {
+          date: dateStr,
+          dateObj: localD,
+          isPast: localD < today,
+          venueId: venueId ?? "",
+        };
+      })
+      .sort((a, b) => b.dateObj.getTime() - a.dateObj.getTime());
+  }, [data, today, venueId]);
 
   const paginatedData = useMemo(() => {
-    const limit = 10;
+    const limit = DEFAULT_PAGE_LIMIT;
     return blockedDatesArray.slice((tablePage - 1) * limit, tablePage * limit);
   }, [blockedDatesArray, tablePage]);
 
   const totalPages = Math.ceil(blockedDatesArray.length / 10);
 
-  const columns: ColumnDef<typeof blockedDatesArray[0]>[] = [
-    {
-      accessorKey: 'dateObj',
-      header: 'Date',
-      cell: ({ row }) => row.original.dateObj.toLocaleDateString('en-IN', {
-        weekday: 'short',
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
-      }),
-    },
-    {
-      accessorKey: 'isPast',
-      header: 'Status',
-      cell: ({ row }) => row.original.isPast 
-        ? <Badge variant="secondary">Past</Badge> 
-        : <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-200 border-none">Upcoming</Badge>,
-    },
-    {
-      id: 'actions',
-      cell: ({ row }) => (
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          disabled={row.original.isPast || unblockMutation.isPending}
-          onClick={() => unblockMutation.mutate({ dates: [row.original.date] })}
-          className="text-red-600 hover:text-red-700 hover:bg-red-50"
-        >
-          <Unlock className="h-4 w-4 mr-2" />
-          Unblock
-        </Button>
-      ),
-    },
-  ];
-
-  // Day click handler
   const handleDayClick = (date: Date) => {
     if (isDisabledDay(date)) return;
-    
+
     setSelectedDate(date);
     setConflictMessage(null);
     setConfirmOpen(true);
@@ -199,10 +129,46 @@ export default function CalendarPage() {
   const handleConfirmAction = () => {
     if (!selectedDate) return;
     const dateStr = toLocalDateStr(selectedDate);
-    if (selectedDate && isBlocked(selectedDate)) {
-      unblockMutation.mutate({ dates: [dateStr] });
+    const currentlyBlocked = isBlocked(selectedDate);
+
+    if (currentlyBlocked) {
+      unblockMutation.mutate(
+        { venueId: venueId!, dates: [dateStr] },
+        {
+          onSuccess: () => {
+            success(`Unblocked ${dateStr}`);
+            setConfirmOpen(false);
+            setSelectedDate(null);
+          },
+          onError: (e: unknown) => {
+            const err = e as AxiosError<{ message: string }>;
+            error(err.response?.data?.message ?? "Failed to unblock date");
+          },
+        },
+      );
     } else {
-      blockMutation.mutate({ dates: [dateStr] });
+      blockMutation.mutate(
+        { venueId: venueId!, dates: [dateStr] },
+        {
+          onSuccess: () => {
+            success(`Blocked ${dateStr}`);
+            setConfirmOpen(false);
+            setSelectedDate(null);
+          },
+          onError: (e: unknown) => {
+            const err = e as AxiosError<{ message: string }>;
+            if (err.response?.status === 409) {
+              setConflictMessage(
+                err.response.data.message ||
+                  "This date cannot be blocked because there are existing bookings.",
+              );
+            } else {
+              error(err.response?.data?.message ?? "Failed to block date");
+              setConfirmOpen(false);
+            }
+          },
+        },
+      );
     }
   };
 
@@ -224,86 +190,35 @@ export default function CalendarPage() {
       </div>
 
       {/* Legend */}
-      <div className="flex flex-wrap gap-4 text-sm">
-        {[
-          { color: 'bg-zinc-200', label: 'Past / Unavailable' },
-          { color: 'bg-blue-100 border border-blue-300', label: 'Booked by customer' },
-          { color: 'bg-red-100 border border-red-300', label: 'Blocked by you' },
-          { color: 'bg-white border border-zinc-300', label: 'Available' },
-        ].map(({ color, label }) => (
-          <div key={label} className="flex items-center gap-2">
-            <div className={`h-4 w-4 rounded ${color}`} />
-            <span className="text-zinc-600">{label}</span>
-          </div>
-        ))}
-      </div>
+      <CalendarLegend
+        hasTempBlock={!!data?.temporaryBlockAfterDate}
+        hasInactivityBlock={!!data?.inactivityBlockedAfterDate}
+      />
 
       {/* Calendar */}
-      <div className="rounded-md border p-6 overflow-x-auto">
-        {isLoading ? (
-          <div className="h-80 animate-pulse rounded-xl bg-zinc-100" />
-        ) : (
-          <div className="flex justify-center">
-            <DayPicker
-              mode="single"
-              showOutsideDays={false}
-              onDayClick={handleDayClick}
-              disabled={isDisabledDay}
-              modifiers={{
-                booked: (date) => isBooked(date),
-                blocked: (date) => isBlocked(date),
-                unavailable: (date) => isPast(date) || isTooFar(date) || isNonWorkingDay(date),
-              }}
-              modifiersClassNames={{
-                booked: 'rdp-day--booked',
-                blocked: 'rdp-day--blocked',
-                unavailable: 'rdp-day--unavailable',
-              }}
-              styles={{
-                root: { '--rdp-accent-color': '#18181b' } as React.CSSProperties,
-              }}
-            />
-          </div>
-        )}
-      </div>
-
-      {/* Custom day styles injected via <style> */}
-      <style>{`
-        .rdp-day--booked {
-          background-color: #dbeafe !important;
-          color: #1d4ed8 !important;
-          cursor: not-allowed !important;
-        }
-        .rdp-day--booked:hover {
-          background-color: #bfdbfe !important;
-        }
-        .rdp-day--blocked {
-          background-color: #fee2e2 !important;
-          color: #dc2626 !important;
-          cursor: default !important;
-        }
-        .rdp-day--blocked:hover {
-          background-color: #fecaca !important;
-        }
-        .rdp-day--unavailable {
-          background-color: #e4e4e7 !important;
-          color: #a1a1aa !important;
-          opacity: 0.5;
-          cursor: not-allowed !important;
-        }
-      `}</style>
+      <VenueCalendar
+        isLoading={isLoading}
+        handleDayClick={handleDayClick}
+        isDisabledDay={isDisabledDay}
+        isBooked={isBooked}
+        isBlocked={isBlocked}
+        isTempBlocked={isTempBlocked}
+        isInactivityBlocked={isInactivityBlocked}
+        isPast={isPast}
+        isTooFar={isTooFar}
+        isNonWorkingDay={isNonWorkingDay}
+      />
 
       {/* Blocked Dates Data Table */}
       <div className="mt-8">
         <h2 className="text-xl font-bold tracking-tight mb-4">Blocked Dates List</h2>
-        <DataTable
-          columns={columns}
-          data={paginatedData}
-          page={tablePage}
+        <BlockedDatesTable
+          tablePage={tablePage}
+          setTablePage={setTablePage}
+          paginatedData={paginatedData as BlockedDate[]}
           totalPages={totalPages}
-          onPageChange={setTablePage}
           isLoading={isLoading}
-          emptyMessage="No dates have been blocked yet."
+          unblockMutation={unblockMutation}
         />
       </div>
 
@@ -315,47 +230,16 @@ export default function CalendarPage() {
       )}
 
       {/* Block/Unblock Confirmation Dialog */}
-      <Dialog open={confirmOpen} onOpenChange={(o) => { setConfirmOpen(o); if (!o) setSelectedDate(null); }}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Lock className="h-5 w-5 text-zinc-600" />
-              {isCurrentlyBlocked ? 'Unblock Date' : 'Block Date'}
-            </DialogTitle>
-            <DialogDescription>
-              Are you sure you want to {isCurrentlyBlocked ? 'unblock' : 'block'}{' '}
-              <strong>
-                {selectedDate
-                  ? selectedDate.toLocaleDateString('en-IN', {
-                      weekday: 'long',
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                    })
-                  : ''}
-              </strong>
-              ? {isCurrentlyBlocked ? 'Customers will be able to book on this date again.' : 'Customers will not be able to book on this date.'}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => { setConfirmOpen(false); setSelectedDate(null); }}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant={isCurrentlyBlocked ? 'default' : 'destructive'}
-              disabled={blockMutation.isPending || unblockMutation.isPending}
-              onClick={handleConfirmAction}
-            >
-              {isCurrentlyBlocked 
-                ? (unblockMutation.isPending ? 'Unblocking…' : 'Confirm Unblock')
-                : (blockMutation.isPending ? 'Blocking…' : 'Confirm Block')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <BlockDateDialog
+        confirmOpen={confirmOpen}
+        setConfirmOpen={setConfirmOpen}
+        selectedDate={selectedDate}
+        setSelectedDate={setSelectedDate}
+        isCurrentlyBlocked={isCurrentlyBlocked}
+        handleConfirmAction={handleConfirmAction}
+        blockPending={blockMutation.isPending}
+        unblockPending={unblockMutation.isPending}
+      />
     </div>
   );
 }

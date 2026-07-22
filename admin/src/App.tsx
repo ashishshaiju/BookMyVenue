@@ -5,14 +5,20 @@ import { TooltipProvider } from "./components/ui/tooltip";
 import { Toaster } from "react-hot-toast";
 
 function App() {
-	return (
-		<QueryClientProvider client={queryClient}>
-			<TooltipProvider>
-				<AppRouter />
-				<Toaster position="top-right" />
-			</TooltipProvider>
-		</QueryClientProvider>
-	);
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <AppRouter />
+        <Toaster 
+          position="top-right" 
+          containerStyle={{
+            top: 32,
+            right: 32,
+          }}
+        />
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
 }
 
 export default App;

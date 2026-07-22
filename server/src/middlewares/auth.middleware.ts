@@ -21,7 +21,10 @@ export const verifyAccessToken = (req: Request, res: Response, next: NextFunctio
 
     const accessSecret = process.env.JWT_ACCESS_SECRET;
     if (!accessSecret) {
-      logError('JWT_ACCESS_SECRET not configured', { module: "auth.middleware.ts/verifyAccessToken",path: req.path });
+      logError('JWT_ACCESS_SECRET not configured', {
+        module: 'auth.middleware.ts/verifyAccessToken',
+        path: req.path,
+      });
       ResponseUtil.internalServerError(res, 'Server configuration error');
       return;
     }
@@ -58,18 +61,27 @@ export const verifyAccessToken = (req: Request, res: Response, next: NextFunctio
   }
 };
 
-export const verifyAccessTokenOptional = (req: Request, _res: Response, next: NextFunction): void => {
+export const verifyAccessTokenOptional = (
+  req: Request,
+  _res: Response,
+  next: NextFunction
+): void => {
   try {
     const accessToken = req.cookies.accessToken as string | undefined;
 
     if (!accessToken) {
-      next(); return;
+      next();
+      return;
     }
 
     const accessSecret = process.env.JWT_ACCESS_SECRET;
     if (!accessSecret) {
-      logError('JWT_ACCESS_SECRET not configured', { module: "auth.middleware.ts/verifyAccessTokenOptional", path: req.path });
-      next(); return;
+      logError('JWT_ACCESS_SECRET not configured', {
+        module: 'auth.middleware.ts/verifyAccessTokenOptional',
+        path: req.path,
+      });
+      next();
+      return;
     }
 
     const decoded = jwt.verify(accessToken, accessSecret, tokenVerifyOptions) as TokenPayload;
@@ -110,7 +122,10 @@ export const verifyRefreshToken = async (
 
     const refreshSecret = process.env.JWT_REFRESH_SECRET;
     if (!refreshSecret) {
-      logError('JWT_REFRESH_SECRET not configured', { module: "auth.middleware.ts/verifyRefreshToken",path: req.path });
+      logError('JWT_REFRESH_SECRET not configured', {
+        module: 'auth.middleware.ts/verifyRefreshToken',
+        path: req.path,
+      });
       ResponseUtil.internalServerError(res, 'Server configuration error');
       return;
     }
@@ -160,7 +175,7 @@ export const verifyRefreshToken = async (
       ).catch((err: unknown) => {
         const error = err as Error;
         logError('Failed to revoke token family on reuse detection', {
-          module: "auth.middleware.ts/verifyRefreshToken",
+          module: 'auth.middleware.ts/verifyRefreshToken',
           error: error.message,
           rootTokenId: storedToken.rootTokenId.toString(),
         });
@@ -171,7 +186,7 @@ export const verifyRefreshToken = async (
         .catch((err: unknown) => {
           const error = err as Error;
           logError('Failed to deactivate session on reuse detection', {
-            module: "auth.middleware.ts/verifyRefreshToken",
+            module: 'auth.middleware.ts/verifyRefreshToken',
             error: error.message,
             rootTokenId: storedToken.rootTokenId.toString(),
           });

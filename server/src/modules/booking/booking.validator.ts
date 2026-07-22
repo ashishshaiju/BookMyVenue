@@ -42,7 +42,8 @@ export function validateDateForVenue(
   venue: IVenue,
   date: string
 ): { valid: boolean; reason?: string } {
-  const dayOfWeek = new Date(date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long' });
+  const dateObj = new Date(date + 'T00:00:00');
+  const dayOfWeek = dateObj.toLocaleDateString('en-US', { weekday: 'long' });
 
   if (!venue.workingDays.includes(dayOfWeek)) {
     return { valid: false, reason: `Venue is not open on ${dayOfWeek}s.` };
@@ -53,6 +54,26 @@ export function validateDateForVenue(
   );
   if (isBlocked) {
     return { valid: false, reason: 'This date is blocked by the venue.' };
+  }
+
+  // Check temporary block
+  if (venue.temporaryBlockAfterDate) {
+    const blockDate = new Date(venue.temporaryBlockAfterDate);
+    dateObj.setHours(0, 0, 0, 0);
+    blockDate.setHours(0, 0, 0, 0);
+    if (dateObj >= blockDate) {
+      return { valid: false, reason: 'This date is after the venue\'s temporary booking block' };
+    }
+  }
+
+  // Check inactivity block
+  if (venue.inactivity?.blockedAfterDate) {
+    const blockDate = new Date(venue.inactivity.blockedAfterDate);
+    dateObj.setHours(0, 0, 0, 0);
+    blockDate.setHours(0, 0, 0, 0);
+    if (dateObj >= blockDate) {
+      return { valid: false, reason: 'This date falls within the venue\'s closing period' };
+    }
   }
 
   return { valid: true };
@@ -195,7 +216,10 @@ export type CheckoutBodyDTO = z.infer<typeof checkoutBodySchema>;
 
 const bookerInfoSchema = z.object({
   name: z.string().trim().min(1, 'Name is required'),
-  email: z.string().trim().regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, 'Valid email is required'),
+  email: z
+    .string()
+    .trim()
+    .regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, 'Valid email is required'),
   phone: z.string().trim().min(10, 'Valid phone number is required'),
   place: z.string().trim().min(1, 'Place is required'),
   note: z.string().trim().optional(),
@@ -224,14 +248,33 @@ export type VerifyPaymentBodyDTO = z.infer<typeof verifyPaymentBodySchema>;
 export const fetchMyBookingsQuerySchema = z.object({});
 export type FetchMyBookingsQueryDTO = z.infer<typeof fetchMyBookingsQuerySchema>;
 
+export const adminBookingFiltersSchema = z.object({
+  status: z.enum(['confirmed', 'pending', 'cancelled', 'completed']).optional(),
+  venueId: z
+    .string()
+    .trim()
+    .regex(/^[a-f\d]{24}$/i, 'Invalid venue ID format')
+    .optional(),
+  page: z.coerce.number().int().positive().default(1),
+  limit: z.coerce.number().int().positive().max(100).default(20),
+  sort: z.string().optional(),
+});
+
+export type AdminBookingFiltersDTO = z.infer<typeof adminBookingFiltersSchema>;
+
 export const bookingRefIdParamSchema = z.object({
-  bookingRefId: z.string().trim().refine((val) => {
-    const isObjectId = /^[a-f\d]{24}$/i.test(val);
-    const isBookingRef = val.toUpperCase().startsWith('BMV-') && val.length === 10;
-    return isObjectId || isBookingRef;
-  }, {
-    message: 'Invalid booking ID or reference format',
-  }),
+  bookingRefId: z
+    .string()
+    .trim()
+    .refine(
+      (val) => {
+        const isObjectId = /^[a-f\d]{24}$/i.test(val);
+        const isBookingRef = val.toUpperCase().startsWith('BMV-') && val.length === 10;
+        return isObjectId || isBookingRef;
+      },
+      {
+        message: 'Invalid booking ID or reference format',
+      }
+    ),
 });
 export type BookingRefIdParamDTO = z.infer<typeof bookingRefIdParamSchema>;
-

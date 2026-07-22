@@ -1,6 +1,10 @@
 import { Router } from 'express';
 import type { Router as ExpressRouter } from 'express';
-import { validateBody, validateParams, validateQuery } from '../../middlewares/validation.middleware';
+import {
+  validateBody,
+  validateParams,
+  validateQuery,
+} from '../../middlewares/validation.middleware';
 import { verifyAccessToken, verifyAccessTokenOptional } from '../../middlewares/auth.middleware';
 import { requirePermission } from '../../middlewares/rbac.middleware';
 import { PERMISSIONS as P } from '../../constants/permissions';
@@ -150,11 +154,6 @@ router
  *       401:
  *         description: Not authenticated
  */
-router
-  .route('/lock')
-  .delete(
-    verifyAccessTokenOptional,
-    bookingController.releaseLock
-  );
+router.route('/lock').delete(verifyAccessTokenOptional, bookingController.releaseLock);
 
 export { router as availabilityRouter };

@@ -18,7 +18,10 @@ const withTimeout = async <T>(promise: Promise<T>, ms: number, name: string): Pr
   try {
     await Promise.race([promise, timeoutPromise]);
   } catch (err) {
-    logError(`[server] ${name} failed to shut down cleanly`, { module: "shutdownUtils.ts/withTimeout",error: (err as Error).message });
+    logError(`[server] ${name} failed to shut down cleanly`, {
+      module: 'shutdownUtils.ts/withTimeout',
+      error: (err as Error).message,
+    });
   } finally {
     if (timeoutHandle) {
       clearTimeout(timeoutHandle);
@@ -34,7 +37,9 @@ async function gracefulShutdown(signal: string, exitCode = 0): Promise<void> {
 
   // Global Hard Timeout
   const forceExitTimer = setTimeout(() => {
-    logError('[server] GLOBAL shutdown timeout reached (30s). Forcing exit.', { module: "shutdownUtils.ts/gracefulShutdown" });
+    logError('[server] GLOBAL shutdown timeout reached (30s). Forcing exit.', {
+      module: 'shutdownUtils.ts/gracefulShutdown',
+    });
     process.exit(exitCode);
   }, 30_000);
   forceExitTimer.unref();
@@ -94,13 +99,16 @@ export function setupGracefulShutdown(getServer: () => Server | null): void {
   getServerFn = getServer;
 
   process.on('unhandledRejection', (reason) => {
-    logError('Unhandled Rejection', { module: "shutdownUtils.ts/setupGracefulShutdown",reason: String(reason) });
+    logError('Unhandled Rejection', {
+      module: 'shutdownUtils.ts/setupGracefulShutdown',
+      reason: String(reason),
+    });
     void gracefulShutdown('Unhandled Rejection', 1);
   });
 
   process.on('uncaughtException', (error) => {
     logError('Uncaught Exception', {
-      module: "shutdownUtils.ts/setupGracefulShutdown",
+      module: 'shutdownUtils.ts/setupGracefulShutdown',
       error: error.message,
       stack: error.stack,
     });

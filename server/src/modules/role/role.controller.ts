@@ -26,9 +26,13 @@ export const roleController = {
 
   getAdmins: async (req: Request, res: Response): Promise<void> => {
     try {
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 10;
-      const result = await service.getAdmins({ page, limit, skip: (page - 1) * limit, sort: '-createdAt' });
+      const paginationParams = req.pagination ?? {
+        page: 1,
+        limit: 10,
+        skip: 0,
+        sort: '-createdAt',
+      };
+      const result = await service.getAdmins(paginationParams);
       ResponseUtil.success(res, 'Admins retrieved successfully', result);
     } catch (e) {
       handleError(res, e, 'getAdmins');

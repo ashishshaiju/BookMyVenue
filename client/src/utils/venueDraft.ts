@@ -1,4 +1,4 @@
-import type { AddVenueFormValues } from '../types/venue.types';
+import type { AddVenueFormValues } from '@/types/venue.types';
 
 // ─── Typed Draft Session ────────────────────────────────────────────────────
 

@@ -1,14 +1,14 @@
-import { useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router';
-import { Loader2, Store, PlusCircle } from 'lucide-react';
-import { useApiQuery } from '../../hooks/useApi';
-import { QUERY_KEYS } from '../../config/queryKeys';
-import { API_ENDPOINTS } from '../../constants';
-import { useAppStore } from '../../store/useAppStore';
-import { Card, CardContent } from '../../components/ui/card';
-import { Badge } from '../../components/ui/badge';
-import { Button } from '../../components/ui/button';
-import { cn } from '../../lib/utils';
+import { useEffect, useMemo } from "react";
+import { useNavigate } from "react-router";
+import { Loader2, Store, PlusCircle, AlertCircle, Info, Lock, MapPin } from "lucide-react";
+import { useApiQuery } from "@/hooks/useApi";
+import { QUERY_KEYS } from "@/config/queryKeys";
+import { API_ENDPOINTS, CLIENT_APP_URL } from "@/constants";
+import { VENUE_STATUS } from "@/constants/venueStatus";
+import { useAppStore } from "@/store/useAppStore";
+import { useToast } from "@/hooks/useToast";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface MyVenue {
   _id: string;
@@ -16,9 +16,10 @@ interface MyVenue {
   city: string;
   venueType: string;
   coverImage: string;
-  status: 'Draft' | 'PendingReview' | 'Approved' | 'Rejected' | 'Suspended';
+  status: "Draft" | "PendingReview" | "Approved" | "Rejected" | "Suspended" | "Inactive";
   rejectionReason?: string;
   suspensionReason?: string;
+  isFeatured?: boolean;
 }
 
 interface MyVenuesResponse {
@@ -26,50 +27,219 @@ interface MyVenuesResponse {
   venues: MyVenue[];
 }
 
+const getStatusBadge = (status: MyVenue['status']) => {
+  switch (status) {
+    case 'Draft':
+      return (
+        <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-muted/40 text-muted-foreground border border-border">
+          Draft
+        </span>
+      );
+    case 'PendingReview':
+      return (
+        <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
+          Under Review
+        </span>
+      );
+    case 'Approved':
+      return (
+        <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800">
+          Approved
+        </span>
+      );
+    case 'Rejected':
+      return (
+        <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800">
+          Rejected
+        </span>
+      );
+    case 'Suspended':
+      return (
+        <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800">
+          Suspended
+        </span>
+      );
+    case 'Inactive':
+      return (
+        <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-800">
+          Inactive
+        </span>
+      );
+    default:
+      return null;
+  }
+};
+
+const VenueCardItem = ({ venue, onClick }: { venue: MyVenue, onClick: () => void }) => {
+  const isAccessible = venue.status === VENUE_STATUS.APPROVED || venue.status === VENUE_STATUS.INACTIVE;
+  
+  return (
+    <div
+      onClick={onClick}
+      className={cn(
+        "bg-card rounded-2xl border border-border overflow-hidden shadow-sm transition-all duration-200 flex flex-col h-full group",
+        isAccessible
+          ? "cursor-pointer hover:border-primary/30 hover:shadow-md hover:-translate-y-1"
+          : "cursor-not-allowed"
+      )}
+    >
+      <div className="relative h-48 w-full bg-muted/30 overflow-hidden">
+        {venue.coverImage ? (
+          <img
+            src={venue.coverImage}
+            alt={venue.name}
+            className={cn(
+              "w-full h-full object-cover transition-transform duration-700",
+              isAccessible ? "group-hover:scale-105" : "" 
+            )}
+            loading="lazy"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+            No Image
+          </div>
+        )}
+        <div className="absolute top-3 right-3">{getStatusBadge(venue.status)}</div>
+        <div className="absolute top-3 left-3">
+          <span className="px-2 py-1 rounded-md text-xs font-medium bg-black/60 text-white backdrop-blur-sm capitalize">
+            {venue.venueType || 'Venue'}
+          </span>
+        </div>
+      </div>
+
+      <div className="p-5 flex-1 flex flex-col">
+        <h3 className="text-xl font-bold text-foreground mb-1 truncate flex items-center gap-1.5">
+          {venue.name}
+          {venue.isFeatured && <span className="text-amber-500 shrink-0" title="Featured venue">&#9733;</span>}
+        </h3>
+
+        <div className="flex items-center text-muted-foreground text-sm mb-4">
+          <MapPin className="mr-1 shrink-0" size={16} />
+          <span className="truncate">
+            {venue.city}
+          </span>
+        </div>
+
+        {!isAccessible && (
+          <div className="mt-auto space-y-2 pt-2">
+            {venue.status === VENUE_STATUS.REJECTED && venue.rejectionReason && (
+              <div className="flex gap-2.5 items-start bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 p-3 rounded-lg text-xs leading-relaxed border border-red-100 dark:border-red-900">
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                <span><strong className="font-semibold block mb-0.5">Rejected</strong> {venue.rejectionReason}</span>
+              </div>
+            )}
+            {venue.status === VENUE_STATUS.SUSPENDED && venue.suspensionReason && (
+              <div className="flex gap-2.5 items-start bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 p-3 rounded-lg text-xs leading-relaxed border border-red-100 dark:border-red-900">
+                <Lock className="w-4 h-4 shrink-0 mt-0.5" />
+                <span><strong className="font-semibold block mb-0.5">Suspended</strong> {venue.suspensionReason}</span>
+              </div>
+            )}
+            {venue.status === VENUE_STATUS.PENDING_REVIEW && (
+              <div className="flex gap-2.5 items-start bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 p-3 rounded-lg text-xs leading-relaxed border border-amber-100 dark:border-amber-900">
+                <Info className="w-4 h-4 shrink-0 mt-0.5" />
+                <span>Our team is currently reviewing your venue. We'll notify you once it's approved.</span>
+              </div>
+            )}
+          </div>
+        )}
+        {venue.status === VENUE_STATUS.INACTIVE && (
+          <div className="mt-auto pt-2">
+            <div className="flex gap-2.5 items-start bg-purple-50 dark:bg-purple-950/30 text-purple-700 dark:text-purple-400 p-3 rounded-lg text-xs leading-relaxed border border-purple-100 dark:border-purple-900">
+              <Info className="w-4 h-4 shrink-0 mt-0.5" />
+              <span>This venue is inactive. You can manage settings and reactivate from the dashboard.</span>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 export default function VenueSelectorPage() {
   const navigate = useNavigate();
   const { setActiveVenue } = useAppStore();
+  const { info } = useToast();
 
   const { data, isLoading } = useApiQuery<MyVenuesResponse>(
     QUERY_KEYS.MY_VENUES,
-    { method: 'GET', url: API_ENDPOINTS.MY_VENUES },
-    { staleTime: 0 }
+    { method: "GET", url: API_ENDPOINTS.MY_VENUES },
+    { staleTime: 0 },
   );
 
   const venues = useMemo(() => data?.venues || [], [data?.venues]);
-  const approvedVenues = useMemo(() => venues.filter(v => v.status === 'Approved'), [venues]);
+  
+  const approvedVenues = useMemo(
+    () => venues.filter((v) => v.status === VENUE_STATUS.APPROVED || v.status === VENUE_STATUS.INACTIVE),
+    [venues],
+  );
+  
+  const flaggedVenues = useMemo(
+    () => venues.filter((v) => v.status !== VENUE_STATUS.APPROVED && v.status !== VENUE_STATUS.INACTIVE),
+    [venues],
+  );
 
   useEffect(() => {
-    if (venues.length > 0 && approvedVenues.length === 1 && venues.length === 1) {
+    if (venues.length === 1 && approvedVenues.length === 1) {
       const v = approvedVenues[0];
-      setActiveVenue(v._id, v.name);
-      navigate(`/dashboard/venue/${v._id}/reports`, { replace: true });
+      setActiveVenue(v._id, v.name, v.status);
+      navigate(`/dashboard/venue/${v._id}/bookings`, { replace: true });
     }
   }, [venues, approvedVenues, navigate, setActiveVenue]);
 
+  const handleCardClick = (venue: MyVenue) => {
+    if (venue.status === VENUE_STATUS.APPROVED || venue.status === VENUE_STATUS.INACTIVE) {
+      setActiveVenue(venue._id, venue.name, venue.status);
+      navigate(`/dashboard/venue/${venue._id}/bookings`);
+    } else {
+      info(`This venue is currently ${venue.status === VENUE_STATUS.PENDING_REVIEW ? 'under review' : venue.status.toLowerCase()}. You can only manage approved venues.`);
+    }
+  };
+
   if (isLoading) {
     return (
-      <div className="flex h-[80vh] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-zinc-500" />
+      <div className="space-y-6 p-8 max-w-7xl mx-auto w-full">
+        <div className="mb-8">
+          <div className="h-10 w-48 bg-muted rounded-lg animate-pulse mb-2"></div>
+          <div className="h-5 w-96 bg-muted rounded-lg animate-pulse"></div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="rounded-2xl border bg-card overflow-hidden shadow-sm">
+               <div className="h-48 w-full bg-muted animate-pulse"></div>
+               <div className="p-5 space-y-4">
+                 <div className="h-6 w-3/4 bg-muted animate-pulse rounded"></div>
+                 <div className="flex gap-2">
+                   <div className="h-4 w-20 bg-muted animate-pulse rounded"></div>
+                   <div className="h-4 w-20 bg-muted animate-pulse rounded"></div>
+                 </div>
+               </div>
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
 
   if (venues.length === 0) {
     return (
-      <div className="flex h-[80vh] items-center justify-center p-6">
-        <div className="max-w-md text-center space-y-6">
-          <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-zinc-800">
-            <Store className="h-10 w-10 text-zinc-400" />
+      <div className="flex min-h-[70vh] items-center justify-center p-6">
+        <div className="max-w-md text-center space-y-8 p-10 border rounded-3xl bg-card shadow-sm">
+          <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-primary/10 ring-8 ring-primary/5">
+            <Store className="h-12 w-12 text-primary" />
           </div>
-          <div className="space-y-2">
-            <h2 className="text-2xl font-bold tracking-tight">No Venues Yet</h2>
-            <p className="text-muted-foreground">
-              You haven't registered any venues. Please use the BookMyVenue client application to list your first venue.
+          <div className="space-y-3">
+            <h2 className="text-3xl font-bold tracking-tight">No Venues Yet</h2>
+            <p className="text-muted-foreground leading-relaxed">
+              You haven't registered any venues. Please use the BookMyVenue
+              client application to list your first venue and start managing bookings.
             </p>
           </div>
-          <Button variant="outline" className="mt-4" onClick={() => window.open('http://localhost:5173', '_blank')}>
-            <PlusCircle className="mr-2 h-4 w-4" />
+          <Button
+            size="lg"
+            className="w-full sm:w-auto group rounded-xl"
+            onClick={() => window.open(CLIENT_APP_URL, "_blank")}
+          >
+            <PlusCircle className="mr-2 h-5 w-5 group-hover:scale-110 transition-transform" />
             Go to Client App
           </Button>
         </div>
@@ -86,79 +256,51 @@ export default function VenueSelectorPage() {
   }
 
   return (
-    <div className="space-y-6 p-8 max-w-6xl mx-auto">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Select Venue</h1>
-        <p className="text-muted-foreground mt-1">
-          Choose a venue to manage its bookings, calendar, and reports.
-        </p>
+    <div className="space-y-8 p-8 max-w-7xl mx-auto w-full">
+      <div className="flex items-center gap-3">
+        <div className="p-2.5 bg-primary/10 rounded-xl">
+          <Store className="w-7 h-7 text-primary" />
+        </div>
+        <div>
+          <h1 className="text-3xl font-extrabold tracking-tight">Select Venue</h1>
+          <p className="text-muted-foreground mt-1 text-sm md:text-base">
+            Choose a venue to manage its bookings, calendar, and reports.
+          </p>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {venues.map((venue) => {
-          const isApproved = venue.status === 'Approved';
-          
-          return (
-            <Card
-              key={venue._id}
-              onClick={() => {
-                if (isApproved) {
-                  setActiveVenue(venue._id, venue.name);
-                  navigate(`/dashboard/venue/${venue._id}/reports`);
-                }
-              }}
-              className={cn(
-                'overflow-hidden transition-all duration-200',
-                isApproved 
-                  ? 'cursor-pointer hover:border-zinc-500 hover:shadow-md hover:-translate-y-1' 
-                  : 'opacity-60 cursor-not-allowed border-dashed'
-              )}
-            >
-              <div className="relative aspect-video w-full bg-zinc-900">
-                <img
-                  src={venue.coverImage}
-                  alt={venue.name}
-                  className="w-full h-full object-cover"
-                  loading="lazy"
-                />
-                {!isApproved && (
-                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-[2px]">
-                    <Badge 
-                      variant={venue.status === 'Rejected' ? 'destructive' : 'secondary'} 
-                      className={cn(
-                        "text-sm px-3 py-1 uppercase tracking-wider font-semibold",
-                        venue.status === 'Suspended' && "bg-amber-500/20 text-amber-500 hover:bg-amber-500/30"
-                      )}
-                    >
-                      {venue.status === 'PendingReview' ? 'Under Review' : venue.status}
-                    </Badge>
-                  </div>
-                )}
-              </div>
-              <CardContent className="p-5">
-                <div className="flex justify-between items-start mb-2">
-                  <h3 className="font-semibold text-lg line-clamp-1">{venue.name}</h3>
-                  {isApproved && <Badge variant="default">Active</Badge>}
-                </div>
-                <div className="flex items-center text-sm text-muted-foreground space-x-2">
-                  <span className="capitalize">{venue.venueType}</span>
-                  <span>•</span>
-                  <span>{venue.city}</span>
-                </div>
-                {venue.status === 'Rejected' && venue.rejectionReason && (
-                  <p className="mt-4 text-sm text-red-400 bg-red-950/30 p-2 rounded border border-red-900/50 line-clamp-2">
-                    <span className="font-semibold">Reason:</span> {venue.rejectionReason}
-                  </p>
-                )}
-                {venue.status === 'Suspended' && venue.suspensionReason && (
-                  <p className="mt-4 text-sm text-amber-500 bg-amber-950/30 p-2 rounded border border-amber-900/50 line-clamp-2">
-                    <span className="font-semibold">Suspended:</span> {venue.suspensionReason}
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          );
-        })}
+      <div className="space-y-8">
+        {flaggedVenues.length > 0 && (
+          <section>
+            <div className="flex items-center gap-2 mb-4">
+              <h2 className="text-xl font-bold text-foreground">Needs Attention</h2>
+              <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
+                {flaggedVenues.length}
+              </span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {flaggedVenues.map((venue) => (
+                <VenueCardItem key={venue._id} venue={venue} onClick={() => handleCardClick(venue)} />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {approvedVenues.length > 0 && (
+          <section>
+            <div className="flex items-center gap-2 mb-4">
+              <h2 className="text-xl font-bold text-foreground">Active Venues</h2>
+              <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800">
+                {approvedVenues.length}
+              </span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {approvedVenues.map((venue) => (
+                <VenueCardItem key={venue._id} venue={venue} onClick={() => handleCardClick(venue)} />
+              ))}
+            </div>
+          </section>
+        )}
       </div>
     </div>
   );

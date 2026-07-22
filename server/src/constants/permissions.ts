@@ -16,6 +16,8 @@ export const EntityEnum = [
   'roles',
   'permissions',
   'payments',
+  'reviews',
+  'wishlist',
 ] as const;
 
 export type IAction = (typeof ActionEnum)[number];
@@ -74,6 +76,17 @@ export const PERMISSIONS = {
     reject: 'reject:payments' as IPermission,
     activate: 'activate:payments' as IPermission,
     deactivate: 'deactivate:payments' as IPermission,
+  },
+  reviews: {
+    create: 'create:reviews' as IPermission,
+    read: 'read:reviews' as IPermission,
+    update: 'update:reviews' as IPermission,
+    delete: 'delete:reviews' as IPermission,
+  },
+  wishlist: {
+    create: 'create:wishlist' as IPermission,
+    read: 'read:wishlist' as IPermission,
+    delete: 'delete:wishlist' as IPermission,
   },
 } as const;
 

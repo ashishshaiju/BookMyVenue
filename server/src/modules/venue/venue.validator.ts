@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { KERALA_DISTRICTS } from '../../constants/venue.constants';
+import { VENUE_CONSTANTS } from '../../constants/venue.constants';
 
 // Shared sub-schemas
 
@@ -18,12 +19,40 @@ const phoneSchema = z
 
 const urlSchema = z.string().regex(/^https?:\/\/.+/, 'Must be a valid URL');
 
+const GOOGLE_MAPS_ALLOWED_HOSTS = new Set([
+  'maps.google.com',
+  'www.google.com',
+  'google.com',
+  'goo.gl',
+  'maps.app.goo.gl',
+]);
+
+const googleMapsUrlSchema = z
+  .url('Must be a valid URL')
+  .refine((url) => {
+    try {
+      const { protocol, hostname } = new URL(url);
+      return protocol === 'https:' && GOOGLE_MAPS_ALLOWED_HOSTS.has(hostname);
+    } catch {
+      return false;
+    }
+  }, 'Must be a valid Google Maps URL (google.com or maps.google.com)')
+  .optional();
+
 const venueIdSchema = z
   .string()
   .trim()
   .regex(/^[a-f\d]{24}$/i, 'Invalid venue ID');
 
-const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] as const;
+const DAYS_OF_WEEK = [
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+  'Sunday',
+] as const;
 
 const fixedPackageSchema = z.object({
   slotName: z.string().trim().min(1, 'Slot name is required'),
@@ -62,7 +91,7 @@ export const createVenueSchema = z
     district: z.enum(KERALA_DISTRICTS),
     pincode: z.string().trim().min(4).max(20),
     coordinates: coordinatesSchema.optional(),
-    googleMapsUrl: urlSchema.optional(),
+    googleMapsUrl: googleMapsUrlSchema,
 
     // Space & Capacity
     spaceAttributes: z.array(z.string()).default([]),
@@ -91,11 +120,13 @@ export const createVenueSchema = z
         bufferTime: z.coerce.number().int().min(0).default(0),
       })
       .optional(),
-    pricing: z.object({
-      pricingType: z.enum(['fixedPricing', 'timeBasedPricing']),
-      basePrice: z.coerce.number().min(0, 'Base price must be 0 or higher'),
-      pricingRules: z.array(pricingRuleSchema).default([]),
-    }).optional(),
+    pricing: z
+      .object({
+        pricingType: z.enum(['fixedPricing', 'timeBasedPricing']),
+        basePrice: z.coerce.number().min(0, 'Base price must be 0 or higher'),
+        pricingRules: z.array(pricingRuleSchema).default([]),
+      })
+      .optional(),
     blockedTimes: z.array(blockedTimeSchema).default([]),
     blockedDates: z.array(z.coerce.date()).default([]),
 
@@ -192,9 +223,11 @@ export const createVenueSchema = z
         });
       }
 
-
       // Time-based pricing: must have at least one pricing rule
-      if (data.pricing.pricingType === 'timeBasedPricing' && data.pricing.pricingRules.length === 0) {
+      if (
+        data.pricing.pricingType === 'timeBasedPricing' &&
+        data.pricing.pricingRules.length === 0
+      ) {
         ctx.addIssue({
           code: 'custom',
           message: 'At least one pricing rule is required for time-based pricing',
@@ -287,6 +320,7 @@ export type CreateVenueDTO = z.infer<typeof createVenueSchema>;
 // PUT /venues/:id
 export const updateVenueSchema = z
   .object({
+    expectedVersion: z.number().int().optional(),
     name: z.string().trim().min(3, 'Name must be at least 3 characters').max(100),
     description: z.string().trim().min(10, 'Description must be at least 10 characters'),
     venueType: z.string().trim().min(1, 'Venue type is required'),
@@ -295,7 +329,7 @@ export const updateVenueSchema = z
     district: z.string().trim().min(2).max(100),
     pincode: z.string().trim().min(4).max(20),
     coordinates: coordinatesSchema.optional(),
-    googleMapsUrl: urlSchema.optional(),
+    googleMapsUrl: googleMapsUrlSchema,
     spaceAttributes: z.array(z.string()),
     seatingConfigurations: z.array(z.string()),
     maxCapacity: z.coerce.number().int().positive().optional(),
@@ -310,11 +344,13 @@ export const updateVenueSchema = z
       slotDuration: z.coerce.number().int().positive(),
       bufferTime: z.coerce.number().int().min(0),
     }),
-    pricing: z.object({
-      pricingType: z.enum(['fixedPricing', 'timeBasedPricing']),
-      basePrice: z.coerce.number().min(0),
-      pricingRules: z.array(pricingRuleSchema).default([]),
-    }).optional(),
+    pricing: z
+      .object({
+        pricingType: z.enum(['fixedPricing', 'timeBasedPricing']),
+        basePrice: z.coerce.number().min(0),
+        pricingRules: z.array(pricingRuleSchema).default([]),
+      })
+      .optional(),
     blockedTimes: z.array(blockedTimeSchema),
     blockedDates: z.array(z.coerce.date()),
     amenities: z.array(z.string()),
@@ -341,16 +377,40 @@ export const updateVenueSchema = z
 
 export type UpdateVenueDTO = z.infer<typeof updateVenueSchema>;
 
-// Admin review
+// Reject venue with optional extended deadline
 export const rejectVenueSchema = z.object({
   rejectionReason: z
     .string()
     .trim()
     .max(500, 'Rejection reason must be under 500 characters')
     .optional(),
+  extendedDeadline: z.coerce
+    .date()
+    .optional()
+    .refine(
+      (date) =>
+        !date ||
+        (date > new Date(Date.now() + VENUE_CONSTANTS.EDIT_WINDOW_DAYS * 24 * 60 * 60 * 1000) &&
+          date <= new Date(Date.now() + VENUE_CONSTANTS.MAX_EXTENDED_DAYS * 24 * 60 * 60 * 1000)),
+      `Extended deadline must be between ${String(VENUE_CONSTANTS.EDIT_WINDOW_DAYS)} and ${String(VENUE_CONSTANTS.MAX_EXTENDED_DAYS)} days`
+    ),
 });
 
 export type RejectVenueDTO = z.infer<typeof rejectVenueSchema>;
+
+// Extend venue deadline
+export const extendVenueDeadlineSchema = z.object({
+  newDeadline: z.coerce
+    .date()
+    .refine(
+      (date) =>
+        date > new Date() &&
+        date <= new Date(Date.now() + VENUE_CONSTANTS.MAX_EXTENDED_DAYS * 24 * 60 * 60 * 1000),
+      `New deadline must be in the future and within ${String(VENUE_CONSTANTS.MAX_EXTENDED_DAYS)} days`
+    ),
+});
+
+export type ExtendVenueDeadlineDTO = z.infer<typeof extendVenueDeadlineSchema>;
 
 export const suspendVenueSchema = z.object({
   suspensionReason: z
@@ -384,22 +444,53 @@ const stringOrArray = z.preprocess(
   z.array(z.string()).optional()
 );
 
-export const publicVenueFiltersSchema = z.object({
-  searchTerm: z.string().trim().max(100).optional(),
-  minPrice: z.coerce.number().min(0).optional(),
-  maxPrice: z.coerce.number().min(0).optional(),
-  venueType: stringOrArray,
-  district: z.enum(KERALA_DISTRICTS).optional(),
-  capacity: z.coerce.number().int().positive().optional(),
-  spaceAttributes: stringOrArray,
-  seatingConfigurations: stringOrArray,
-  amenities: stringOrArray,
-  sortBy: z.enum(['price-low', 'price-high', 'rating']).optional(),
-  page: z.coerce.number().int().positive().default(1),
-  limit: z.coerce.number().int().positive().max(100).default(20),
-});
+export const publicVenueFiltersSchema = z
+  .object({
+    searchTerm: z.string().trim().max(100).optional(),
+    minPrice: z.coerce.number().min(0).optional(),
+    maxPrice: z.coerce.number().min(0).optional(),
+    venueType: stringOrArray,
+    district: z.enum(KERALA_DISTRICTS).optional(),
+    capacity: z.coerce.number().int().positive().optional(),
+    spaceAttributes: stringOrArray,
+    seatingConfigurations: stringOrArray,
+    amenities: stringOrArray,
+    lat: z.coerce.number().min(-90).max(90).optional(),
+    lng: z.coerce.number().min(-180).max(180).optional(),
+    radiusKm: z.coerce.number().positive().max(200).default(25).optional(),
+    sortBy: z.enum(['price-low', 'price-high', 'rating', 'distance']).optional(),
+    page: z.coerce.number().int().positive().default(1),
+    limit: z.coerce.number().int().positive().max(100).default(20),
+  })
+  .refine(
+    (data) => {
+      // If lat is provided, lng must also be provided
+      if (data.lat !== undefined && data.lng === undefined) return false;
+      // If lng is provided, lat must also be provided
+      if (data.lng !== undefined && data.lat === undefined) return false;
+      return true;
+    },
+    {
+      message: 'Both latitude and longitude must be provided together',
+      path: ['lat', 'lng'],
+    }
+  );
 
 export type PublicVenueFiltersDTO = z.infer<typeof publicVenueFiltersSchema>;
+
+// Review schemas
+
+export const approveReviewSchema = z.object({
+  note: z.string().trim().max(500).optional(),
+});
+
+export type ApproveReviewDTO = z.infer<typeof approveReviewSchema>;
+
+export const rejectReviewSchema = z.object({
+  note: z.string().trim().min(1).max(500),
+});
+
+export type RejectReviewDTO = z.infer<typeof rejectReviewSchema>;
 
 // Route param
 

@@ -1,6 +1,6 @@
 import axios from 'axios';
 import type { AxiosError, AxiosInstance, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
-import { API_BASE_URL, API_ENDPOINTS } from '../constants';
+import { API_BASE_URL, API_ENDPOINTS, STORAGE_KEYS } from '@/constants';
 
 // Types
 interface QueuedRequest {
@@ -35,12 +35,12 @@ export const createAxiosInstance = (): AxiosInstance => {
   });
 
   instance.interceptors.request.use((config) => {
-    let sessionToken = localStorage.getItem('x-session-token');
+    let sessionToken = localStorage.getItem(STORAGE_KEYS.SESSION_TOKEN);
     if (!sessionToken) {
       sessionToken = crypto.randomUUID();
-      localStorage.setItem('x-session-token', sessionToken);
+      localStorage.setItem(STORAGE_KEYS.SESSION_TOKEN, sessionToken);
     }
-    
+
     // Attach to headers
     config.headers['x-session-token'] = sessionToken;
 

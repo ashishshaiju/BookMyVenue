@@ -1,4 +1,5 @@
 import * as Yup from 'yup';
+import { CANCELLATION_POLICIES, REFUND_TYPES } from '@/constants/bookingConstants';
 
 export const finishSchema = Yup.object({
   contact: Yup.object({
@@ -11,12 +12,13 @@ export const finishSchema = Yup.object({
   cancellation: Yup.object({
     policy: Yup.string().required('Select cancellation policy'),
     refundType: Yup.string().when('policy', {
-      is: 'refundable',
+      is: CANCELLATION_POLICIES.REFUNDABLE,
       then: (schema) =>
-        schema.oneOf(['fullRefund', 'timeBasedRefund']).required('Select refund type'),
+        schema.oneOf([REFUND_TYPES.FULL, REFUND_TYPES.TIME_BASED]).required('Select refund type'),
     }),
     refundRules: Yup.array().when(['policy', 'refundType'], {
-      is: (policy: string, type: string) => policy === 'refundable' && type === 'timeBasedRefund',
+      is: (policy: string, type: string) =>
+        policy === CANCELLATION_POLICIES.REFUNDABLE && type === REFUND_TYPES.TIME_BASED,
       then: () =>
         Yup.array(
           Yup.object({
@@ -26,5 +28,10 @@ export const finishSchema = Yup.object({
         ).min(1, 'Add at least one refund rule'),
     }),
   }),
-  venuePhotos: Yup.array().min(1, 'Upload at least one photo'),
+  venuePhotos: Yup.array().when('existingImages', {
+    is: (ei: { coverImage: string; galleryImages: string[] }) =>
+      !ei?.coverImage && (!ei?.galleryImages || ei.galleryImages.length === 0),
+    then: (s) => s.min(1, 'Upload at least one photo'),
+    otherwise: (s) => s.notRequired(),
+  }),
 });

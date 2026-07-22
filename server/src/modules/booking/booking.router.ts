@@ -13,8 +13,10 @@ import {
   fetchMyBookingsQuerySchema,
   saveBookerDetailsBodySchema,
   bookingRefIdParamSchema,
+  adminBookingFiltersSchema,
 } from './booking.validator';
 import * as controller from './booking.controller';
+import { paginationMiddleware } from '../../middlewares/pagination.middleware';
 
 const router: Router = Router();
 
@@ -106,8 +108,6 @@ router
     validateBody(saveBookerDetailsBodySchema),
     controller.saveBookerDetails
   );
-
-
 
 /**
  * @openapi
@@ -213,7 +213,14 @@ router
  */
 router
   .route('/all')
-  .get(verifyAccessToken, requireRole('admin'), requirePermission(P.bookings.read), controller.getAllBookings);
+  .get(
+    verifyAccessToken,
+    requireRole('admin'),
+    requirePermission(P.bookings.read),
+    validateQuery(adminBookingFiltersSchema),
+    paginationMiddleware(),
+    controller.getAllBookings
+  );
 
 /**
  * @openapi

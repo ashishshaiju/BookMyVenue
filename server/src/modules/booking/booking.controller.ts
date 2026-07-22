@@ -3,15 +3,18 @@ import { Types } from 'mongoose';
 import { ResponseUtil } from '../../utils/responseUtils';
 import { logError } from '../../utils/logger';
 import * as workflow from './booking.workflow';
-import { fetchMyBookings, fetchBookingById, fetchBookingByPaymentReference, findAllBookings } from './booking.repository';
+import * as service from './booking.service';
 import type { BookingStatusType } from '../../constants/booking.constants';
 import { verifyPaymentSignature } from '../../services/razorpay.service';
+import { getUserReviewedBookings } from '../review/review.service';
+import { findVenueById } from '../venue/venue.repository';
 import type {
   BlockSlotBodyDTO,
   CheckoutBodyDTO,
   SaveBookerDetailsBodyDTO,
   VerifyPaymentBodyDTO,
   VenueIdParamDTO,
+  AdminBookingFiltersDTO,
 } from './booking.validator';
 
 export const blockSlot = async (req: Request, res: Response): Promise<void> => {
@@ -27,6 +30,14 @@ export const blockSlot = async (req: Request, res: Response): Promise<void> => {
 
     if (!userId) {
       ResponseUtil.unauthorized(res, 'User identity not found in token');
+      return;
+    }
+
+    // Guard: only Approved, active, non-deleted venues accept slot locks.
+    // Return 404 (not 403) to avoid leaking existence of non-public venues.
+    const venue = await findVenueById(venueId);
+    if (!venue || !venue.active || venue.status !== 'Approved' || venue.deleted) {
+      ResponseUtil.notFound(res, 'Venue not found');
       return;
     }
 
@@ -46,7 +57,10 @@ export const blockSlot = async (req: Request, res: Response): Promise<void> => {
     const error = err as Error;
     if (error.message.includes('not found') || error.message.includes('unavailable')) {
       ResponseUtil.notFound(res, error.message);
-    } else if (error.message.includes('no longer available')) {
+    } else if (
+      error.message.includes('no longer available') ||
+      error.message.includes('Someone else is booking')
+    ) {
       ResponseUtil.conflict(res, error.message);
     } else if (error.message.includes('Invalid') || error.message.includes('mismatch')) {
       ResponseUtil.badRequest(res, error.message);
@@ -67,7 +81,8 @@ export const saveBookerDetails = async (req: Request, res: Response): Promise<vo
       ResponseUtil.badRequest(res, 'Validation failed');
       return;
     }
-    const { lockId, guestCount, eventType, bookerInfo } = validated.body as SaveBookerDetailsBodyDTO;
+    const { lockId, guestCount, eventType, bookerInfo } =
+      validated.body as SaveBookerDetailsBodyDTO;
     const userId = req.user?.userId;
 
     if (!userId) {
@@ -139,10 +154,13 @@ export const verifyPayment = async (req: Request, res: Response): Promise<void> 
       return;
     }
 
-    const booking = await fetchBookingByPaymentReference(paymentId);
+    const booking = await service.getBookingByPaymentReference(paymentId);
     if (booking) {
       const bookingRef = `BMV-${booking._id.toString().slice(-6).toUpperCase()}`;
-      ResponseUtil.success(res, 'Payment verified successfully', { _id: booking._id.toString(), bookingRef });
+      ResponseUtil.success(res, 'Payment verified successfully', {
+        _id: booking._id.toString(),
+        bookingRef,
+      });
     } else {
       ResponseUtil.success(res, 'Payment verified successfully');
     }
@@ -182,7 +200,23 @@ export const getMyBookings = async (req: Request, res: Response): Promise<void> 
       return;
     }
 
-    const result = await fetchMyBookings(userId);
+    const [bookingsResult, reviewedBookingIds] = await Promise.all([
+      service.getMyBookings(userId),
+      getUserReviewedBookings(userId),
+    ]);
+
+    // Merge hasReview flag into completed bookings
+    const result = {
+      ...bookingsResult,
+      bookings: {
+        ...bookingsResult.bookings,
+        completed: bookingsResult.bookings.completed.map((booking: Record<string, unknown>) => ({
+          ...booking,
+          hasReview: reviewedBookingIds.has(booking._id as string),
+        })),
+      },
+    };
+
     ResponseUtil.success(res, 'My bookings retrieved successfully', result);
   } catch (err) {
     const error = err as Error;
@@ -209,7 +243,7 @@ export const getBookingById = async (req: Request, res: Response): Promise<void>
       return;
     }
 
-    const booking = await fetchBookingById(bookingId, userId);
+    const booking = await service.getBookingById(bookingId, userId);
     if (!booking) {
       ResponseUtil.notFound(res, 'Booking not found');
       return;
@@ -243,13 +277,19 @@ export const cancelBooking = async (req: Request, res: Response): Promise<void> 
     }
 
     await workflow.cancelBookingWorkflow(userId, bookingId, reason);
-    
+
     ResponseUtil.success(res, 'Booking cancelled successfully');
   } catch (err) {
     const error = err as Error;
     if (error.message.includes('not found')) {
       ResponseUtil.notFound(res, error.message);
-    } else if (error.message.includes('Cannot') || error.message.includes('Only confirmed') || error.message.includes('Cancellation window')) {
+    } else if (error.message.includes('already been cancelled')) {
+      ResponseUtil.conflict(res, error.message);
+    } else if (
+      error.message.includes('Cannot') ||
+      error.message.includes('Only confirmed') ||
+      error.message.includes('Cancellation window')
+    ) {
       ResponseUtil.badRequest(res, error.message);
     } else {
       logError('cancelBooking controller error', {
@@ -263,14 +303,20 @@ export const cancelBooking = async (req: Request, res: Response): Promise<void> 
 
 export const getAllBookings = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { status, venueId } = req.query as { status?: string; venueId?: string };
+    const { status, venueId } = req.validated?.query as AdminBookingFiltersDTO;
     const paginationParams = req.pagination ?? { page: 1, limit: 10, skip: 0, sort: '' };
-    const result = await findAllBookings(paginationParams, { 
-      status: status as BookingStatusType | undefined, 
-      venueId 
+    const result = await service.getAllBookings(paginationParams, {
+      status: status as BookingStatusType | undefined,
+      venueId,
     });
-    
-    ResponseUtil.paginated(res, 'All bookings retrieved successfully', result.bookings, result.pagination, 'bookings');
+
+    ResponseUtil.paginated(
+      res,
+      'All bookings retrieved successfully',
+      result.bookings,
+      result.pagination,
+      'bookings'
+    );
   } catch (err) {
     const error = err as Error;
     logError('getAllBookings controller error', {

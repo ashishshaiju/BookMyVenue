@@ -53,5 +53,5 @@ jobs:
         run: pnpm exec tsc --noEmit
 
       - run: pnpm run lint
-      # removed: pnpm test
+      - run: pnpm run test
       - run: pnpm run build

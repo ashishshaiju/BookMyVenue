@@ -27,7 +27,11 @@ async function dispatch(task: IEmailTask): Promise<void> {
       if (!newPassword || !username) {
         throw new Error(`Missing required metadata for ${EmailIntent.ADMIN_PASSWORD_RESET} intent`);
       }
-      const result = await emailService.sendAdminPasswordResetEmail(recipient, newPassword, username);
+      const result = await emailService.sendAdminPasswordResetEmail(
+        recipient,
+        newPassword,
+        username
+      );
       if (!result.success) {
         throw new Error('Failed to send admin password reset email via Resend');
       }
@@ -43,7 +47,9 @@ async function dispatch(task: IEmailTask): Promise<void> {
     case EmailIntent.BOOKING_CONFIRMATION: {
       const { venueName, date, startTime, endTime, amount, paymentReference } = metadata;
       if (!venueName || !date || !startTime || !endTime || !amount || !paymentReference) {
-        throw new Error(`Missing required metadata fields for ${EmailIntent.BOOKING_CONFIRMATION} intent`);
+        throw new Error(
+          `Missing required metadata fields for ${EmailIntent.BOOKING_CONFIRMATION} intent`
+        );
       }
       const result = await emailService.sendBookingConfirmation(recipient, {
         venueName,
@@ -61,7 +67,9 @@ async function dispatch(task: IEmailTask): Promise<void> {
     case EmailIntent.BOOKING_REFUND: {
       const { venueName, date, startTime, endTime, amount, refundReference } = metadata;
       if (!venueName || !date || !startTime || !endTime || !amount || !refundReference) {
-        throw new Error(`Missing required metadata fields for ${EmailIntent.BOOKING_REFUND} intent`);
+        throw new Error(
+          `Missing required metadata fields for ${EmailIntent.BOOKING_REFUND} intent`
+        );
       }
       const result = await emailService.sendRefundNotification(recipient, {
         venueName,
@@ -79,7 +87,9 @@ async function dispatch(task: IEmailTask): Promise<void> {
     case EmailIntent.BOOKING_CANCELLATION: {
       const { venueName, date, timeRange, refundAmount, bookingRef } = metadata;
       if (!venueName || !date || !timeRange || !refundAmount || !bookingRef) {
-        throw new Error(`Missing required metadata fields for ${EmailIntent.BOOKING_CANCELLATION} intent`);
+        throw new Error(
+          `Missing required metadata fields for ${EmailIntent.BOOKING_CANCELLATION} intent`
+        );
       }
       const result = await emailService.sendBookingCancellationEmail(recipient, {
         venueName,
@@ -110,7 +120,7 @@ async function processNextTask(): Promise<void> {
       {
         status: EmailTaskStatus.PENDING,
         $or: [{ lockedAt: null }, { lockedAt: { $lt: staleCutoff } }],
-        retryAfter: { $lte: now }
+        retryAfter: { $lte: now },
       },
       {
         $set: {
@@ -139,7 +149,7 @@ async function processNextTask(): Promise<void> {
       if (task.retries >= EmailConstants.MAX_RETRIES) {
         task.status = EmailTaskStatus.FAILED;
         logError(`Email task failed permanently`, {
-          module: "email.worker.ts/processNextTask",
+          module: 'email.worker.ts/processNextTask',
           taskId: task._id.toString(),
           error: error.message,
         });
@@ -161,7 +171,7 @@ async function processNextTask(): Promise<void> {
     }
   } catch (err) {
     logError('Email worker polling loop encountered an error', {
-      module: "email.worker.ts/processNextTask",
+      module: 'email.worker.ts/processNextTask',
       error: (err as Error).message,
     });
   }

@@ -13,7 +13,12 @@ import {
   getVenueRejectedTemplate,
   getVenueSuspendedTemplate,
   getVenueUnsuspendedTemplate,
+  getVenueDeadlineExtendedTemplate,
   getAdminPasswordResetTemplate,
+  getUserBannedTemplate,
+  getUserUnbannedTemplate,
+  getReviewRemovedTemplate,
+  getReviewRestoredTemplate,
 } from './emailTemplateFactory';
 
 // Validates required email configuration on startup.
@@ -27,11 +32,14 @@ export function validateEmailConfig(): void {
   if (!resendConfig.frontendUrl) missing.push('FRONTEND_URL');
 
   if (missing.length > 0) {
-    logError('Missing required email environment variables', { module: "email.service.ts/validateEmailConfig", missing });
+    logError('Missing required email environment variables', {
+      module: 'email.service.ts/validateEmailConfig',
+      missing,
+    });
     process.exit(1);
   }
 
-  logInfo('Resend Email service config validated');
+  logInfo('Email config validated');
 }
 
 let _resend: Resend | null = null;
@@ -80,7 +88,7 @@ async function sendEmail(
 
     if (error) {
       logError('Email delivery failed', {
-        module: "email.service.ts/sendEmail",
+        module: 'email.service.ts/sendEmail',
         intent,
         recipient: to,
         providerError: error.message,
@@ -98,7 +106,7 @@ async function sendEmail(
   } catch (e) {
     const err = e as Error;
     logError('Email service encountered an unexpected error', {
-      module: "email.service.ts/sendEmail",
+      module: 'email.service.ts/sendEmail',
       intent,
       recipient: to,
       error: err.message,
@@ -125,7 +133,11 @@ class EmailService {
   }
 
   // Sends an admin password reset email
-  async sendAdminPasswordResetEmail(email: string, newPassword: string, username: string): Promise<SendEmailResult> {
+  async sendAdminPasswordResetEmail(
+    email: string,
+    newPassword: string,
+    username: string
+  ): Promise<SendEmailResult> {
     const validatedRecipientEmail = validateRecipient(email);
     const appName = resendConfig.appName;
     const html = getAdminPasswordResetTemplate(newPassword, username);
@@ -238,9 +250,15 @@ class EmailService {
     );
   }
 
-  async sendVenueRejectedEmail(email: string, venueName: string, reason: string): Promise<SendEmailResult> {
+  async sendVenueRejectedEmail(
+    email: string,
+    venueName: string,
+    reason: string,
+    editDeadline: Date,
+    submissionNumber: number
+  ): Promise<SendEmailResult> {
     const validatedRecipientEmail = validateRecipient(email);
-    const html = getVenueRejectedTemplate(venueName, reason);
+    const html = getVenueRejectedTemplate(venueName, reason, editDeadline, submissionNumber);
 
     return sendEmail(
       validatedRecipientEmail,
@@ -250,7 +268,11 @@ class EmailService {
     );
   }
 
-  async sendVenueSuspendedEmail(email: string, venueName: string, reason: string): Promise<SendEmailResult> {
+  async sendVenueSuspendedEmail(
+    email: string,
+    venueName: string,
+    reason: string
+  ): Promise<SendEmailResult> {
     const validatedRecipientEmail = validateRecipient(email);
     const html = getVenueSuspendedTemplate(venueName, reason);
 
@@ -271,6 +293,90 @@ class EmailService {
       `Your Venue "${venueName}" has been Reactivated`,
       html,
       EmailIntent.VENUE_UNSUSPENDED
+    );
+  }
+
+  async sendVenueDeadlineExtendedEmail(
+    email: string,
+    venueName: string,
+    newDeadline: Date
+  ): Promise<SendEmailResult> {
+    const validatedRecipientEmail = validateRecipient(email);
+    const html = getVenueDeadlineExtendedTemplate(venueName, newDeadline);
+
+    return sendEmail(
+      validatedRecipientEmail,
+      `Edit Deadline Extended for "${venueName}"`,
+      html,
+      EmailIntent.VENUE_UNSUSPENDED // reuse existing intent or create new one
+    );
+  }
+
+  // Moderation emails
+  async sendUserBannedEmail(
+    email: string,
+    details: {
+      scope: string;
+      reason: string;
+      expiresAt: Date | null;
+      venueName?: string;
+    }
+  ): Promise<SendEmailResult> {
+    const validatedRecipientEmail = validateRecipient(email);
+    const html = getUserBannedTemplate(
+      details.scope,
+      details.reason,
+      details.expiresAt,
+      details.venueName
+    );
+
+    return sendEmail(
+      validatedRecipientEmail,
+      'Account Restriction Applied',
+      html,
+      EmailIntent.USER_BANNED
+    );
+  }
+
+  async sendUserUnbannedEmail(email: string): Promise<SendEmailResult> {
+    const validatedRecipientEmail = validateRecipient(email);
+    const html = getUserUnbannedTemplate();
+
+    return sendEmail(
+      validatedRecipientEmail,
+      'Account Restriction Lifted',
+      html,
+      EmailIntent.USER_UNBANNED
+    );
+  }
+
+  async sendReviewRemovedEmail(
+    email: string,
+    details: {
+      venueName: string;
+      reason: string;
+    }
+  ): Promise<SendEmailResult> {
+    const validatedRecipientEmail = validateRecipient(email);
+    const html = getReviewRemovedTemplate(details.venueName, details.reason);
+
+    return sendEmail(
+      validatedRecipientEmail,
+      'Your Review Has Been Removed',
+      html,
+      EmailIntent.REVIEW_REMOVED
+    );
+  }
+
+  async sendReviewRestoredEmail(email: string, venueName: string): Promise<SendEmailResult> {
+    const validatedRecipientEmail = validateRecipient(email);
+    const html = getReviewRestoredTemplate(venueName);
+
+    return sendEmail(
+      validatedRecipientEmail,
+      'Your Review Has Been Restored',
+      html,
+      EmailIntent.REVIEW_RESTORED
     );
   }
 }

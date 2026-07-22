@@ -1,9 +1,15 @@
-import { create } from 'zustand';
-import React from 'react';
+import { create } from "zustand";
+import React from "react";
 
 export interface ModalAction {
   label: string;
-  variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
+  variant?:
+    | "default"
+    | "destructive"
+    | "outline"
+    | "secondary"
+    | "ghost"
+    | "link";
   icon?: React.ReactNode;
   isLoading?: boolean;
   disabled?: boolean;
@@ -13,7 +19,7 @@ export interface ModalAction {
 export interface ActiveModal {
   id: string;
   title: string;
-  size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl';
+  size?: "sm" | "md" | "lg" | "xl" | "2xl";
 
   component: React.ComponentType<{ data: Record<string, unknown> }>;
   data: Record<string, unknown>;
@@ -22,7 +28,7 @@ export interface ActiveModal {
 
 interface ModalStore {
   modal: ActiveModal | null;
-  open: (config: Omit<ActiveModal, 'id'>) => void;
+  open: (config: Omit<ActiveModal, "id">) => void;
   close: () => void;
 }
 

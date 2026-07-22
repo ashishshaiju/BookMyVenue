@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { verifyAccessToken } from '../../middlewares/auth.middleware';
 import { requireSuperAdmin } from '../../middlewares/rbac.middleware';
 import { validateBody, validateQuery } from '../../middlewares/validation.middleware';
+import { paginationMiddleware } from '../../middlewares/pagination.middleware';
 import * as validator from './role.validator';
 import { roleController } from './role.controller';
 
@@ -31,7 +32,12 @@ const router: Router = Router();
  */
 router
   .route('/promote')
-  .post(verifyAccessToken, requireSuperAdmin, validateBody(validator.promoteUserSchema), roleController.promoteToAdmin);
+  .post(
+    verifyAccessToken,
+    requireSuperAdmin,
+    validateBody(validator.promoteUserSchema),
+    roleController.promoteToAdmin
+  );
 
 /**
  * @openapi
@@ -57,7 +63,12 @@ router
  */
 router
   .route('/demote')
-  .post(verifyAccessToken, requireSuperAdmin, validateBody(validator.demoteUserSchema), roleController.demoteAdmin);
+  .post(
+    verifyAccessToken,
+    requireSuperAdmin,
+    validateBody(validator.demoteUserSchema),
+    roleController.demoteAdmin
+  );
 
 /**
  * @openapi
@@ -82,6 +93,12 @@ router
  */
 router
   .route('/admins')
-  .get(verifyAccessToken, requireSuperAdmin, validateQuery(validator.getAdminsQuerySchema), roleController.getAdmins);
+  .get(
+    verifyAccessToken,
+    requireSuperAdmin,
+    validateQuery(validator.getAdminsQuerySchema),
+    paginationMiddleware(),
+    roleController.getAdmins
+  );
 
 export { router as roleRouter };

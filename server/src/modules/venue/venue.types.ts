@@ -1,8 +1,10 @@
 import type mongoose from 'mongoose';
 import type { Document } from 'mongoose';
-import type { VenueStatusEnum, VenueFields } from '../../constants/venue.constants';
+import type { VenueStatusEnum, VenueFields, ReviewIntentType } from '../../constants/venue.constants';
 
 export type VenueStatus = (typeof VenueStatusEnum)[number];
+
+export type PlainVenue = Omit<IVenue, keyof Document> & { _id: IVenue['_id'] };
 
 export type VenueKey = (typeof VenueFields)[number];
 
@@ -15,7 +17,7 @@ export interface IGeoPoint {
 export interface IFixedPackage {
   slotName: string;
   startTime: string; // 09:00
-  endTime: string;   // 13:00
+  endTime: string; // 13:00
   price: number;
 }
 
@@ -53,9 +55,21 @@ export interface ICancellation {
   refundRules: IRefundRule[];
 }
 
-// Main Interface
+export interface IRejectionEntry {
+  _id: mongoose.Types.ObjectId;
+  reason: string;
+  rejectedAt: Date;
+  rejectedBy: mongoose.Types.ObjectId;
+  submissionNumber: number;
+  editDeadline: Date;
+  extendedAt?: Date;
+  extendedBy?: mongoose.Types.ObjectId;
+  originalDeadline?: Date;
+}
 
+// Main Interface
 export interface IVenue extends Document {
+  __v?: number;
   // Basic Info
   name: string;
   description: string;
@@ -105,10 +119,38 @@ export interface IVenue extends Document {
   // Cancellation & Refund
   cancellation: ICancellation;
 
+  // Ratings & Reviews
+  avgRating: number;
+  reviewCount: number;
+
+  pendingReview?: {
+    intent: ReviewIntentType;
+    requestedAt: Date;
+    details: {
+      changedFields?: string[];
+      previousSnapshot?: Record<string, unknown>;
+      reason?: string;
+    };
+  };
+
+  inactivity?: {
+    requestedAt?: Date;
+    approvedAt?: Date;
+    blockedAfterDate?: Date;
+    inactiveAt?: Date;
+    lastInactiveAt?: Date;
+    withdrawalRequestedAt?: Date;
+  };
+
+  temporaryBlockAfterDate?: Date;
+
   // Operational
   status: VenueStatus;
   ownerUserId: mongoose.Types.ObjectId;
-  rejectionReason?: string;
+  rejectionHistory: IRejectionEntry[];
+  submissionCount: number;
+  lastSubmittedAt?: Date;
+  currentEditDeadline?: Date;
   suspensionReason?: string;
 
   // Audit
@@ -130,7 +172,10 @@ export type CreateVenueData = Omit<
   | 'updatedAt'
   | 'active'
   | 'deleted'
-  | 'rejectionReason'
+  | 'rejectionHistory'
+  | 'submissionCount'
+  | 'lastSubmittedAt'
+  | 'currentEditDeadline'
   | 'suspensionReason'
 >;
 
@@ -157,5 +202,8 @@ export interface PublicVenueFilters {
   spaceAttributes?: string[];
   seatingConfigurations?: string[];
   amenities?: string[];
-  sortBy?: 'price-low' | 'price-high' | 'rating';
+  sortBy?: 'price-low' | 'price-high' | 'rating' | 'distance';
+  lat?: number;
+  lng?: number;
+  radiusKm?: number;
 }

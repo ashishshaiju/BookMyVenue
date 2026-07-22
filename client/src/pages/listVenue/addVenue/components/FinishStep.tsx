@@ -1,6 +1,9 @@
 import { Field, FieldArray, ErrorMessage, useFormikContext } from 'formik';
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/useToast';
+import { ALLOWED_IMAGE_TYPES, MAX_IMAGE_FILE_SIZE } from '@/constants/upload';
+import { FORM_ERROR_CLASS } from '@/constants/uiClasses';
+import { CANCELLATION_POLICIES, REFUND_TYPES } from '@/constants/bookingConstants';
 
 type FinishStepValues = {
   contact: { name: string; phone: string; email?: string };
@@ -10,12 +13,13 @@ type FinishStepValues = {
     refundRules: { daysBefore: string; refundPercentage: string }[];
   };
   venuePhotos: File[];
+  existingImages: {
+    coverImage: string;
+    galleryImages: string[];
+  };
 };
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
-const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-
-const err = 'text-red-500 text-sm mt-1';
+const err = FORM_ERROR_CLASS;
 
 const FinishStep = () => {
   const [previewImages, setPreviewImages] = useState<string[]>([]);
@@ -24,11 +28,24 @@ const FinishStep = () => {
 
   useEffect(() => {
     const urls = values.venuePhotos?.map((file) => URL.createObjectURL(file)) || [];
-    Promise.resolve().then(() => setPreviewImages(urls));
+    setPreviewImages(urls);
     return () => {
       urls.forEach((url) => URL.revokeObjectURL(url));
     };
   }, [values.venuePhotos]);
+
+  const existingCover = values.existingImages?.coverImage || '';
+  const existingGallery = values.existingImages?.galleryImages || [];
+
+  const allDisplayItems: Array<
+    { type: 'existing'; url: string } | { type: 'new'; url: string; index: number }
+  > = [
+    ...(existingCover ? [{ type: 'existing' as const, url: existingCover }] : []),
+    ...existingGallery.map((url) => ({ type: 'existing' as const, url })),
+    ...previewImages.map((url, i) => ({ type: 'new' as const, url, index: i })),
+  ];
+
+  const hasImages = allDisplayItems.length > 0;
 
   return (
     <section className="font-sans">
@@ -48,6 +65,52 @@ const FinishStep = () => {
               Upload venue images. First image becomes cover photo.
             </p>
 
+            {/* Combined Grid — existing images + new upload previews */}
+            {hasImages && (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                {allDisplayItems.map((item, index) => (
+                  <div
+                    key={item.type === 'existing' ? item.url : `new-${item.index}`}
+                    className={`relative rounded-2xl overflow-hidden border-2 ${
+                      index === 0 ? 'border-[var(--bg-green)]' : 'border-[var(--bg-grey)]'
+                    }`}
+                  >
+                    <img src={item.url} alt="" className="w-full h-40 object-cover" />
+
+                    {index === 0 && (
+                      <div className="absolute top-2 left-2 bg-[var(--bg-green)] text-white text-xs px-2 py-1 rounded-lg">
+                        Cover
+                      </div>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (item.type === 'existing') {
+                          if (item.url === existingCover) {
+                            setFieldValue('existingImages.coverImage', '');
+                          } else {
+                            setFieldValue(
+                              'existingImages.galleryImages',
+                              existingGallery.filter((u) => u !== item.url)
+                            );
+                          }
+                        } else {
+                          const newFiles = [...(values.venuePhotos || [])];
+                          newFiles.splice(item.index, 1);
+                          setFieldValue('venuePhotos', newFiles);
+                        }
+                      }}
+                      className="absolute top-2 right-2 bg-white/90 w-8 h-8 rounded-full shadow flex items-center justify-center text-red-500 hover:bg-white transition"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Upload area */}
             <label className="flex items-center justify-center w-full border-2 border-dashed border-[var(--bg-grey)] rounded-2xl p-8 cursor-pointer hover:border-[var(--bg-green)] transition">
               <input
                 type="file"
@@ -57,13 +120,17 @@ const FinishStep = () => {
                 onChange={(e) => {
                   const files = Array.from(e.target.files || []);
                   const validFiles = files.filter((file) => {
-                    if (!ALLOWED_TYPES.includes(file.type)) {
+                    if (
+                      !ALLOWED_IMAGE_TYPES.includes(
+                        file.type as (typeof ALLOWED_IMAGE_TYPES)[number]
+                      )
+                    ) {
                       showError(
                         `Invalid file type: ${file.name}. Only JPG, PNG and WEBP are allowed.`
                       );
                       return false;
                     }
-                    if (file.size > MAX_FILE_SIZE) {
+                    if (file.size > MAX_IMAGE_FILE_SIZE) {
                       showError(`File too large: ${file.name}. Maximum size is 5MB.`);
                       return false;
                     }
@@ -88,41 +155,9 @@ const FinishStep = () => {
 
             {previewImages.length > 0 && (
               <p className="mt-4 text-sm text-[var(--bg-green)] font-medium">
-                {previewImages.length} image(s) selected
+                {previewImages.length} new image(s) selected
               </p>
             )}
-
-            {/* Preview Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
-              {previewImages.map((image, index) => (
-                <div
-                  key={index}
-                  className={`relative rounded-2xl overflow-hidden border-2 ${
-                    index === 0 ? 'border-[var(--bg-green)]' : 'border-[var(--bg-grey)]'
-                  }`}
-                >
-                  <img src={image} alt="preview" className="w-full h-40 object-cover" />
-
-                  {index === 0 && (
-                    <div className="absolute top-2 left-2 bg-[var(--bg-green)] text-white text-xs px-2 py-1 rounded-lg">
-                      Cover
-                    </div>
-                  )}
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const newFiles = [...(values.venuePhotos || [])];
-                      newFiles.splice(index, 1);
-                      setFieldValue('venuePhotos', newFiles);
-                    }}
-                    className="absolute top-2 right-2 bg-white w-8 h-8 rounded-full shadow flex items-center justify-center text-red-500"
-                  >
-                    ✕
-                  </button>
-                </div>
-              ))}
-            </div>
           </div>
 
           {/* Contact */}
@@ -169,7 +204,7 @@ const FinishStep = () => {
           </div>
 
           {/* Refund Rules — only for refundable */}
-          {values.cancellation.policy === 'refundable' && (
+          {values.cancellation.policy === CANCELLATION_POLICIES.REFUNDABLE && (
             <div>
               <h3 className="font-semibold text-lg mb-4">Refund Rules</h3>
               <p className="text-[var(--text-secondary)] mb-4">
@@ -193,7 +228,7 @@ const FinishStep = () => {
               </div>
 
               {/* Refund Rules — only for time based */}
-              {values.cancellation.refundType === 'timeBasedRefund' && (
+              {values.cancellation.refundType === REFUND_TYPES.TIME_BASED && (
                 <FieldArray name="cancellation.refundRules">
                   {({ push, remove }) => (
                     <div className="space-y-5">
@@ -233,7 +268,7 @@ const FinishStep = () => {
                             <button
                               type="button"
                               onClick={() => remove(index)}
-                              className="text-red-500 mt-4"
+                              className="text-red-500 dark:text-red-400 mt-4"
                             >
                               Remove Rule
                             </button>

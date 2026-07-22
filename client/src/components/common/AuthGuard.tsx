@@ -1,10 +1,11 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router';
 import { useAuth } from '@/hooks/useAuth';
-import { showError } from '@/utils/toast';
+import { useToast } from '@/hooks/useToast';
 
 const AuthGuard: React.FC = () => {
   const { isAuthenticated, loading, verifySession } = useAuth();
+  const { error: showError } = useToast();
   const [checking, setChecking] = useState(true);
   const location = useLocation();
   const checkedRef = useRef(false);
@@ -28,7 +29,7 @@ const AuthGuard: React.FC = () => {
       }
     };
     performCheck();
-  }, [location.pathname, loading, isAuthenticated, verifySession]);
+  }, [location.pathname, loading, isAuthenticated, verifySession, showError]);
 
   if (loading || checking) {
     return (
