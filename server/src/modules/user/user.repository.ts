@@ -131,8 +131,8 @@ export async function findAllUsers(
         localField: '_id',
         foreignField: 'ownerUserId',
         as: 'venues',
-      }
-    }
+      },
+    },
   ];
 
   if (filters?.role) {
@@ -160,14 +160,11 @@ export async function findAllUsers(
         },
       },
     ]),
-    UserModel.aggregate<Record<string, unknown>>([
-      ...pipeline,
-      { $count: 'total' },
-    ]),
+    UserModel.aggregate<Record<string, unknown>>([...pipeline, { $count: 'total' }]),
   ]);
 
   const totalCount = totalCountResult[0]?.total ?? 0;
-  
+
   return {
     users,
     pagination: buildPaginationMeta(totalCount as number, paginationParams),
@@ -216,7 +213,7 @@ export async function unbanUser(userId: string): Promise<IUser> {
       $set: {
         isBanned: false,
         active: true,
-      }
+      },
     },
     { new: true, strict: false }
   ).exec();

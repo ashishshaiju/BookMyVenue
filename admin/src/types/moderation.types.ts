@@ -12,6 +12,7 @@ export interface ModerationSummary {
   }>;
   hideRequests: Array<{
     _id: string;
+    venueId: string;
     venueName: string;
     ownerUsername: string;
     ownerEmail: string;

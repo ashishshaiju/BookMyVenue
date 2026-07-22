@@ -36,4 +36,8 @@ WishlistSchema.index(
 // Index for "My Wishlist" listing (user + most recent first)
 WishlistSchema.index({ userId: 1, createdAt: -1 }, { name: 'idx_user_recency' });
 
-export const WishlistModel = mongoose.model<IWishlistItem>('Wishlists', WishlistSchema, 'Wishlists');
+export const WishlistModel = mongoose.model<IWishlistItem>(
+  'Wishlists',
+  WishlistSchema,
+  'Wishlists'
+);

@@ -76,10 +76,7 @@ export function BlockedDatesTable({
   ];
 
   return (
-    <div className="mt-8">
-      <h2 className="text-xl font-bold tracking-tight mb-4">
-        Blocked Dates List
-      </h2>
+    <div className="mt-2">
       <DataTable
         columns={columns}
         data={paginatedData}

@@ -2,10 +2,13 @@ import { useState } from "react";
 import { useApiQuery } from "@/hooks/useApi";
 import { API_ENDPOINTS } from "@/constants";
 import { QUERY_KEYS } from "@/config/queryKeys";
+import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { AlertCircle, AlertTriangle } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AlertCircle, AlertTriangle, Ban, UserX } from "lucide-react";
 // Extracted hooks and components
 import { useModeration } from "@/hooks/useModeration";
+import { useModerationStore } from "@/store/useModerationStore";
 import { FlaggedReviewsTable } from "@/components/moderation/FlaggedReviewsTable";
 import { HideRequestsTable } from "@/components/moderation/HideRequestsTable";
 import { SuspendedVenuesTable } from "@/components/moderation/SuspendedVenuesTable";
@@ -13,8 +16,11 @@ import { BannedUsersTable } from "@/components/moderation/BannedUsersTable";
 import { ReviewActionDialog } from "@/components/moderation/ReviewActionDialog";
 import type { ReviewActionDialogState } from "@/types/ui";
 import type { ModerationSummary } from "@/types/moderation.types";
+import type { ModerationTab } from "@/store/useModerationStore";
 
 const ModerationPage = () => {
+  const { activeTab, setActiveTab } = useModerationStore();
+
   const [reviewDialog, setReviewDialog] = useState<ReviewActionDialogState>({
     open: false,
     action: "remove",
@@ -54,80 +60,150 @@ const ModerationPage = () => {
         </p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card className="p-6 border-[var(--bg-grey)] bg-[var(--bg-primary)] shadow-sm">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold flex items-center text-[var(--text-primary)]">
-              <AlertCircle className="mr-2 text-yellow-500" size={20} />
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Card 
+          className={`p-4 cursor-pointer transition-colors border-[var(--bg-grey)] ${activeTab === "flagged" ? "bg-yellow-50/50 dark:bg-yellow-950/20 border-yellow-200" : "bg-[var(--bg-primary)] hover:bg-[var(--bg-grey)]"}`}
+          onClick={() => setActiveTab("flagged")}
+        >
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-sm font-semibold flex items-center text-[var(--text-secondary)]">
+              <AlertCircle className="mr-2 text-yellow-500" size={16} />
               Flagged Reviews
             </h2>
-            <span className="bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-yellow-900 dark:text-yellow-300">
-              {flaggedReviews.length} Action
-              {flaggedReviews.length !== 1 ? "s" : ""} Needed
-            </span>
           </div>
-          <div className="rounded-md border border-[var(--bg-grey)]">
+          <p className="text-2xl font-bold text-[var(--text-primary)]">{flaggedReviews.length}</p>
+        </Card>
+
+        <Card 
+          className={`p-4 cursor-pointer transition-colors border-[var(--bg-grey)] ${activeTab === "hide_requests" ? "bg-orange-50/50 dark:bg-orange-950/20 border-orange-200" : "bg-[var(--bg-primary)] hover:bg-[var(--bg-grey)]"}`}
+          onClick={() => setActiveTab("hide_requests")}
+        >
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-sm font-semibold flex items-center text-[var(--text-secondary)]">
+              <AlertTriangle className="mr-2 text-orange-500" size={16} />
+              Hide Requests
+            </h2>
+          </div>
+          <p className="text-2xl font-bold text-[var(--text-primary)]">{hideRequests.length}</p>
+        </Card>
+
+        <Card 
+          className={`p-4 cursor-pointer transition-colors border-[var(--bg-grey)] ${activeTab === "suspended" ? "bg-gray-50/50 dark:bg-gray-800/20 border-gray-300" : "bg-[var(--bg-primary)] hover:bg-[var(--bg-grey)]"}`}
+          onClick={() => setActiveTab("suspended")}
+        >
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-sm font-semibold flex items-center text-[var(--text-secondary)]">
+              <Ban className="mr-2 text-gray-500" size={16} />
+              Suspended Venues
+            </h2>
+          </div>
+          <p className="text-2xl font-bold text-[var(--text-primary)]">{suspendedVenues.length}</p>
+        </Card>
+
+        <Card 
+          className={`p-4 cursor-pointer transition-colors border-[var(--bg-grey)] ${activeTab === "banned" ? "bg-red-50/50 dark:bg-red-950/20 border-red-200" : "bg-[var(--bg-primary)] hover:bg-[var(--bg-grey)]"}`}
+          onClick={() => setActiveTab("banned")}
+        >
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-sm font-semibold flex items-center text-[var(--text-secondary)]">
+              <UserX className="mr-2 text-red-500" size={16} />
+              Banned Users
+            </h2>
+          </div>
+          <p className="text-2xl font-bold text-[var(--text-primary)]">{bannedUsers.length}</p>
+        </Card>
+      </div>
+
+      <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as ModerationTab)} className="w-full">
+        <TabsList className="mb-4" variant="line">
+          <TabsTrigger value="flagged">Flagged Reviews</TabsTrigger>
+          <TabsTrigger value="hide_requests">Hide Requests</TabsTrigger>
+          <TabsTrigger value="suspended">Suspended Venues</TabsTrigger>
+          <TabsTrigger value="banned">Banned Users</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="flagged" className="outline-none mt-0">
+          <Card className="p-6 border-[var(--bg-grey)] bg-[var(--bg-primary)] shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold flex items-center text-[var(--text-primary)]">
+                <AlertCircle className="mr-2 text-yellow-500" size={20} />
+                Flagged Reviews
+              </h2>
+              {flaggedReviews.length > 0 && (
+                <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-300">
+                  {flaggedReviews.length} Action{flaggedReviews.length !== 1 ? "s" : ""} Needed
+                </Badge>
+              )}
+            </div>
             <FlaggedReviewsTable
               flaggedReviews={flaggedReviews}
               setReviewDialog={setReviewDialog}
               moderateReviewMutation={moderateReviewMutation}
             />
-          </div>
-        </Card>
+          </Card>
+        </TabsContent>
 
-        <Card className="p-6 border-[var(--bg-grey)] bg-[var(--bg-primary)] shadow-sm">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold flex items-center text-[var(--text-primary)]">
-              <AlertTriangle className="mr-2 text-orange-500" size={20} />
-              Hide Requests
-            </h2>
-            <span className="bg-orange-100 text-orange-800 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-orange-900 dark:text-orange-300">
-              {hideRequests.length} Pending
-            </span>
-          </div>
-          <div className="rounded-md border border-[var(--bg-grey)]">
+        <TabsContent value="hide_requests" className="outline-none mt-0">
+          <Card className="p-6 border-[var(--bg-grey)] bg-[var(--bg-primary)] shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold flex items-center text-[var(--text-primary)]">
+                <AlertTriangle className="mr-2 text-orange-500" size={20} />
+                Hide Requests
+              </h2>
+              {hideRequests.length > 0 && (
+                <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-300">
+                  {hideRequests.length} Pending
+                </Badge>
+              )}
+            </div>
             <HideRequestsTable
               hideRequests={hideRequests}
               setReviewDialog={setReviewDialog}
               moderateReviewMutation={moderateReviewMutation}
             />
-          </div>
-        </Card>
+          </Card>
+        </TabsContent>
 
-        <Card className="p-6 border-[var(--bg-grey)] bg-[var(--bg-primary)] shadow-sm">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-[var(--text-primary)]">
-              Suspended Venues
-            </h2>
-            <span className="bg-gray-100 text-gray-800 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-gray-700 dark:text-gray-300">
-              {suspendedVenues.length} Total
-            </span>
-          </div>
-          <div className="rounded-md border border-[var(--bg-grey)]">
+        <TabsContent value="suspended" className="outline-none mt-0">
+          <Card className="p-6 border-[var(--bg-grey)] bg-[var(--bg-primary)] shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold flex items-center text-[var(--text-primary)]">
+                <Ban className="mr-2 text-gray-500" size={20} />
+                Suspended Venues
+              </h2>
+              {suspendedVenues.length > 0 && (
+                <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-300">
+                  {suspendedVenues.length} Total
+                </Badge>
+              )}
+            </div>
             <SuspendedVenuesTable
               suspendedVenues={suspendedVenues}
               unsuspendVenueMutation={unsuspendVenueMutation}
             />
-          </div>
-        </Card>
+          </Card>
+        </TabsContent>
 
-        <Card className="p-6 border-[var(--bg-grey)] bg-[var(--bg-primary)] shadow-sm">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-[var(--text-primary)]">
-              Banned Users
-            </h2>
-            <span className="bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-red-900 dark:text-red-300">
-              {bannedUsers.length} Total
-            </span>
-          </div>
-          <div className="rounded-md border border-[var(--bg-grey)]">
+        <TabsContent value="banned" className="outline-none mt-0">
+          <Card className="p-6 border-[var(--bg-grey)] bg-[var(--bg-primary)] shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold flex items-center text-[var(--text-primary)]">
+                <UserX className="mr-2 text-red-500" size={20} />
+                Banned Users
+              </h2>
+              {bannedUsers.length > 0 && (
+                <Badge variant="outline" className="bg-red-50 text-red-700 border-red-300">
+                  {bannedUsers.length} Total
+                </Badge>
+              )}
+            </div>
             <BannedUsersTable
               bannedUsers={bannedUsers}
               unbanUserMutation={unbanUserMutation}
             />
-          </div>
-        </Card>
-      </div>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       <ReviewActionDialog
         reviewDialog={reviewDialog}
@@ -141,3 +217,4 @@ const ModerationPage = () => {
 };
 
 export default ModerationPage;
+

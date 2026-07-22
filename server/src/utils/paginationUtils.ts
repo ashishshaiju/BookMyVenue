@@ -56,7 +56,8 @@ export function parsePaginationParams(
   }
 
   // --- sort ---
-  const sort = typeof query.sort === 'string' && query.sort.trim() ? query.sort.trim() : defaultSort;
+  const sort =
+    typeof query.sort === 'string' && query.sort.trim() ? query.sort.trim() : defaultSort;
 
   return { page, limit, skip, sort };
 }

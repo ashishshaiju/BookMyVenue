@@ -13,6 +13,7 @@ dist-ssr
 
 # Editor / IDE
 .agents
+.agent
 .idea
 .vscode
 !.vscode/extensions.json
@@ -21,6 +22,7 @@ dist-ssr
 *.sln
 *.suo
 *.sw?
+*.md
 
 # Root
 node_modules/
@@ -46,3 +48,6 @@ node_modules/
 /server/.env
 /server/dist/
 /server/node_modules
+
+# Test coverage
+coverage/

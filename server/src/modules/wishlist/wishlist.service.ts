@@ -33,7 +33,9 @@ export async function syncWishlist(
   if (!venueIds.length) return {};
 
   const existingVenues = await findVenuesByIds(venueIds);
-  const validVenueIds = existingVenues.map((v: { _id: { toString(): string } }) => v._id.toString());
+  const validVenueIds = existingVenues.map((v: { _id: { toString(): string } }) =>
+    v._id.toString()
+  );
 
   await Promise.all(validVenueIds.map((venueId: string) => repo.addToWishlist(userId, venueId)));
 
@@ -55,11 +57,8 @@ export async function getWishlistStatus(
 
   const wishlisted = await repo.getWishlistedVenueIds(userId, venueIds);
 
-  return venueIds.reduce<WishlistStatusResponse>(
-    (acc, venueId) => {
-      acc[venueId] = wishlisted.has(venueId);
-      return acc;
-    },
-    {}
-  );
+  return venueIds.reduce<WishlistStatusResponse>((acc, venueId) => {
+    acc[venueId] = wishlisted.has(venueId);
+    return acc;
+  }, {});
 }

@@ -2,6 +2,7 @@ import { RotateCcw } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { ModerationSummary } from "@/types";
 import type { UseMutationResult } from "@tanstack/react-query";
 
@@ -45,7 +46,10 @@ export function BannedUsersTable({
       }: {
         row: { original: ModerationSummary["bannedUsers"][0] };
       }) => (
-        <p className="text-sm text-[var(--text-secondary)] max-w-xs line-clamp-2">
+        <p 
+          className="text-sm text-[var(--text-secondary)] max-w-xs truncate cursor-help"
+          title={row.original.banReason}
+        >
           {row.original.banReason}
         </p>
       ),
@@ -83,16 +87,25 @@ export function BannedUsersTable({
       }: {
         row: { original: ModerationSummary["bannedUsers"][0] };
       }) => (
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() =>
-            unbanUserMutation.mutate({ userId: row.original.userId })
-          }
-          disabled={unbanUserMutation.isPending}
-        >
-          <RotateCcw size={16} className="mr-1" /> Unban
-        </Button>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                size="icon"
+                variant="outline"
+                onClick={() =>
+                  unbanUserMutation.mutate({ userId: row.original.userId })
+                }
+                disabled={unbanUserMutation.isPending}
+              >
+                <RotateCcw size={16} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Unban</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       ),
     },
   ];

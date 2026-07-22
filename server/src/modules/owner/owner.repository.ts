@@ -7,17 +7,17 @@ import type { IVenue } from '../venue/venue.types';
 
 export async function getVenueAnalyticsData(venueId: string): Promise<Record<string, unknown>[]> {
   const pipeline = [
-    { 
-      $match: { 
-        venueId: new Types.ObjectId(venueId), 
-        status: BookingStatus.COMPLETED 
-      } 
+    {
+      $match: {
+        venueId: new Types.ObjectId(venueId),
+        status: BookingStatus.COMPLETED,
+      },
     },
     {
       $group: {
         _id: {
-          year: { $substr: ['$date', 0, 4] },
-          month: { $substr: ['$date', 5, 2] },
+          year: { $substrCP: ['$date', 0, 4] },
+          month: { $substrCP: ['$date', 5, 2] },
         },
         revenue: { $sum: '$price' },
         count: { $sum: 1 },
@@ -38,7 +38,11 @@ export async function getVenueAnalyticsData(venueId: string): Promise<Record<str
   return BookingModel.aggregate(pipeline);
 }
 
-export async function getVenueBookingsPaginated(venueId: string, skip: number, limit: number): Promise<IBooking[]> {
+export async function getVenueBookingsPaginated(
+  venueId: string,
+  skip: number,
+  limit: number
+): Promise<IBooking[]> {
   return BookingModel.find({ venueId: new Types.ObjectId(venueId) })
     .sort({ date: -1, startTime: -1 })
     .skip(skip)
@@ -80,10 +84,13 @@ export async function createOfflineBookingRecord(
 }
 
 export async function getVenueBlockedDatesAndWorkingDays(venueId: string): Promise<IVenue | null> {
-  return VenueModel.findById(venueId).select('blockedDates workingDays').lean().exec();
+  return VenueModel.findById(venueId).select('blockedDates workingDays temporaryBlockAfterDate inactivity.blockedAfterDate').lean().exec();
 }
 
-export async function getConfirmedBookingsAfterDate(venueId: string, dateThreshold: string): Promise<IBooking[]> {
+export async function getConfirmedBookingsAfterDate(
+  venueId: string,
+  dateThreshold: string
+): Promise<IBooking[]> {
   return BookingModel.find({
     venueId: new Types.ObjectId(venueId),
     status: { $in: [BookingStatus.CONFIRMED, BookingStatus.COMPLETED] },
@@ -94,34 +101,51 @@ export async function getConfirmedBookingsAfterDate(venueId: string, dateThresho
     .exec();
 }
 
-export async function findConflictingBookingForDates(venueId: string, dates: string[]): Promise<IBooking | null> {
+export async function findConflictingBookingForDates(
+  venueId: string,
+  dates: string[]
+): Promise<IBooking | null> {
   return BookingModel.findOne({
     venueId: new Types.ObjectId(venueId),
     status: BookingStatus.CONFIRMED,
     date: { $in: dates },
-  }).lean().exec();
+  })
+    .lean()
+    .exec();
 }
 
-export async function addBlockedDatesToVenue(venueId: string, dates: Date[]): Promise<IVenue | null> {
+export async function addBlockedDatesToVenue(
+  venueId: string,
+  dates: Date[]
+): Promise<IVenue | null> {
   return VenueModel.findByIdAndUpdate(
     venueId,
     {
       $addToSet: {
-        blockedDates: { $each: dates }
-      }
+        blockedDates: { $each: dates },
+      },
     },
     { new: true }
-  ).select('blockedDates').lean().exec();
+  )
+    .select('blockedDates')
+    .lean()
+    .exec();
 }
 
-export async function removeBlockedDatesFromVenue(venueId: string, dates: Date[]): Promise<IVenue | null> {
+export async function removeBlockedDatesFromVenue(
+  venueId: string,
+  dates: Date[]
+): Promise<IVenue | null> {
   return VenueModel.findByIdAndUpdate(
     venueId,
     {
       $pullAll: {
-        blockedDates: dates
-      }
+        blockedDates: dates,
+      },
     },
     { new: true }
-  ).select('blockedDates').lean().exec();
+  )
+    .select('blockedDates')
+    .lean()
+    .exec();
 }

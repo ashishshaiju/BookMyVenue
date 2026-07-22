@@ -1,4 +1,5 @@
 import { resendConfig } from '../constants/env';
+import { VENUE_CONSTANTS } from '../constants/venue.constants';
 
 function buildEmailWrapper(bodyContent: string): string {
   const appName = resendConfig.appName;
@@ -123,7 +124,7 @@ export function getAdminPasswordResetTemplate(newPassword: string, username: str
       Please log in with this new password and change it immediately from your profile settings.
     </p>
   `;
-  
+
   return buildEmailWrapper(bodyContent);
 }
 
@@ -320,7 +321,28 @@ export function getVenueApprovedTemplate(venueName: string): string {
   return buildEmailWrapper(bodyContent);
 }
 
-export function getVenueRejectedTemplate(venueName: string, reason: string): string {
+export function getVenueRejectedTemplate(
+  venueName: string,
+  reason: string,
+  editDeadline: Date,
+  submissionNumber: number
+): string {
+  const deadlineStr = editDeadline.toLocaleDateString('en-IN', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
+  const daysLeft = Math.ceil((editDeadline.getTime() - Date.now()) / (24 * 60 * 60 * 1000));
+
+  const maxAttempts = VENUE_CONSTANTS.MAX_SUBMISSION_ATTEMPTS.toString();
+
+  const attemptNotice =
+    submissionNumber >= 7
+      ? `<p style="margin:0 0 8px;font-size:14px;color:#713f12;">
+         <strong>This is submission attempt #${String(submissionNumber)} of ${maxAttempts}.</strong>
+       </p>`
+      : '';
+
   const bodyContent = `
     <h1 style="margin:0 0 8px;font-size:22px;font-weight:700;color:#111827;">Venue Application Update</h1>
     <p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#374151;">
@@ -332,6 +354,22 @@ export function getVenueRejectedTemplate(venueName: string, reason: string): str
         <td style="padding:20px 24px;">
           <p style="margin:0 0 8px;font-size:14px;color:#991b1b;"><strong>Reason for Rejection:</strong></p>
           <p style="margin:0;font-size:15px;color:#7f1d1d;line-height:1.5;">${reason}</p>
+        </td>
+      </tr>
+    </table>
+    ${attemptNotice}
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+           style="background-color:#fef9c3;border-radius:8px;margin-bottom:24px;">
+      <tr>
+        <td style="padding:20px 24px;">
+          <p style="margin:0 0 8px;font-size:14px;color:#92400e;"><strong>⏰ Action Required: Edit & Resubmit</strong></p>
+          <p style="margin:0 0 8px;font-size:15px;color:#713f12;line-height:1.5;">
+            You have <strong>${daysLeft.toString()} days</strong> (until <strong>${deadlineStr}</strong>)
+            to edit your venue and resubmit for review.
+          </p>
+          <p style="margin:8px 0 0;font-size:14px;color:#713f12;">
+            After this deadline, your venue will be <strong>auto-suspended</strong> and no longer editable.
+          </p>
         </td>
       </tr>
     </table>
@@ -366,20 +404,235 @@ export function getVenueSuspendedTemplate(venueName: string, reason: string): st
 
 export function getVenueUnsuspendedTemplate(venueName: string): string {
   const bodyContent = `
-    <h1 style="margin:0 0 8px;font-size:22px;font-weight:700;color:#111827;">Venue Reactivated</h1>
+    <h1 style="margin:0 0 8px;font-size:22px;font-weight:700;color:#111827;">Your Venue Has Been Reactivated ✅</h1>
     <p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#374151;">
-      The suspension on your venue <strong>${venueName}</strong> has been lifted.
+      Great news! Your venue <strong>${venueName}</strong> has been reactivated and is now visible to customers again.
     </p>
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
            style="background-color:#f0fdf4;border-radius:8px;margin-bottom:24px;">
       <tr>
         <td style="padding:20px 24px;">
-          <p style="margin:0;font-size:15px;color:#166534;line-height:1.6;">
-            Your venue is now active again and visible to all users on the platform. Welcome back!
+          <p style="margin:0 0 8px;font-size:14px;color:#166534;"><strong>Venue</strong></p>
+          <p style="margin:0;font-size:16px;color:#111827;font-weight:600;">${venueName}</p>
+        </td>
+      </tr>
+    </table>
+    <p style="margin:16px 0 0;font-size:14px;color:#374151;">
+      You can now manage your venue and accept bookings as usual. If you have any questions, please reply to this email.
+    </p>
+  `;
+
+  return buildEmailWrapper(bodyContent);
+}
+
+export function getVenueDeadlineExtendedTemplate(venueName: string, newDeadline: Date): string {
+  const deadlineStr = newDeadline.toLocaleDateString('en-IN', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
+  const daysLeft = Math.ceil((newDeadline.getTime() - Date.now()) / (24 * 60 * 60 * 1000));
+
+  const bodyContent = `
+    <h1 style="margin:0 0 8px;font-size:22px;font-weight:700;color:#111827;">Edit Deadline Extended ✅</h1>
+    <p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#374151;">
+      Good news! The deadline to edit and resubmit your venue <strong>${venueName}</strong> has been extended.
+    </p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+           style="background-color:#f0fdf4;border-radius:8px;margin-bottom:24px;">
+      <tr>
+        <td style="padding:20px 24px;">
+          <p style="margin:0 0 8px;font-size:14px;color:#166534;"><strong>New Deadline</strong></p>
+          <p style="margin:0;font-size:18px;color:#111827;font-weight:600;">${deadlineStr}</p>
+          <p style="margin:8px 0 0;font-size:14px;color:#166534;">
+            You now have <strong>${daysLeft.toString()} days</strong> to make changes and resubmit.
           </p>
         </td>
       </tr>
     </table>
+    <p style="margin:16px 0 0;font-size:14px;color:#374151;">
+      Please update your venue details and submit for review before the new deadline.
+    </p>
   `;
+  return buildEmailWrapper(bodyContent);
+}
+
+interface BanScopeDisplay {
+  label: string;
+  description: string;
+}
+
+function getBanScopeDisplay(scope: string, venueName?: string): BanScopeDisplay {
+  switch (scope) {
+    case 'full':
+      return {
+        label: 'Full Platform Ban',
+        description:
+          'You cannot access any features of the platform. Your account has been deactivated.',
+      };
+    case 'commenting':
+      return {
+        label: 'Commenting Ban',
+        description: venueName
+          ? `You cannot post reviews or comments on <strong>${venueName}</strong>.`
+          : 'You cannot post reviews or comments on any venue.',
+      };
+    case 'owner_dashboard':
+      return {
+        label: 'Owner Dashboard Ban',
+        description: venueName
+          ? `You cannot access the owner dashboard for <strong>${venueName}</strong>.`
+          : 'You cannot access the owner dashboard for any of your venues.',
+      };
+    case 'venue_creation':
+      return {
+        label: 'Venue Creation Ban',
+        description: 'You cannot create new venues on the platform.',
+      };
+    default:
+      return {
+        label: 'Account Restriction',
+        description: 'Your account has been restricted.',
+      };
+  }
+}
+
+export function getUserBannedTemplate(
+  scope: string,
+  reason: string,
+  expiresAt: Date | null,
+  venueName?: string
+): string {
+  const scopeDisplay = getBanScopeDisplay(scope, venueName);
+  const appName = resendConfig.appName;
+  const isDev = process.env.NODE_ENV === 'development';
+
+  const expiryHtml = expiresAt
+    ? `<p style="margin:16px 0 0;font-size:14px;color:#166534;"><strong>This ban expires on:</strong> ${expiresAt.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })} at ${expiresAt.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</p>`
+    : '<p style="margin:16px 0 0;font-size:14px;color:#991b1b;"><strong>This ban is permanent</strong> unless lifted by an administrator.</p>';
+
+  const bodyContent = `
+    <h1 style="margin:0 0 8px;font-size:22px;font-weight:700;color:#111827;">Account Restriction Applied</h1>
+    <p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#374151;">
+      Your <strong>${appName}</strong> account has been restricted. Please review the details below.
+    </p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+           style="background-color:#fef2f2;border-radius:8px;margin-bottom:24px;">
+      <tr>
+        <td style="padding:20px 24px;">
+          <p style="margin:0 0 8px;font-size:14px;color:#991b1b;"><strong>Restriction Type</strong></p>
+          <p style="margin:0 0 16px;font-size:16px;color:#111827;font-weight:600;">${scopeDisplay.label}</p>
+          <p style="margin:0 0 16px;font-size:14px;line-height:1.6;color:#374151;">${scopeDisplay.description}</p>
+          <p style="margin:0 0 8px;font-size:14px;color:#991b1b;"><strong>Reason</strong></p>
+          <p style="margin:0;font-size:15px;color:#111827;">${reason}</p>
+        </td>
+      </tr>
+    </table>
+    ${expiryHtml}
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+           style="background-color:#fef9c3;border-radius:6px;margin-bottom:16px;">
+      <tr>
+        <td style="padding:14px 16px;">
+          <p style="margin:0;font-size:13px;color:#92400e;line-height:1.5;">
+            <strong>What this means:</strong> You will not be able to perform actions related to this restriction.
+            If you believe this was a mistake, please contact our support team by replying to this email.
+          </p>
+        </td>
+      </tr>
+    </table>
+    ${isDev ? `<p style="margin:16px 0 0;font-size:13px;color:#92400e;background-color:#fef9c3;padding:12px;border-radius:6px;"><strong>Development mode:</strong> This email was redirected to the development address. The original recipient email is shown in the application logs.</p>` : ''}
+  `;
+
+  return buildEmailWrapper(bodyContent);
+}
+
+export function getUserUnbannedTemplate(): string {
+  const appName = resendConfig.appName;
+  const isDev = process.env.NODE_ENV === 'development';
+
+  const bodyContent = `
+    <h1 style="margin:0 0 8px;font-size:22px;font-weight:700;color:#111827;">Account Restriction Lifted ✅</h1>
+    <p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#374151;">
+      Good news! The restriction on your <strong>${appName}</strong> account has been lifted.
+    </p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+           style="background-color:#f0fdf4;border-radius:8px;margin-bottom:24px;">
+      <tr>
+        <td style="padding:20px 24px;">
+          <p style="margin:0 0 8px;font-size:14px;color:#166534;"><strong>Status</strong></p>
+          <p style="margin:0;font-size:16px;color:#111827;font-weight:600;">All restrictions removed</p>
+        </td>
+      </tr>
+    </table>
+    <p style="margin:16px 0 0;font-size:14px;color:#374151;">
+      You can now use all platform features as normal. If you have any questions, please reply to this email.
+    </p>
+    ${isDev ? `<p style="margin:16px 0 0;font-size:13px;color:#92400e;background-color:#fef9c3;padding:12px;border-radius:6px;"><strong>Development mode:</strong> This email was redirected to the development address. The original recipient email is shown in the application logs.</p>` : ''}
+  `;
+
+  return buildEmailWrapper(bodyContent);
+}
+
+export function getReviewRemovedTemplate(venueName: string, reason: string): string {
+  const appName = resendConfig.appName;
+  const isDev = process.env.NODE_ENV === 'development';
+
+  const bodyContent = `
+    <h1 style="margin:0 0 8px;font-size:22px;font-weight:700;color:#111827;">Your Review Has Been Removed</h1>
+    <p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#374151;">
+      An administrator has removed your review for <strong>${venueName}</strong> on <strong>${appName}</strong>.
+    </p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+           style="background-color:#fef2f2;border-radius:8px;margin-bottom:24px;">
+      <tr>
+        <td style="padding:20px 24px;">
+          <p style="margin:0 0 8px;font-size:14px;color:#991b1b;"><strong>Venue</strong></p>
+          <p style="margin:0 0 16px;font-size:16px;color:#111827;font-weight:600;">${venueName}</p>
+          <p style="margin:0 0 8px;font-size:14px;color:#991b1b;"><strong>Reason for Removal</strong></p>
+          <p style="margin:0;font-size:15px;color:#111827;">${reason}</p>
+        </td>
+      </tr>
+    </table>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+           style="background-color:#fef9c3;border-radius:6px;margin-bottom:16px;">
+      <tr>
+        <td style="padding:14px 16px;">
+          <p style="margin:0;font-size:13px;color:#92400e;line-height:1.5;">
+            <strong>Note:</strong> Reviews are removed when they violate our community guidelines.
+            If you believe this was a mistake, please contact our support team by replying to this email.
+          </p>
+        </td>
+      </tr>
+    </table>
+    ${isDev ? `<p style="margin:16px 0 0;font-size:13px;color:#92400e;background-color:#fef9c3;padding:12px;border-radius:6px;"><strong>Development mode:</strong> This email was redirected to the development address. The original recipient email is shown in the application logs.</p>` : ''}
+  `;
+
+  return buildEmailWrapper(bodyContent);
+}
+
+export function getReviewRestoredTemplate(venueName: string): string {
+  const appName = resendConfig.appName;
+  const isDev = process.env.NODE_ENV === 'development';
+
+  const bodyContent = `
+    <h1 style="margin:0 0 8px;font-size:22px;font-weight:700;color:#111827;">Your Review Has Been Restored ✅</h1>
+    <p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#374151;">
+      An administrator has restored your review for <strong>${venueName}</strong> on <strong>${appName}</strong>.
+    </p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+           style="background-color:#f0fdf4;border-radius:8px;margin-bottom:24px;">
+      <tr>
+        <td style="padding:20px 24px;">
+          <p style="margin:0 0 8px;font-size:14px;color:#166534;"><strong>Venue</strong></p>
+          <p style="margin:0;font-size:16px;color:#111827;font-weight:600;">${venueName}</p>
+        </td>
+      </tr>
+    </table>
+    <p style="margin:16px 0 0;font-size:14px;color:#374151;">
+      Your review is now visible to other users. If you have any questions, please reply to this email.
+    </p>
+    ${isDev ? `<p style="margin:16px 0 0;font-size:13px;color:#92400e;background-color:#fef9c3;padding:12px;border-radius:6px;"><strong>Development mode:</strong> This email was redirected to the development address. The original recipient email is shown in the application logs.</p>` : ''}
+  `;
+
   return buildEmailWrapper(bodyContent);
 }

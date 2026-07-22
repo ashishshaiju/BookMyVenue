@@ -36,38 +36,30 @@ export function FeaturedVenues({
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {isLoading ? (
-            Array.from({ length: 8 }).map((_, i) => (
-              <div
-                key={i}
-                className="flex flex-col h-[380px] rounded-2xl border border-[var(--bg-grey)] bg-[var(--bg-tertiary)] overflow-hidden"
-              >
-                <Skeleton className="w-full h-48 shrink-0" />
-                <div className="flex-1 p-5 flex flex-col justify-between">
-                  <div>
-                    <Skeleton className="h-6 w-3/4 mb-3" />
-                    <Skeleton className="h-4 w-1/2 mb-2" />
-                    <Skeleton className="h-4 w-1/3" />
+          {isLoading
+            ? Array.from({ length: 8 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="flex flex-col h-[380px] rounded-2xl border border-[var(--bg-grey)] bg-[var(--bg-tertiary)] overflow-hidden"
+                >
+                  <Skeleton className="w-full h-48 shrink-0" />
+                  <div className="flex-1 p-5 flex flex-col justify-between">
+                    <div>
+                      <Skeleton className="h-6 w-3/4 mb-3" />
+                      <Skeleton className="h-4 w-1/2 mb-2" />
+                      <Skeleton className="h-4 w-1/3" />
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))
-          ) : featuredVenues.length > 0 ? (
-            featuredVenues
-              .slice(0, 8)
-              .map((venue: PublicVenue) => (
+              ))
+            : featuredVenues.slice(0, 8).map((venue: PublicVenue) => (
                 <CompactVenueCard
                   key={venue._id}
                   venue={venue}
                   onToggleWishlist={handleToggleWishlist}
                   isLoadingWishlist={togglingVenues.has(venue._id)}
                 />
-              ))
-          ) : (
-            <div className="col-span-full py-12 text-center text-[var(--text-secondary)]">
-              No featured venues currently available.
-            </div>
-          )}
+              ))}
         </div>
       </div>
     </section>

@@ -30,20 +30,57 @@ export interface Venue {
   [key: string]: unknown;
   _id: string;
   name: string;
-  category: string;
-  capacity: number;
-  pricePerHour: number;
-  status: "draft" | "pending" | "active" | "rejected" | "deactivated";
-  address: {
-    city: string;
-    state: string;
-  };
-  ownerId: {
+  venueType: string;
+  maxCapacity: number;
+  status: "Draft" | "PendingReview" | "Approved" | "Rejected" | "Suspended" | "Inactive";
+  city: string;
+  ownerUserId: {
+    _id: string;
     username: string;
     email: string;
   };
-  rating?: number;
+  avgRating?: number;
+  reviewCount?: number;
+  isActive?: boolean;
+  isFeatured?: boolean;
+  contact?: {
+    name?: string;
+    phone?: string;
+    email?: string;
+  };
+  submissionCount?: number;
+  lastSubmittedAt?: string;
   createdAt: string;
+  updatedAt?: string;
+  currentEditDeadline?: string;
+  rejectionHistory?: Array<{
+    reason: string;
+    rejectedAt: string;
+    rejectedBy?: string;
+    submissionNumber: number;
+    editDeadline: string;
+    extendedAt?: string;
+    extendedBy?: string;
+    originalDeadline?: string;
+  }>;
+  pendingReview?: {
+    intent: string;
+    requestedAt: string;
+    details?: {
+      changedFields?: string[];
+      previousSnapshot?: Record<string, unknown>;
+      reason?: string;
+    };
+  };
+  inactivity?: {
+    requestedAt?: string;
+    approvedAt?: string;
+    blockedAfterDate?: string;
+    inactiveAt?: string;
+    lastInactiveAt?: string;
+    withdrawalRequestedAt?: string;
+  };
+  temporaryBlockAfterDate?: string;
 }
 
 export interface MyVenue {
@@ -60,15 +97,22 @@ export interface Booking {
   [key: string]: unknown;
   _id: string;
   bookingRefId: string;
-  venueId: { name: string; _id: string };
+  venueId: string;
+  venue?: { _id: string; name: string; city?: string; district?: string; address?: string };
   date: string;
   startTime: number;
   endTime: number;
-  status: "pending" | "confirmed" | "cancelled";
-  totalPrice: number;
+  status: "pending" | "confirmed" | "completed" | "cancelled";
+  uiStatus?: "confirmed" | "completed" | "cancelled";
+  price: number;
   createdAt: string;
   bookerName?: string;
   bookerPhone?: string;
+  bookerEmail?: string;
+  paymentMethod?: string;
+  userId?: string;
+  user?: { _id: string; username: string; email: string; phone?: string };
+  eventType?: string;
 }
 
 export interface BookerInfo {

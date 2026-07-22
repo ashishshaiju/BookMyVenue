@@ -1,4 +1,6 @@
 import type { AddVenueFormValues } from '@/types/venue.types';
+import type { VenueDetail } from '@/types/venue.types';
+import type { IFixedPackage } from '@/types/venue.types';
 
 export function mapFormToDTO(values: AddVenueFormValues, imageUrls: string[]) {
   const base = {
@@ -95,5 +97,58 @@ export function mapFormToDTO(values: AddVenueFormValues, imageUrls: string[]) {
       pricingRules: pricingType === 'timeBasedPricing' ? pricingRules : [],
     },
     blockedTimes: (values.blockedTimes ?? []).filter((b) => b.fromTime && b.toTime),
+  };
+}
+
+export function mapVenueToForm(venue: VenueDetail): AddVenueFormValues {
+  
+  return {
+    VenueName: venue.name,
+    VenueDescription: venue.description,
+    venueType: venue.venueType,
+    district: venue.district,
+    state: venue.state || 'Kerala',
+    city: venue.city,
+    pincode: venue.pincode,
+    fullAddress: venue.address,
+    googleMapsLink: venue.googleMapsUrl || '',
+    coordinates: venue.location?.coordinates
+      ? { lat: venue.location.coordinates[1], lng: venue.location.coordinates[0] }
+      : null,
+    spaceAttributes: venue.spaceAttributes || [],
+    seatingConfigurations: venue.seatingConfigurations || [],
+    maxCapacity: venue.maxCapacity?.toString() || '',
+    bookingType: venue.bookingType,
+    workingDays: venue.workingDays || [],
+    fixedPackages: venue.bookingType === 'fixedBooking' && venue.fixedPackages?.length
+      ? venue.fixedPackages.map((p: IFixedPackage) => ({
+          slotName: p.slotName,
+          startTime: p.startTime,
+          endTime: p.endTime,
+          price: p.price,
+        }))
+      : [{ slotName: '', startTime: '', endTime: '', price: 0 }],
+    workingHours: venue.workingHours || { open: '', close: '' },
+    flexibleBooking: venue.flexibleBooking || { slotDuration: '', bufferTime: '' },
+    pricing: venue.pricing || { pricingType: '', basePrice: 0, pricingRules: [] },
+    pricingType: venue.pricing?.pricingType || '',
+    samePrice: venue.pricing?.basePrice || 0,
+    blockedTimes: venue.blockedTimes || [{ fromTime: '', toTime: '', reason: '' }],
+    amenities: venue.amenities || [],
+    venuePhotos: [],
+    existingImages: {
+      coverImage: venue.coverImage,
+      galleryImages: venue.galleryImages || [],
+    },
+    contact: {
+      name: venue.contact?.name || '',
+      phone: venue.contact?.phone || '',
+      email: venue.contact?.email || undefined,
+    },
+    cancellation: {
+      policy: venue.cancellation?.policy || '',
+      refundType: venue.cancellation?.refundType || '',
+      refundRules: venue.cancellation?.refundRules || [{ daysBefore: '', refundPercentage: '' }],
+    },
   };
 }

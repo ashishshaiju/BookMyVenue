@@ -35,11 +35,7 @@ const router: Router = Router();
  */
 router
   .route('/toggle/:venueId')
-  .post(
-    verifyAccessToken,
-    requirePermission(P.wishlist.create),
-    controller.toggleWishlist
-  );
+  .post(verifyAccessToken, requirePermission(P.wishlist.create), controller.toggleWishlist);
 
 /**
  * @openapi
@@ -95,11 +91,7 @@ router
  */
 router
   .route('/status')
-  .get(
-    verifyAccessToken,
-    requirePermission(P.wishlist.read),
-    controller.getWishlistStatus
-  );
+  .get(verifyAccessToken, requirePermission(P.wishlist.read), controller.getWishlistStatus);
 
 /**
  * @openapi

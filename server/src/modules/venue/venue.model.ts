@@ -1,5 +1,5 @@
 import mongoose, { Schema } from 'mongoose';
-import { VenueStatusEnum } from '../../constants/venue.constants';
+import { VenueStatusEnum, ReviewIntent } from '../../constants/venue.constants';
 import type {
   IGeoPoint,
   IFixedPackage,
@@ -89,6 +89,20 @@ const CancellationSchema = new Schema<ICancellation>(
   { _id: false }
 );
 
+const RejectionEntrySchema = new Schema(
+  {
+    reason: { type: String, required: true, maxlength: 500 },
+    rejectedAt: { type: Date, default: Date.now },
+    rejectedBy: { type: Schema.Types.ObjectId, ref: 'Users', required: true },
+    submissionNumber: { type: Number, required: true },
+    editDeadline: { type: Date, required: true },
+    extendedAt: { type: Date },
+    extendedBy: { type: Schema.Types.ObjectId, ref: 'Users' },
+    originalDeadline: { type: Date },
+  },
+  { _id: true }
+);
+
 const VenueSchema = new Schema<IVenue>(
   {
     // Basic Info
@@ -144,6 +158,36 @@ const VenueSchema = new Schema<IVenue>(
     avgRating: { type: Number, default: 0, min: 0, max: 5 },
     reviewCount: { type: Number, default: 0, min: 0 },
 
+    pendingReview: {
+      type: {
+        intent: { type: String, enum: Object.values(ReviewIntent) },
+        requestedAt: { type: Date },
+        details: {
+          type: {
+            changedFields: [{ type: String }],
+            previousSnapshot: { type: Schema.Types.Mixed },
+            reason: { type: String },
+          },
+          default: {},
+        },
+      },
+      default: undefined,
+    },
+
+    inactivity: {
+      type: {
+        requestedAt: { type: Date },
+        approvedAt: { type: Date },
+        blockedAfterDate: { type: Date },
+        inactiveAt: { type: Date },
+        lastInactiveAt: { type: Date },
+        withdrawalRequestedAt: { type: Date },
+      },
+      default: undefined,
+    },
+
+    temporaryBlockAfterDate: { type: Date, default: undefined },
+
     // Operational
     status: {
       type: String,
@@ -152,7 +196,17 @@ const VenueSchema = new Schema<IVenue>(
       default: 'Draft',
     },
     ownerUserId: { type: Schema.Types.ObjectId, ref: 'Users', required: true },
-    rejectionReason: { type: String },
+    rejectionHistory: {
+      type: [RejectionEntrySchema],
+      default: [],
+      validate: {
+        validator: (v: unknown[]): boolean => v.length <= 10,
+        message: 'Maximum 10 submission attempts exceeded',
+      },
+    },
+    submissionCount: { type: Number, default: 0 },
+    lastSubmittedAt: { type: Date },
+    currentEditDeadline: { type: Date },
     suspensionReason: { type: String, default: null },
 
     // Audit
@@ -184,5 +238,8 @@ VenueSchema.index({ ownerUserId: 1, status: 1, deleted: 1 }, { name: 'idx_owner_
 
 // Future geo-search readiness (2dsphere on the nested GeoJSON Point)
 VenueSchema.index({ location: '2dsphere' }, { name: 'idx_location_geo' });
+
+// For auto-suspend job query
+VenueSchema.index({ status: 1, currentEditDeadline: 1 }, { name: 'idx_status_edit_deadline' });
 
 export const VenueModel = mongoose.model<IVenue>('Venues', VenueSchema, 'Venues');

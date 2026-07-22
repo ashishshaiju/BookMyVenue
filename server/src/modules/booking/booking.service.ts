@@ -16,12 +16,16 @@ import {
 } from './booking.repository';
 import type { PaginationParams, PaginatedResponse } from '../../types/pagination.types';
 import { minutesToTimeString } from '../../utils/timeUtils';
-import { EmailIntent, EmailTaskStatus, type EmailIntentType } from '../../constants/email.constants';
+import {
+  EmailIntent,
+  EmailTaskStatus,
+  type EmailIntentType,
+} from '../../constants/email.constants';
 import type { ILock } from './lock.types';
 import type { IBooking } from './booking.types';
 import type { RazorpayWebhookNotes } from './booking.types';
 import { findUserEmailById } from '../user/user.repository';
-import { findVenueNameAndOwner } from '../venue/venue.repository';
+import { findVenueNameAndOwner, findVenueById } from '../venue/venue.repository';
 import { enqueueEmailTask } from '../../services/email.repository';
 
 async function enqueueEmail(
@@ -131,13 +135,16 @@ export async function processCapturedPayment(
   if (lock) {
     const expectedAmountPaise = Math.round(lock.price * 100);
     if (Math.abs(amountPaise - expectedAmountPaise) > 100) {
-      logWarn('Captured payment amount does not match lock price — proceeding, but flagging for review', {
-        module: 'booking.service.ts/processCapturedPayment',
-        lockId,
-        paymentId,
-        expectedAmountPaise,
-        capturedAmountPaise: amountPaise,
-      });
+      logWarn(
+        'Captured payment amount does not match lock price — proceeding, but flagging for review',
+        {
+          module: 'booking.service.ts/processCapturedPayment',
+          lockId,
+          paymentId,
+          expectedAmountPaise,
+          capturedAmountPaise: amountPaise,
+        }
+      );
     }
 
     logInfo('Webhook Scenario A: Lock exists, creating booking', {
@@ -146,6 +153,69 @@ export async function processCapturedPayment(
       userId,
       paymentId,
     });
+
+    // Transfer contractSnapshot from lock to booking
+    let contractSnapshot = lock.contractSnapshot;
+
+    if (!contractSnapshot) {
+      logWarn('Lock missing contractSnapshot — building fallback from venue', {
+        module: 'booking.service.ts/processCapturedPayment',
+        lockId,
+        venueId,
+      });
+      const fallbackVenue = await findVenueById(venueId);
+      if (fallbackVenue) {
+        const totalPrice = amountPaise / 100;
+        contractSnapshot = {
+          venue: {
+            name: fallbackVenue.name,
+            city: fallbackVenue.city,
+            district: fallbackVenue.district,
+          },
+          packages: [{
+            pkgName: `${String(lock.startTime)}-${String(lock.endTime)}`,
+            pkgType: fallbackVenue.bookingType === 'fixedBooking' ? 'fixed' : 'flexible',
+            startTime: lock.startTime,
+            endTime: lock.endTime,
+            price: totalPrice,
+          }],
+          financial: { basePrice: totalPrice, taxes: 0, platformFee: 0, totalPaid: totalPrice },
+          cancellation: fallbackVenue.cancellation,
+        };
+      }
+    }
+
+    // Security re-verify: fetch venue and log inconsistencies
+    try {
+      const currentVenue = await findVenueById(venueId);
+      if (currentVenue && contractSnapshot) {
+        if (currentVenue.name !== contractSnapshot.venue.name) {
+          logWarn('Venue name changed since lock was acquired', {
+            module: 'booking.service.ts/processCapturedPayment',
+            lockId,
+            venueId,
+            snapshotName: contractSnapshot.venue.name,
+            currentName: currentVenue.name,
+          });
+        }
+        if (currentVenue.cancellation.policy !== contractSnapshot.cancellation.policy) {
+          logWarn('Venue cancellation policy changed since lock was acquired', {
+            module: 'booking.service.ts/processCapturedPayment',
+            lockId,
+            venueId,
+            snapshotPolicy: contractSnapshot.cancellation.policy,
+            currentPolicy: currentVenue.cancellation.policy,
+          });
+        }
+      }
+    } catch (err) {
+      logWarn('Failed to re-verify venue during webhook processing', {
+        module: 'booking.service.ts/processCapturedPayment',
+        lockId,
+        venueId,
+        error: (err as Error).message,
+      });
+    }
 
     try {
       await createBooking({
@@ -161,6 +231,7 @@ export async function processCapturedPayment(
         eventType: lock.eventType,
         bookerInfo: lock.bookerInfo,
         paymentMethod: paymentMethod,
+        contractSnapshot,
       });
     } catch (err) {
       const error = err as { code?: number; message: string };
@@ -308,11 +379,22 @@ export async function getAllBookings(
   return findAllBookings(paginationParams, filters);
 }
 
-export async function getMyBookings(userId: string): Promise<{ bookings: { upcoming: Record<string, unknown>[]; cancelled: Record<string, unknown>[]; completed: Record<string, unknown>[] } }> {
+export async function getMyBookings(
+  userId: string
+): Promise<{
+  bookings: {
+    upcoming: Record<string, unknown>[];
+    cancelled: Record<string, unknown>[];
+    completed: Record<string, unknown>[];
+  };
+}> {
   return fetchMyBookings(userId);
 }
 
-export async function getBookingById(bookingId: string, userId: string): Promise<Record<string, unknown> | null> {
+export async function getBookingById(
+  bookingId: string,
+  userId: string
+): Promise<Record<string, unknown> | null> {
   return fetchBookingById(bookingId, userId);
 }
 

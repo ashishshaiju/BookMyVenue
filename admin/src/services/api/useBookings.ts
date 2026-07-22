@@ -15,6 +15,19 @@ export function useOwnerBookings(venueId: string, page: number) {
   );
 }
 
+export function useAdminBookings(page: number, statusFilter: string) {
+  const params = new URLSearchParams({
+    page: String(page),
+    limit: "10",
+  });
+  if (statusFilter !== "All") params.append("status", statusFilter);
+
+  return useApiQuery<BookingsResponse>(
+    [...QUERY_KEYS.ADMIN_BOOKINGS, page, statusFilter],
+    { method: "GET", url: `${API_ENDPOINTS.ADMIN_BOOKINGS}?${params}` },
+  );
+}
+
 export function useCreateOfflineBooking() {
   const queryClient = useQueryClient();
   return useApiMutation<

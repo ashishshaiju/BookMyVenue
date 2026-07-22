@@ -34,9 +34,6 @@ UserSchema.index(
   { unique: true, sparse: true, partialFilterExpression: { active: true } }
 );
 
-UserSchema.index(
-  { active: 1, deleted: 1, isBanned: 1 },
-  { name: 'idx_active_deleted_banned' }
-);
+UserSchema.index({ active: 1, deleted: 1, isBanned: 1 }, { name: 'idx_active_deleted_banned' });
 
 export const UserModel = mongoose.model<IUser>('Users', UserSchema, 'Users');

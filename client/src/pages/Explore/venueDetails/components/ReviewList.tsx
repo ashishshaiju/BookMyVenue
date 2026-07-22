@@ -36,6 +36,7 @@ export function ReviewList({
       {reviews.map((review) => (
         <div
           key={review._id}
+          id={`review-${review._id}`}
           className="p-3 bg-[var(--bg-primary)] rounded-xl border border-[var(--bg-grey)]"
         >
           <div className="grid grid-cols-[2rem_1fr] gap-x-2">

@@ -27,6 +27,7 @@ export function useVenueColumns({
   setRejectDialog,
   setSuspendDialog,
   setFeatureDialog,
+  setExtendDeadlineDialog,
   success,
   error,
 }: {
@@ -60,6 +61,7 @@ export function useVenueColumns({
   setRejectDialog: (state: VenueDialogState) => void;
   setSuspendDialog: (state: VenueDialogState) => void;
   setFeatureDialog: (state: VenueDialogState) => void;
+  setExtendDeadlineDialog: (state: { open: boolean; venueId: string; currentDeadline: string }) => void;
   success: (msg: string) => void;
   error: (msg: string) => void;
 }) {
@@ -73,11 +75,11 @@ export function useVenueColumns({
           onClick={() => {
             openModal({
               title: row.original.name,
-              size: "xl",
+              size: "2xl",
               component: VenueDetailPanel,
               data: row.original,
               actions: [
-                ...(row.original.status === "pending"
+                ...(row.original.status === "PendingReview"
                   ? [
                       {
                         label: "Approve",
@@ -114,7 +116,7 @@ export function useVenueColumns({
                       },
                     ]
                   : []),
-                ...(row.original.status === "active"
+                ...(row.original.status === "Approved"
                   ? [
                       {
                         label: "Suspend",
@@ -129,7 +131,7 @@ export function useVenueColumns({
                       },
                     ]
                   : []),
-                ...(row.original.status === "deactivated"
+                ...(row.original.status === "Suspended"
                   ? [
                       {
                         label: "Unsuspend",
@@ -166,16 +168,16 @@ export function useVenueColumns({
             {row.original.name}
           </p>
           <p className="text-xs text-muted-foreground">
-            {row.original.address?.city}
+            {row.original.city}
           </p>
         </div>
       ),
     },
     {
-      accessorKey: "category",
+      accessorKey: "venueType",
       header: "Type",
       cell: ({ row }: { row: { original: Venue } }) => (
-        <span className="capitalize text-sm">{row.original.category}</span>
+        <span className="capitalize text-sm">{row.original.venueType}</span>
       ),
     },
     {
@@ -184,21 +186,59 @@ export function useVenueColumns({
       cell: ({ row }: { row: { original: Venue } }) => {
         const v = row.original as Venue;
         return (
-          <div className="flex flex-col gap-1 items-start">
-            <Badge variant={STATUS_VARIANT[v.status] ?? "outline"}>
-              {v.status}
-            </Badge>
-            {v.status === "active" && (
-              <Badge
-                variant="outline"
-                className="text-amber-600 border-amber-600 text-xs"
-              >
-                Active
-              </Badge>
-            )}
-          </div>
+          <Badge variant={STATUS_VARIANT[v.status] ?? "outline"}>
+            {v.status}
+          </Badge>
         );
       },
+    },
+    {
+      accessorKey: "isActive",
+      header: "Active",
+      cell: ({ row }: { row: { original: Venue } }) => {
+        const v = row.original as Venue;
+        return (
+          <Badge
+            variant={v.isActive ? "default" : "outline"}
+            className={
+              v.isActive
+                ? "bg-green-100 text-green-800 hover:bg-green-100"
+                : "text-muted-foreground"
+            }
+          >
+            {v.isActive ? "Active" : "Inactive"}
+          </Badge>
+        );
+      },
+    },
+    {
+      accessorKey: "ownerUserId",
+      header: "Owner",
+      cell: ({ row }: { row: { original: Venue } }) => (
+        <span>{row.original.ownerUserId?.username || "—"}</span>
+      ),
+    },
+    {
+      accessorKey: "avgRating",
+      header: "Rating",
+      cell: ({ row }: { row: { original: Venue } }) => {
+        const r = row.original;
+        return (
+          <span>
+            {r.avgRating != null
+              ? `${r.avgRating.toFixed(1)} (${r.reviewCount ?? 0})`
+              : "—"}
+          </span>
+        );
+      },
+    },
+    {
+      accessorKey: "updatedAt",
+      header: "Last Updated",
+      cell: ({ row }: { row: { original: Venue } }) =>
+        row.original.updatedAt
+          ? new Date(row.original.updatedAt).toLocaleDateString()
+          : "—",
     },
     {
       accessorKey: "createdAt",
@@ -230,7 +270,7 @@ export function useVenueColumns({
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
               <DropdownMenuSeparator />
 
-              {venue.status === "pending" && (
+              {venue.status === "PendingReview" && (
                 <>
                   <DropdownMenuItem
                     onClick={() =>
@@ -265,7 +305,7 @@ export function useVenueColumns({
                 </>
               )}
 
-              {venue.status === "active" && (
+              {venue.status === "Approved" && (
                 <>
                   <DropdownMenuItem
                     onClick={() =>
@@ -286,7 +326,7 @@ export function useVenueColumns({
                 </>
               )}
 
-              {venue.status === "deactivated" && (
+              {venue.status === "Suspended" && (
                 <DropdownMenuItem
                   onClick={() =>
                     unsuspendMutation.mutate(
@@ -312,6 +352,23 @@ export function useVenueColumns({
                   ✓ Unsuspend
                 </DropdownMenuItem>
               )}
+
+              {venue.status === "Rejected" && venue.currentEditDeadline && (() => {
+                const deadline = venue.currentEditDeadline;
+                return (
+                  <DropdownMenuItem
+                    onClick={() =>
+                      setExtendDeadlineDialog({
+                        open: true,
+                        venueId: venue._id,
+                        currentDeadline: deadline,
+                      })
+                    }
+                  >
+                    ⏰ Extend Deadline…
+                  </DropdownMenuItem>
+                );
+              })()}
             </DropdownMenuContent>
           </DropdownMenu>
         );

@@ -9,6 +9,7 @@ import {
   useFeatureVenue,
   useSuspendVenue,
   useUnsuspendVenue,
+  useExtendVenueDeadline,
 } from "@/services/api/useAdminVenues";
 import { DataTable } from "@/components/ui/data-table";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,9 @@ import { useVenueColumns } from "@/components/venues/useVenueColumns";
 import { RejectVenueDialog } from "@/components/venues/RejectVenueDialog";
 import { SuspendVenueDialog } from "@/components/venues/SuspendVenueDialog";
 import { FeatureVenueDialog } from "@/components/venues/FeatureVenueDialog";
+import { ExtendDeadlineDialog } from "@/components/venues/ExtendDeadlineDialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ReviewsTabContent } from "@/components/reviews/ReviewsTabContent";
 
 export default function VenuesPage() {
   const [page, setPage] = useState(1);
@@ -36,6 +40,7 @@ export default function VenuesPage() {
     venueId: "",
   });
   const [rejectReason, setRejectReason] = useState("");
+  const [extendedDeadline, setExtendedDeadline] = useState<Date | null>(null);
 
   const [suspendDialog, setSuspendDialog] = useState<VenueDialogState>({
     open: false,
@@ -49,6 +54,16 @@ export default function VenuesPage() {
   });
   const [featureDuration, setFeatureDuration] = useState("7");
 
+  const [extendDeadlineDialog, setExtendDeadlineDialog] = useState<{
+    open: boolean;
+    venueId: string;
+    currentDeadline: string;
+  }>({
+    open: false,
+    venueId: "",
+    currentDeadline: "",
+  });
+
   const { openModal, closeModal } = useModal();
   const { success, error } = useToast();
 
@@ -59,22 +74,39 @@ export default function VenuesPage() {
   const featureMutation = useFeatureVenue();
   const suspendMutation = useSuspendVenue();
   const unsuspendMutation = useUnsuspendVenue();
+  const extendDeadlineMutation = useExtendVenueDeadline();
 
   const handleReject = () => {
-    if (!rejectReason.trim()) return error("Please enter a rejection reason");
+    if (!rejectReason.trim()) return error("Please enter a reason");
     if (!rejectDialog.venueId) return;
 
     rejectMutation.mutate(
-      { id: rejectDialog.venueId, reason: rejectReason },
+      { id: rejectDialog.venueId, reason: rejectReason, extendedDeadline: extendedDeadline || undefined },
       {
         onSuccess: () => {
-          success("Venue rejected");
+          success("Venue rejected successfully");
           setRejectDialog({ open: false, venueId: "" });
           setRejectReason("");
+          setExtendedDeadline(null);
         },
         onError: (e: unknown) => {
           const err = e as import("axios").AxiosError<{ message: string }>;
-          error(err.response?.data?.message ?? "Failed to reject");
+          error(err.response?.data?.message ?? "Failed to reject venue");
+        },
+      },
+    );
+  };
+
+  const handleExtendDeadline = (venueId: string, newDeadline: Date) => {
+    extendDeadlineMutation.mutate(
+      { id: venueId, newDeadline },
+      {
+        onSuccess: () => {
+          success("Edit deadline extended successfully");
+        },
+        onError: (e: unknown) => {
+          const err = e as import("axios").AxiosError<{ message: string }>;
+          error(err.response?.data?.message ?? "Failed to extend deadline");
         },
       },
     );
@@ -86,7 +118,7 @@ export default function VenuesPage() {
     featureMutation.mutate(
       {
         id: featureDialog.venueId,
-        durationDays: "7", // Default to 7 days for featuring
+        durationDays: "7",
       },
       {
         onSuccess: () => {
@@ -134,6 +166,7 @@ export default function VenuesPage() {
     setRejectDialog,
     setSuspendDialog,
     setFeatureDialog,
+    setExtendDeadlineDialog,
     success,
     error,
   });
@@ -178,46 +211,70 @@ export default function VenuesPage() {
         </div>
       </div>
 
-      <DataTable
-        columns={columns}
-        data={data?.venues ?? []}
-        page={page}
-        totalPages={data?.pagination?.totalPages ?? 0}
-        onPageChange={setPage}
-        isLoading={isLoading}
-        emptyMessage={
-          statusFilter === "All"
-            ? "No venues found."
-            : `No ${statusFilter.toLowerCase()} venues found.`
-        }
-      />
+      <Tabs defaultValue="all">
+        <TabsList>
+          <TabsTrigger value="all">All Venues</TabsTrigger>
+          <TabsTrigger value="reviews">Reviews</TabsTrigger>
+        </TabsList>
 
-      <RejectVenueDialog
-        open={rejectDialog.open}
-        setOpen={(open) => setRejectDialog({ ...rejectDialog, open })}
-        rejectReason={rejectReason}
-        setRejectReason={setRejectReason}
-        handleReject={handleReject}
-        isPending={rejectMutation.isPending}
-      />
+        <TabsContent value="all">
+          <DataTable
+            columns={columns}
+            data={data?.venues ?? []}
+            page={page}
+            totalPages={data?.pagination?.totalPages ?? 0}
+            onPageChange={setPage}
+            isLoading={isLoading}
+            emptyMessage={
+              statusFilter === "All"
+                ? "No venues found."
+                : `No ${statusFilter === "PendingReview" ? "pending review" : statusFilter.toLowerCase()} venues found.`
+            }
+          />
 
-      <SuspendVenueDialog
-        open={suspendDialog.open}
-        setOpen={(open) => setSuspendDialog({ ...suspendDialog, open })}
-        suspensionReason={suspensionReason}
-        setSuspensionReason={setSuspensionReason}
-        handleSuspend={handleSuspend}
-        isPending={suspendMutation.isPending}
-      />
+          <RejectVenueDialog
+            open={rejectDialog.open}
+            setOpen={(open) => setRejectDialog({ ...rejectDialog, open })}
+            rejectReason={rejectReason}
+            setRejectReason={setRejectReason}
+            handleReject={handleReject}
+            isPending={rejectMutation.isPending}
+            extendedDeadline={extendedDeadline}
+            setExtendedDeadline={setExtendedDeadline}
+          />
 
-      <FeatureVenueDialog
-        open={featureDialog.open}
-        setOpen={(open) => setFeatureDialog({ ...featureDialog, open })}
-        featureDuration={featureDuration}
-        setFeatureDuration={setFeatureDuration}
-        handleFeature={handleFeature}
-        isPending={featureMutation.isPending}
-      />
+          <SuspendVenueDialog
+            open={suspendDialog.open}
+            setOpen={(open) => setSuspendDialog({ ...suspendDialog, open })}
+            suspensionReason={suspensionReason}
+            setSuspensionReason={setSuspensionReason}
+            handleSuspend={handleSuspend}
+            isPending={suspendMutation.isPending}
+          />
+
+          <FeatureVenueDialog
+            open={featureDialog.open}
+            setOpen={(open) => setFeatureDialog({ ...featureDialog, open })}
+            featureDuration={featureDuration}
+            setFeatureDuration={setFeatureDuration}
+            handleFeature={handleFeature}
+            isPending={featureMutation.isPending}
+          />
+
+          <ExtendDeadlineDialog
+            open={extendDeadlineDialog.open}
+            setOpen={(open) => setExtendDeadlineDialog((prev) => ({ ...prev, open }))}
+            venueId={extendDeadlineDialog.venueId}
+            currentDeadline={extendDeadlineDialog.currentDeadline}
+            onExtend={handleExtendDeadline}
+            isPending={extendDeadlineMutation.isPending}
+          />
+        </TabsContent>
+
+        <TabsContent value="reviews">
+          <ReviewsTabContent />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

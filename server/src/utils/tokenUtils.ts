@@ -158,7 +158,7 @@ export const setTokenCookies = (
   res.cookie('accessToken', accessToken, {
     httpOnly: true,
     secure: true,
-    sameSite: isProduction ? 'strict' : 'none' as const ,
+    sameSite: isProduction ? 'strict' : ('none' as const),
     maxAge: accessTokenMaxAge,
     path: '/',
   });
@@ -166,7 +166,7 @@ export const setTokenCookies = (
   res.cookie('refreshToken', refreshToken, {
     httpOnly: true,
     secure: true,
-    sameSite: isProduction ? 'strict' : 'none' as const ,
+    sameSite: isProduction ? 'strict' : ('none' as const),
     maxAge: refreshTokenMaxAge,
     path: '/api/v1/auth',
   });

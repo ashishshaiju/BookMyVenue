@@ -1,6 +1,4 @@
-import type {
-  ModerationSummary,
-} from './moderation.types';
+import type { ModerationSummary } from './moderation.types';
 import * as repo from './moderation.repository';
 
 export async function getModerationSummary(): Promise<ModerationSummary> {

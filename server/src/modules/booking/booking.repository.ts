@@ -8,13 +8,13 @@ import { ProcessedWebhookModel } from './models/processedWebhook.model';
 import { VenueModel } from '../venue/venue.model';
 import type { IVenue, IRefundRule } from '../venue/venue.types';
 import type { IBooking } from './booking.types';
-import type { ILock } from './lock.types';
+import type { ILock, IContractSnapshot } from './lock.types';
 import type { PaginationParams, PaginatedResponse } from '../../types/pagination.types';
 import { minutesToTimeString } from '../../utils/timeUtils';
 
 function resolveRefundPct(venueRaw: unknown, bookingDate: string): { pct: number; label: string } {
   const venue = venueRaw as IVenue;
-  
+
   if (venue.cancellation.policy !== 'refundable') {
     return { pct: 0, label: 'Non-refundable' };
   }
@@ -30,12 +30,41 @@ function resolveRefundPct(venueRaw: unknown, bookingDate: string): { pct: number
   const bookingDateMs = new Date(`${bookingDate}T00:00:00`).getTime();
   const daysUntilBooking = Math.floor((bookingDateMs - nowMs) / (1000 * 60 * 60 * 24));
 
-  const matchedRule = sortedRules.find(rule => daysUntilBooking >= rule.daysBefore);
+  const matchedRule = sortedRules.find((rule) => daysUntilBooking >= rule.daysBefore);
 
   if (matchedRule) {
     return {
       pct: matchedRule.refundPercentage,
-      label: `Refundable (${String(matchedRule.refundPercentage)}% up to ${String(matchedRule.daysBefore)} days before)`
+      label: `Refundable (${String(matchedRule.refundPercentage)}% up to ${String(matchedRule.daysBefore)} days before)`,
+    };
+  }
+
+  return { pct: 0, label: 'Non-refundable' };
+}
+
+export function resolveRefundPctFromSnapshot(
+  cancellation: IContractSnapshot['cancellation'],
+  bookingDate: string
+): { pct: number; label: string } {
+  if (cancellation.policy !== 'refundable') {
+    return { pct: 0, label: 'Non-refundable' };
+  }
+
+  const rules = cancellation.refundRules;
+  if (rules.length === 0) {
+    return { pct: 0, label: 'Non-refundable' };
+  }
+
+  const sortedRules = [...rules].sort((a, b) => b.daysBefore - a.daysBefore);
+  const nowMs = Date.now();
+  const bookingDateMs = new Date(`${bookingDate}T00:00:00`).getTime();
+  const daysUntilBooking = Math.floor((bookingDateMs - nowMs) / (1000 * 60 * 60 * 24));
+
+  const matchedRule = sortedRules.find((rule) => daysUntilBooking >= rule.daysBefore);
+  if (matchedRule) {
+    return {
+      pct: matchedRule.refundPercentage,
+      label: `Refundable (${String(matchedRule.refundPercentage)}% up to ${String(matchedRule.daysBefore)} days before)`,
     };
   }
 
@@ -67,9 +96,18 @@ export interface AggregatedBooking {
   createdAt: Date;
   updatedAt: Date;
   venue: IVenue & { _id: Types.ObjectId };
+  contractSnapshot?: IContractSnapshot;
 }
 
-export async function fetchMyBookings(userId: string): Promise<{ bookings: { upcoming: Record<string, unknown>[], cancelled: Record<string, unknown>[], completed: Record<string, unknown>[] } }> {
+export async function fetchMyBookings(
+  userId: string
+): Promise<{
+  bookings: {
+    upcoming: Record<string, unknown>[];
+    cancelled: Record<string, unknown>[];
+    completed: Record<string, unknown>[];
+  };
+}> {
   const bookings = await BookingModel.aggregate<AggregatedBooking>([
     { $match: { userId: new Types.ObjectId(userId) } },
     {
@@ -110,9 +148,17 @@ export async function fetchMyBookings(userId: string): Promise<{ bookings: { upc
       city: b.venue.city,
       district: b.venue.district,
       coverImage: b.venue.coverImage,
-      date: new Date(b.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+      date: new Date(b.date).toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+      }),
       timeRange: `${minutesToTimeString(b.startTime)} - ${minutesToTimeString(b.endTime)}`,
-      bookedOn: new Date(b.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+      bookedOn: new Date(b.createdAt).toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+      }),
       guestCount: b.guestCount,
       eventType: b.eventType,
       totalPrice: b.price,
@@ -134,17 +180,17 @@ export async function fetchMyBookings(userId: string): Promise<{ bookings: { upc
   };
 }
 
-export async function fetchBookingById(bookingId: string, userId: string): Promise<Record<string, unknown> | null> {
+export async function fetchBookingById(
+  bookingId: string,
+  userId: string
+): Promise<Record<string, unknown> | null> {
   let matchStage: Record<string, unknown>;
   if (bookingId.toUpperCase().startsWith('BMV-')) {
     const suffix = bookingId.toUpperCase().replace('BMV-', '').toLowerCase();
     matchStage = {
       userId: new Types.ObjectId(userId),
       $expr: {
-        $eq: [
-          { $substr: [{ $toString: '$_id' }, 18, 6] },
-          suffix,
-        ],
+        $eq: [{ $substr: [{ $toString: '$_id' }, 18, 6] }, suffix],
       },
     };
   } else {
@@ -187,9 +233,17 @@ export async function fetchBookingById(bookingId: string, userId: string): Promi
     city: booking.venue.city,
     district: booking.venue.district,
     coverImage: booking.venue.coverImage,
-    date: new Date(booking.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+    date: new Date(booking.date).toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    }),
     timeRange: `${minutesToTimeString(booking.startTime)} - ${minutesToTimeString(booking.endTime)}`,
-    bookedOn: new Date(booking.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+    bookedOn: new Date(booking.createdAt).toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    }),
     guestCount: booking.guestCount,
     eventType: booking.eventType,
     totalPrice: booking.price,
@@ -200,8 +254,12 @@ export async function fetchBookingById(bookingId: string, userId: string): Promi
     contactEmail: booking.venue.contact.email,
     googleMapsUrl: booking.venue.googleMapsUrl,
     amenities: booking.venue.amenities,
-    cancellationPolicy: resolveRefundPct(booking.venue, booking.date).label,
-    cancellationRefundPct: resolveRefundPct(booking.venue, booking.date).pct,
+    cancellationPolicy: booking.contractSnapshot
+      ? resolveRefundPctFromSnapshot(booking.contractSnapshot.cancellation, booking.date).label
+      : resolveRefundPct(booking.venue, booking.date).label,
+    cancellationRefundPct: booking.contractSnapshot
+      ? resolveRefundPctFromSnapshot(booking.contractSnapshot.cancellation, booking.date).pct
+      : resolveRefundPct(booking.venue, booking.date).pct,
     paymentReference: booking.paymentReference,
     bookerInfo: booking.bookerInfo,
   };
@@ -233,8 +291,12 @@ export async function fetchActiveConflicts(
     lockQuery = { ...lockQuery, $nor: excludeConditions };
   }
 
-  const locks = await LockModel.find(lockQuery).session(options?.session ?? null).lean();
-  const bookings = await BookingModel.find({ venueId: vId, date, status: BookingStatus.CONFIRMED }).session(options?.session ?? null).lean();
+  const locks = await LockModel.find(lockQuery)
+    .session(options?.session ?? null)
+    .lean();
+  const bookings = await BookingModel.find({ venueId: vId, date, status: BookingStatus.CONFIRMED })
+    .session(options?.session ?? null)
+    .lean();
 
   return [
     ...locks.map((l: ILock) => ({ start: l.startTime, end: l.endTime })),
@@ -273,6 +335,7 @@ export interface CreateBookingData {
   paymentMethod?: string;
   advancePaid?: number;
   remainingAmount?: number;
+  contractSnapshot?: IContractSnapshot;
 }
 
 export async function createBooking(data: CreateBookingData): Promise<IBooking> {
@@ -291,6 +354,7 @@ export async function createBooking(data: CreateBookingData): Promise<IBooking> 
     paymentMethod: data.paymentMethod,
     advancePaid: data.advancePaid,
     remainingAmount: data.remainingAmount,
+    contractSnapshot: data.contractSnapshot,
   });
   return booking;
 }
@@ -322,7 +386,6 @@ export async function createFailedBooking(data: CreateFailedBookingData): Promis
     reason: data.reason,
   });
 }
-
 
 // Idempotency gate
 /**
@@ -359,16 +422,45 @@ export async function findAllBookings(
         },
       },
       { $unwind: '$venue' },
+      {
+        $lookup: {
+          from: 'Users',
+          localField: 'userId',
+          foreignField: '_id',
+          as: 'user',
+        },
+      },
+      { $unwind: { path: '$user', preserveNullAndEmptyArrays: true } },
+      {
+        $addFields: {
+          bookerEmail: '$bookerInfo.email',
+          bookerPhone: '$bookerInfo.phone',
+          bookerName: '$bookerInfo.name',
+        },
+      },
     ]),
     BookingModel.countDocuments(matchStage).exec(),
   ]);
 
+  // Compute UI status for each booking
+  const now = new Date();
+  const bookingsWithUIStatus = bookings.map((booking) => {
+    if (booking.status === 'cancelled') {
+      return { ...booking, uiStatus: 'cancelled' as const };
+    }
+    const eventEnd = new Date(`${booking.date}T00:00:00`);
+    eventEnd.setMinutes(booking.endTime);
+    if (eventEnd < now) {
+      return { ...booking, uiStatus: 'completed' as const };
+    }
+    return { ...booking, uiStatus: 'confirmed' as const };
+  });
+
   return {
-    bookings,
+    bookings: bookingsWithUIStatus,
     pagination: buildPaginationMeta(totalCount, paginationParams),
   };
 }
-
 
 export async function updateLockBookerDetails(
   lockId: string,
@@ -389,19 +481,28 @@ export async function updateLockBookerDetails(
     { new: true }
   ).lean();
 }
-export async function fetchUserBookingByRefIdOrId(bookingId: string, userId: string): Promise<IBooking | null> {
+export async function fetchUserBookingByRefIdOrId(
+  bookingId: string,
+  userId: string
+): Promise<IBooking | null> {
   const isBookingRef = bookingId.toUpperCase().startsWith('BMV-') && bookingId.length === 10;
   if (isBookingRef) {
     const suffix = bookingId.toUpperCase().replace('BMV-', '');
     const userBookings = await BookingModel.find({ userId: new Types.ObjectId(userId) });
-    return userBookings.find(b => b._id.toString().slice(-6).toUpperCase() === suffix) ?? null;
+    return userBookings.find((b) => b._id.toString().slice(-6).toUpperCase() === suffix) ?? null;
   } else {
-    return BookingModel.findOne({ _id: new Types.ObjectId(bookingId), userId: new Types.ObjectId(userId) });
+    return BookingModel.findOne({
+      _id: new Types.ObjectId(bookingId),
+      userId: new Types.ObjectId(userId),
+    });
   }
 }
 
 export async function findLockById(lockId: string, userId: string): Promise<ILock | null> {
-  return LockModel.findOne({ _id: new Types.ObjectId(lockId), userId: new Types.ObjectId(userId) }).lean();
+  return LockModel.findOne({
+    _id: new Types.ObjectId(lockId),
+    userId: new Types.ObjectId(userId),
+  }).lean();
 }
 
 export async function findLockByIdRaw(lockId: string): Promise<ILock | null> {
@@ -459,11 +560,14 @@ export async function claimBookingForCancellation(
   ).lean();
 }
 
-export async function findVerifiedUserIds(venueId: string, userIds: string[]): Promise<Set<string>> {
+export async function findVerifiedUserIds(
+  venueId: string,
+  userIds: string[]
+): Promise<Set<string>> {
   const verified = await BookingModel.find({
     venueId,
     userId: { $in: userIds },
     status: { $ne: BookingStatus.CANCELLED },
   }).distinct('userId');
-  return new Set(verified.map(id => id.toString()));
+  return new Set(verified.map((id) => id.toString()));
 }

@@ -266,7 +266,11 @@ export async function revokeSession(
   assertCanRevokeOlderSessions(currentSession, [targetSession.createdAt]);
 
   await runInTransaction(async (session) => {
-    await authRepo.revokeTokenFamily(targetSession.rootTokenId, TokenRevocationReason.USER_REVOKED, session);
+    await authRepo.revokeTokenFamily(
+      targetSession.rootTokenId,
+      TokenRevocationReason.USER_REVOKED,
+      session
+    );
     await authRepo.deactivateSessionById(targetSession._id, userId, session);
   });
 }
@@ -507,7 +511,7 @@ export async function changePassword(
   userAgent: string
 ): Promise<void> {
   const session = await mongoose.startSession();
-  
+
   await session.withTransaction(async () => {
     const user = await userRepo.findActiveUserByIdWithPassword(userId, session);
     if (!user) {

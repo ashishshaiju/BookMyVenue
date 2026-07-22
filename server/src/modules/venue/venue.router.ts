@@ -11,8 +11,10 @@ import {
 import * as validator from './venue.validator';
 import rateLimit from 'express-rate-limit';
 import { paginationMiddleware } from '../../middlewares/pagination.middleware';
+import { idempotencyMiddleware } from '../../middlewares/idempotency.middleware';
 
-const router: Router = Router();
+const 
+router: Router = Router();
 
 const uploadSignatureLimiter = rateLimit({
   windowMs: 30 * 60 * 1000,
@@ -58,11 +60,7 @@ const uploadSignatureLimiter = rateLimit({
  */
 router
   .route('/upload-signature')
-  .get(
-    verifyAccessToken,
-    uploadSignatureLimiter,
-    controller.getUploadSignature
-  );
+  .get(verifyAccessToken, uploadSignatureLimiter, controller.getUploadSignature);
 
 /**
  * @openapi
@@ -137,11 +135,7 @@ router
  */
 router
   .route('/')
-  .post(
-    verifyAccessToken,
-    validateBody(validator.createVenueSchema),
-    controller.createVenue
-  )
+  .post(verifyAccessToken, validateBody(validator.createVenueSchema), controller.createVenue)
   .get(
     verifyAccessTokenOptional,
     validateQuery(validator.publicVenueFiltersSchema),
@@ -215,9 +209,7 @@ router
  *                       items:
  *                         type: object
  */
-router
-  .route('/pins')
-  .get(controller.getVenuePins);
+router.route('/pins').get(controller.getVenuePins);
 
 /**
  * @openapi
@@ -262,15 +254,8 @@ router
  */
 router
   .route('/draft')
-  .put(
-    verifyAccessToken,
-    controller.upsertDraft
-  )
-  .get(
-    verifyAccessToken,
-    requirePermission(P.venues.read),
-    controller.getMyDraft
-  );
+  .put(verifyAccessToken, controller.upsertDraft)
+  .get(verifyAccessToken, requirePermission(P.venues.read), controller.getMyDraft);
 
 /**
  * @openapi
@@ -303,10 +288,35 @@ router
 
 /**
  * @openapi
- * /venues/all:
+ * /venues/reviews:
  *   get:
  *     tags: [Venues]
- *     summary: List all venues regardless of status (admin only)
+ *     summary: List all venues with pending reviews grouped by intent (admin only)
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Array of venues with pending reviews
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Admin role required
+ */
+router
+  .route('/reviews')
+  .get(
+    verifyAccessToken,
+    requireRole('admin'),
+    requirePermission(P.venues.activate),
+    controller.getReviewsList
+  );
+
+/**
+ * @openapi
+ * /venues:
+ *   get:
+ *     tags: [Venues]
+ *     summary: Get venue by ID or all venues (authenticated users get venue details, public gets basic info)
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -362,12 +372,7 @@ router
  *             schema:
  *               $ref: '#/components/schemas/SuccessResponse'
  */
-router
-  .route('/featured')
-  .get(
-    verifyAccessTokenOptional,
-    controller.getFeaturedVenues
-  );
+router.route('/featured').get(verifyAccessTokenOptional, controller.getFeaturedVenues);
 
 /**
  * @openapi
@@ -452,6 +457,7 @@ router
   )
   .put(
     verifyAccessToken,
+    idempotencyMiddleware(),
     requirePermission(P.venues.update),
     validateParams(validator.venueIdParamSchema),
     validateBody(validator.updateVenueSchema),
@@ -722,6 +728,148 @@ router
     requirePermission(P.venues.activate),
     validateParams(validator.venueIdParamSchema),
     controller.unfeatureVenue
+  );
+
+/**
+ * @openapi
+ * /venues/{id}/extend-deadline:
+ *   post:
+ *     tags: [Venues]
+ *     summary: Extend edit deadline for a rejected venue (superAdmin only)
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [newDeadline]
+ *             properties:
+ *               newDeadline:
+ *                 type: string
+ *                 format: date-time
+ *                 description: New deadline for editing (must be within 120 days)
+ *     responses:
+ *       200:
+ *         description: Edit deadline extended successfully
+ *       400:
+ *         description: Invalid deadline
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: SuperAdmin role required
+ *       404:
+ *         description: Venue not found
+ */
+router
+  .route('/:id/extend-deadline')
+  .post(
+    verifyAccessToken,
+    requireRole('superAdmin'),
+    validateParams(validator.venueIdParamSchema),
+    validateBody(validator.extendVenueDeadlineSchema),
+    controller.extendDeadline
+  );
+
+/**
+ * @openapi
+ * /venues/{id}/approve-review:
+ *   post:
+ *     tags: [Venues]
+ *     summary: Approve a pending review (admin only)
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               note:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Review approved
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Admin role required
+ *       404:
+ *         description: Venue not found
+ *       409:
+ *         description: No pending review
+ */
+router
+  .route('/:id/approve-review')
+  .post(
+    verifyAccessToken,
+    requireRole('admin'),
+    requirePermission(P.venues.activate),
+    validateParams(validator.venueIdParamSchema),
+    validateBody(validator.approveReviewSchema),
+    idempotencyMiddleware(),
+    controller.approveReview
+  );
+
+/**
+ * @openapi
+ * /venues/{id}/reject-review:
+ *   post:
+ *     tags: [Venues]
+ *     summary: Reject a pending review (admin only)
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [note]
+ *             properties:
+ *               note:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Review rejected
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Admin role required
+ *       404:
+ *         description: Venue not found
+ *       409:
+ *         description: No pending review
+ */
+router
+  .route('/:id/reject-review')
+  .post(
+    verifyAccessToken,
+    requireRole('admin'),
+    requirePermission(P.venues.deactivate),
+    validateParams(validator.venueIdParamSchema),
+    validateBody(validator.rejectReviewSchema),
+    idempotencyMiddleware(),
+    controller.rejectReview
   );
 
 export { router as venueRouter };

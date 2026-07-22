@@ -38,12 +38,12 @@ export async function getUserRole(userId: string): Promise<UserRoleInfo | null> 
                 { case: { $eq: ['$role.name', 'superAdmin'] }, then: 4 },
                 { case: { $eq: ['$role.name', 'admin'] }, then: 3 },
                 { case: { $eq: ['$role.name', 'owner'] }, then: 2 },
-                { case: { $eq: ['$role.name', 'user'] }, then: 1 }
+                { case: { $eq: ['$role.name', 'user'] }, then: 1 },
               ],
-              default: 0
-            }
-          }
-        }
+              default: 0,
+            },
+          },
+        },
       },
       { $sort: { priority: -1 } },
       { $limit: 1 },
@@ -59,7 +59,11 @@ export async function getUserRole(userId: string): Promise<UserRoleInfo | null> 
     return result[0] ?? null;
   } catch (e) {
     const error = e as Error;
-    logError('getUserRole failed', { module: "roles.service.ts/getUserRole", error: error.message, userId });
+    logError('getUserRole failed', {
+      module: 'roles.service.ts/getUserRole',
+      error: error.message,
+      userId,
+    });
     return null;
   }
 }
@@ -139,7 +143,7 @@ export async function fetchRolePermissions(roleId: string): Promise<string[]> {
   } catch (e) {
     const error = e as Error;
     logError('fetchRolePermissions failed', {
-      module: "roles.service.ts/fetchRolePermissions",
+      module: 'roles.service.ts/fetchRolePermissions',
       error: error.message,
       roleId,
     });
@@ -158,7 +162,9 @@ export async function verifyRbacSeed(): Promise<void> {
     });
 
     if (roleCount === 0) {
-      throw new Error('No active roles found in database. Run "pnpm script seed:rbac" to initialize RBAC data.');
+      throw new Error(
+        'No active roles found in database. Run "pnpm script seed:rbac" to initialize RBAC data.'
+      );
     }
 
     for (const roleName of requiredRoles) {
@@ -182,7 +188,9 @@ export async function verifyRbacSeed(): Promise<void> {
     });
 
     if (permissionCount === 0) {
-      throw new Error('No active permissions found in database. Run "pnpm script seed:rbac" to initialize RBAC data.');
+      throw new Error(
+        'No active permissions found in database. Run "pnpm script seed:rbac" to initialize RBAC data.'
+      );
     }
 
     // Check role-permission links exist
@@ -199,7 +207,11 @@ export async function verifyRbacSeed(): Promise<void> {
 
     // Check admin and superAdmin have at least one permission
     const adminRole = await RoleModel.findOne({ name: 'admin', active: true, deleted: false });
-    const superAdminRole = await RoleModel.findOne({ name: 'superAdmin', active: true, deleted: false });
+    const superAdminRole = await RoleModel.findOne({
+      name: 'superAdmin',
+      active: true,
+      deleted: false,
+    });
 
     if (adminRole) {
       const adminPerms = await RolePermissionModel.countDocuments({
@@ -209,7 +221,9 @@ export async function verifyRbacSeed(): Promise<void> {
       });
 
       if (adminPerms === 0) {
-        throw new Error('Admin role has no permissions. Run "pnpm script seed:rbac" to initialize RBAC data.');
+        throw new Error(
+          'Admin role has no permissions. Run "pnpm script seed:rbac" to initialize RBAC data.'
+        );
       }
     }
 
@@ -221,7 +235,9 @@ export async function verifyRbacSeed(): Promise<void> {
       });
 
       if (superAdminPerms === 0) {
-        throw new Error('SuperAdmin role has no permissions. Run "pnpm script seed:rbac" to initialize RBAC data.');
+        throw new Error(
+          'SuperAdmin role has no permissions. Run "pnpm script seed:rbac" to initialize RBAC data.'
+        );
       }
     }
 

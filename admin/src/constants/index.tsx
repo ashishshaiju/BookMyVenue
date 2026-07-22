@@ -38,6 +38,8 @@ export const API_ENDPOINTS = {
   OWNER_UNBLOCK_DATES: "/owner",
   OWNER_VENUE_BOOKINGS: "/owner/venue",
   OWNER_OFFLINE_BOOKING: "/owner/bookings/offline",
+  OWNER_VENUE_SETTINGS: "/owner/venue",
+  UPLOAD_SIGNATURE: "/venues/upload-signature",
   MODERATION_BANS: "/moderation/bans",
   MODERATION_SUMMARY: "/moderation/summary",
   MODERATION_LOGS: "/moderation/logs",

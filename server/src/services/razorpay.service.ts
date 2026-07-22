@@ -125,7 +125,7 @@ export async function createOrder(params: CreateOrderParams): Promise<CreateOrde
  * @returns true if the signature is valid, false otherwise.
  */
 export function verifyWebhookSignature(rawBody: Buffer, signature: string): boolean {
-  const { webhookSecret } = razorpayConfig;
+  const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET ?? razorpayConfig.webhookSecret;
 
   if (!webhookSecret) {
     logError('RAZORPAY_WEBHOOK_SECRET is not configured', {
@@ -176,10 +176,7 @@ export function verifyPaymentSignature(params: VerifyPaymentParams): boolean {
 
   try {
     const payload = `${params.orderId}|${params.paymentId}`;
-    const expectedSignature = crypto
-      .createHmac('sha256', keySecret)
-      .update(payload)
-      .digest('hex');
+    const expectedSignature = crypto.createHmac('sha256', keySecret).update(payload).digest('hex');
 
     const expectedBuffer = Buffer.from(expectedSignature, 'utf8');
     const receivedBuffer = Buffer.from(params.signature, 'utf8');

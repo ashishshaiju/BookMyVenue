@@ -40,12 +40,12 @@ export function useReportReview() {
   const queryClient = useQueryClient();
   return useApiMutation<
     unknown,
-    { venueId: string; reviewId: string; reason: string }
+    { venueId: string; reviewId: string; reason: string; action: 'hide' | 'flag' }
   >(
     (vars) => ({
       method: "POST",
       url: `${API_ENDPOINTS.OWNER_VENUE_BOOKINGS}/${vars.venueId}/reviews/${vars.reviewId}/report`,
-      data: { reason: vars.reason },
+      data: { reason: vars.reason, action: vars.action },
     }),
     {
       onSuccess: (_, vars) => {

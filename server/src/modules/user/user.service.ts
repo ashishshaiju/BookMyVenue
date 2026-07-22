@@ -52,8 +52,11 @@ export async function updateProfile(
     }
   }
 
-  const updateData: { username?: string; profilePicture?: string; profilePicturePublicId?: string } =
-    {};
+  const updateData: {
+    username?: string;
+    profilePicture?: string;
+    profilePicturePublicId?: string;
+  } = {};
   if (dto.username) {
     updateData.username = dto.username;
   }

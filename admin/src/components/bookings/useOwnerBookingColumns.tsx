@@ -3,9 +3,43 @@ import { Badge } from "@/components/ui/badge";
 import type { Booking } from "@/types/models";
 import { STATUS_VARIANT } from "@/constants/statusVariants";
 import { minutesToTime } from "@/utils/bookingUtils";
+import { type ActiveModal } from "@/store/useModalStore";
+import { BookingDetailPanel } from "@/components/common/panels/BookingDetailPanel";
 
-export function useOwnerBookingColumns(): ColumnDef<Booking, unknown>[] {
+export function useOwnerBookingColumns({
+  openModal,
+}: {
+  openModal: (opts: Omit<ActiveModal, "id">) => void;
+}): ColumnDef<Booking, unknown>[] {
   return [
+    {
+      accessorKey: "_id",
+      header: "Booking ID",
+      cell: ({ row }) => {
+        const id: string = row.original._id;
+        return (
+          <span
+            className="font-mono text-sm font-medium cursor-pointer text-primary hover:underline"
+            onClick={() => openModal({
+              title: `Booking Details`,
+              size: "xl",
+              component: BookingDetailPanel,
+              data: row.original,
+              actions: [],
+            })}
+          >
+            <span className="inline-flex items-center gap-1">
+              BMV-{id.slice(-6).toUpperCase()}
+              {row.original.paymentMethod === "offline" && (
+                <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+                  Offline
+                </span>
+              )}
+            </span>
+          </span>
+        );
+      },
+    },
     {
       accessorKey: "date",
       header: "Date",
@@ -23,11 +57,22 @@ export function useOwnerBookingColumns(): ColumnDef<Booking, unknown>[] {
       accessorKey: "bookerName",
       header: "Customer",
       cell: ({ row }) => (
-        <div>
+        <div className="cursor-pointer hover:text-primary" onClick={() => openModal({
+          title: `Booking Details`,
+          size: "xl",
+          component: BookingDetailPanel,
+          data: row.original,
+          actions: [],
+        })}>
           <p className="font-medium">{row.original.bookerName ?? "—"}</p>
           <p className="text-xs text-muted-foreground">
             {row.original.bookerPhone ?? ""}
           </p>
+          {row.original.bookerEmail && (
+            <p className="text-xs text-muted-foreground">
+              {row.original.bookerEmail}
+            </p>
+          )}
         </div>
       ),
     },
@@ -36,7 +81,7 @@ export function useOwnerBookingColumns(): ColumnDef<Booking, unknown>[] {
       header: "Amount",
       cell: ({ row }) => (
         <span className="font-semibold text-emerald-600">
-          ₹{(row.original.totalPrice as number)?.toLocaleString("en-IN") ?? 0}
+          ₹{(row.original.price as number)?.toLocaleString("en-IN") ?? 0}
         </span>
       ),
     },
@@ -52,16 +97,14 @@ export function useOwnerBookingColumns(): ColumnDef<Booking, unknown>[] {
     {
       accessorKey: "status",
       header: "Status",
-      cell: ({ row }) => (
-        <Badge
-          variant={
-            STATUS_VARIANT[(row.original.status as string).toUpperCase()] ??
-            "outline"
-          }
-        >
-          {(row.original.status as string).toUpperCase()}
-        </Badge>
-      ),
+      cell: ({ row }) => {
+        const displayStatus = row.original.uiStatus ?? row.original.status;
+        return (
+          <Badge variant={STATUS_VARIANT[(displayStatus as string).toUpperCase()] ?? "outline"}>
+            {(displayStatus as string).toUpperCase()}
+          </Badge>
+        );
+      },
     },
   ];
 }

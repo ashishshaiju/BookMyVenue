@@ -76,15 +76,13 @@ const BannedUserSchema = new Schema<IBannedUser>(
 );
 
 // Composite index for enforcement lookups
-BannedUserSchema.index(
-  { userId: 1, scope: 1, status: 1 },
-  { name: 'idx_user_scope_status' }
-);
+BannedUserSchema.index({ userId: 1, scope: 1, status: 1 }, { name: 'idx_user_scope_status' });
 
 // Index for expiry sweep
-BannedUserSchema.index(
-  { status: 1, expiresAt: 1 },
-  { name: 'idx_active_expiry' }
-);
+BannedUserSchema.index({ status: 1, expiresAt: 1 }, { name: 'idx_active_expiry' });
 
-export const BannedUserModel = mongoose.model<IBannedUser>('BannedUsers', BannedUserSchema, 'BannedUsers');
+export const BannedUserModel = mongoose.model<IBannedUser>(
+  'BannedUsers',
+  BannedUserSchema,
+  'BannedUsers'
+);

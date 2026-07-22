@@ -30,6 +30,7 @@ const BookingSchema = new Schema<IBooking>(
     advancePaid: { type: Number, required: false },
     remainingAmount: { type: Number, required: false },
     cancellationReason: { type: String, required: false, trim: true },
+    contractSnapshot: { type: Schema.Types.Mixed }, // typed via IContractSnapshot from lock.types
   },
   { timestamps: true }
 );

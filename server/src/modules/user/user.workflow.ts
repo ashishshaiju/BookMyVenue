@@ -9,7 +9,8 @@ export async function resetUserPasswordWorkflow(userId: string): Promise<boolean
     throw new Error('User not found');
   }
 
-  const { plain: newPassword, hashed: hashedPassword } = await service.generateRandomPasswordWithHash();
+  const { plain: newPassword, hashed: hashedPassword } =
+    await service.generateRandomPasswordWithHash();
 
   await repo.updateUserPassword(userId, hashedPassword);
 

@@ -6,7 +6,7 @@ const successStyle = {
   borderRadius: "12px",
   padding: "12px 16px",
   fontSize: "14px",
-  fontWeight: "500" as const,
+  fontWeight: "500",
 };
 
 const errorStyle = {
@@ -15,7 +15,7 @@ const errorStyle = {
   borderRadius: "12px",
   padding: "12px 16px",
   fontSize: "14px",
-  fontWeight: "500" as const,
+  fontWeight: "500",
 };
 
 const infoStyle = {
@@ -24,7 +24,7 @@ const infoStyle = {
   borderRadius: "12px",
   padding: "12px 16px",
   fontSize: "14px",
-  fontWeight: "500" as const,
+  fontWeight: "500",
 };
 
 export const showSuccess = (message: string) => {

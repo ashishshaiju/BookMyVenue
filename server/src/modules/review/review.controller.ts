@@ -98,7 +98,13 @@ export const getVenueReviews = async (req: Request, res: Response): Promise<void
     const venueId = Array.isArray(req.params.venueId) ? req.params.venueId[0] : req.params.venueId;
     const paginationParams = req.pagination ?? { page: 1, limit: 10, skip: 0, sort: '' };
     const result = await service.getVenueReviews(venueId, paginationParams);
-    ResponseUtil.paginated(res, 'Reviews retrieved successfully', result.reviews, result.pagination, 'reviews');
+    ResponseUtil.paginated(
+      res,
+      'Reviews retrieved successfully',
+      result.reviews,
+      result.pagination,
+      'reviews'
+    );
   } catch (err) {
     handleError(res, err, 'getVenueReviews');
   }
@@ -108,7 +114,13 @@ export const getFlaggedReviews = async (req: Request, res: Response): Promise<vo
   try {
     const paginationParams = req.pagination ?? { page: 1, limit: 20, skip: 0, sort: '' };
     const result = await service.getFlaggedReviews(paginationParams);
-    ResponseUtil.paginated(res, 'Flagged reviews retrieved successfully', result.reviews, result.pagination, 'reviews');
+    ResponseUtil.paginated(
+      res,
+      'Flagged reviews retrieved successfully',
+      result.reviews,
+      result.pagination,
+      'reviews'
+    );
   } catch (err) {
     handleError(res, err, 'getFlaggedReviews');
   }
@@ -137,7 +149,13 @@ export const getOwnerVenueReviews = async (req: Request, res: Response): Promise
     const { page, limit, skip } = req.pagination ?? { page: 1, limit: 10, skip: 0, sort: '' };
 
     const result = await service.getOwnerVenueReviews(venueId, { page, limit, skip, sort: '' });
-    ResponseUtil.paginated(res, 'Venue reviews retrieved', result.reviews, result.pagination, 'reviews');
+    ResponseUtil.paginated(
+      res,
+      'Venue reviews retrieved',
+      result.reviews,
+      result.pagination,
+      'reviews'
+    );
   } catch (err) {
     handleError(res, err, 'getOwnerVenueReviews');
   }
@@ -146,7 +164,9 @@ export const getOwnerVenueReviews = async (req: Request, res: Response): Promise
 export const replyToReview = async (req: Request, res: Response): Promise<void> => {
   try {
     const venueId = Array.isArray(req.params.venueId) ? req.params.venueId[0] : req.params.venueId;
-    const reviewId = Array.isArray(req.params.reviewId) ? req.params.reviewId[0] : req.params.reviewId;
+    const reviewId = Array.isArray(req.params.reviewId)
+      ? req.params.reviewId[0]
+      : req.params.reviewId;
     const { text } = req.body as { text: string };
 
     const review = await service.replyToReview(venueId, reviewId, text);
@@ -164,12 +184,13 @@ export const reportReview = async (req: Request, res: Response): Promise<void> =
       return;
     }
 
-    const venueId = Array.isArray(req.params.venueId) ? req.params.venueId[0] : req.params.venueId;
-    const reviewId = Array.isArray(req.params.reviewId) ? req.params.reviewId[0] : req.params.reviewId;
+    const reviewId = Array.isArray(req.params.reviewId)
+      ? req.params.reviewId[0]
+      : req.params.reviewId;
     const { reason } = req.body as { reason: string };
 
-    const review = await service.requestHideForReview(venueId, reviewId, userId, reason);
-    ResponseUtil.success(res, 'Report submitted to admin', review);
+    const review = await service.flagReview(reviewId, reason);
+    ResponseUtil.success(res, 'Review flagged successfully', review);
   } catch (err) {
     handleError(res, err, 'reportReview');
   }

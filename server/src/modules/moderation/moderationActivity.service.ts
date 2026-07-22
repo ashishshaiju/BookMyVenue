@@ -1,4 +1,8 @@
-import { ModerationActivityModel, type ModerationActionType, type ModerationLogLean } from './moderationActivity.model';
+import {
+  ModerationActivityModel,
+  type ModerationActionType,
+  type ModerationLogLean,
+} from './moderationActivity.model';
 import type mongoose from 'mongoose';
 import { logError } from '../../utils/logger';
 
@@ -28,9 +32,12 @@ export async function logModerationAction(
   }
 }
 
-export async function getModerationLogs(page: number, limit: number): Promise<{ logs: ModerationLogLean[]; total: number }> {
+export async function getModerationLogs(
+  page: number,
+  limit: number
+): Promise<{ logs: ModerationLogLean[]; total: number }> {
   const skip = (page - 1) * limit;
-  
+
   const [logs, total] = await Promise.all([
     ModerationActivityModel.find()
       .sort({ createdAt: -1 })
@@ -39,7 +46,7 @@ export async function getModerationLogs(page: number, limit: number): Promise<{ 
       .populate('adminId', 'username email')
       .lean()
       .exec() as unknown as Promise<ModerationLogLean[]>,
-    ModerationActivityModel.countDocuments()
+    ModerationActivityModel.countDocuments(),
   ]);
 
   return { logs, total };

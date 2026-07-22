@@ -5,7 +5,7 @@ import type {
   FlaggedReviewLean,
   HideRequestLean,
   SuspendedVenueLean,
-  BannedUserLean
+  BannedUserLean,
 } from './moderation.types';
 
 export async function getTopFlaggedReviews(limit = 10): Promise<FlaggedReviewLean[]> {

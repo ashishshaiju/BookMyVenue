@@ -2,6 +2,7 @@ import { RotateCcw } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { ModerationSummary } from "@/types";
 import type { UseMutationResult } from "@tanstack/react-query";
 
@@ -40,7 +41,10 @@ export function SuspendedVenuesTable({
       }: {
         row: { original: ModerationSummary["suspendedVenues"][0] };
       }) => (
-        <p className="text-sm text-[var(--text-secondary)] max-w-xs line-clamp-2">
+        <p 
+          className="text-sm text-[var(--text-secondary)] max-w-xs truncate cursor-help"
+          title={row.original.suspensionReason}
+        >
           {row.original.suspensionReason}
         </p>
       ),
@@ -78,16 +82,25 @@ export function SuspendedVenuesTable({
       }: {
         row: { original: ModerationSummary["suspendedVenues"][0] };
       }) => (
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() =>
-            unsuspendVenueMutation.mutate({ venueId: row.original._id })
-          }
-          disabled={unsuspendVenueMutation.isPending}
-        >
-          <RotateCcw size={16} className="mr-1" /> Unsuspend
-        </Button>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                size="icon"
+                variant="outline"
+                onClick={() =>
+                  unsuspendVenueMutation.mutate({ venueId: row.original._id })
+                }
+                disabled={unsuspendVenueMutation.isPending}
+              >
+                <RotateCcw size={16} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Unsuspend</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       ),
     },
   ];

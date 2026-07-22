@@ -28,5 +28,10 @@ export const finishSchema = Yup.object({
         ).min(1, 'Add at least one refund rule'),
     }),
   }),
-  venuePhotos: Yup.array().min(1, 'Upload at least one photo'),
+  venuePhotos: Yup.array().when('existingImages', {
+    is: (ei: { coverImage: string; galleryImages: string[] }) =>
+      !ei?.coverImage && (!ei?.galleryImages || ei.galleryImages.length === 0),
+    then: (s) => s.min(1, 'Upload at least one photo'),
+    otherwise: (s) => s.notRequired(),
+  }),
 });

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useParams } from "react-router";
 import { Plus } from "lucide-react";
 import { useToast } from "@/hooks/useToast";
+import { useModal } from "@/hooks/useModal";
 
 import {
   useOwnerBookings,
@@ -10,6 +11,9 @@ import {
 import type { OfflineForm } from "@/types/ui";
 import { DataTable } from "@/components/ui/data-table";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { useAppStore } from "@/store/useAppStore";
+import { VENUE_STATUS } from "@/constants/venueStatus";
 
 // Extracted Components
 import { useOwnerBookingColumns } from "@/components/bookings/useOwnerBookingColumns";
@@ -26,13 +30,17 @@ const EMPTY_FORM: OfflineForm = {
 
 export default function OwnerBookingsPage() {
   const { venueId } = useParams<{ venueId: string }>();
+  const { activeVenueStatus } = useAppStore();
+  const isInactive = activeVenueStatus === VENUE_STATUS.INACTIVE;
   const [page, setPage] = useState(1);
   const [offlineOpen, setOfflineOpen] = useState(false);
   const [form, setForm] = useState<OfflineForm>(EMPTY_FORM);
 
   const { data, isLoading } = useOwnerBookings(venueId!, page);
+
   const offlineMutation = useCreateOfflineBooking();
   const { success, error } = useToast();
+  const { openModal } = useModal();
 
   const handleSubmit = () => {
     if (
@@ -78,7 +86,7 @@ export default function OwnerBookingsPage() {
     );
   };
 
-  const columns = useOwnerBookingColumns();
+  const columns = useOwnerBookingColumns({ openModal });
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
@@ -91,26 +99,35 @@ export default function OwnerBookingsPage() {
             Manage your online and offline bookings
           </p>
         </div>
-        <Button
-          onClick={() => setOfflineOpen(true)}
-          className="bg-primary text-primary-foreground shadow-sm hover:bg-primary/90"
-        >
-          <Plus size={18} className="mr-2" />
-          Add Offline Booking
-        </Button>
+        <div className="relative group">
+          <Button
+            onClick={() => setOfflineOpen(true)}
+            disabled={isInactive}
+            className={cn(
+              "bg-primary text-primary-foreground shadow-sm",
+              isInactive ? "opacity-50 cursor-not-allowed" : "hover:bg-primary/90"
+            )}
+          >
+            <Plus size={18} className="mr-2" />
+            Add Offline Booking
+          </Button>
+          {isInactive && (
+            <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-zinc-900 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+              Cannot create bookings while venue is inactive
+            </div>
+          )}
+        </div>
       </div>
 
-      <div className="rounded-md border border-[var(--bg-grey)] bg-[var(--bg-primary)] overflow-hidden shadow-sm">
-        <DataTable
-          columns={columns}
-          data={data?.bookings ?? []}
-          page={page}
-          totalPages={data?.pagination?.totalPages ?? 0}
-          onPageChange={setPage}
-          isLoading={isLoading}
-          emptyMessage="No bookings found for this venue."
-        />
-      </div>
+      <DataTable
+        columns={columns}
+        data={data?.bookings ?? []}
+        page={page}
+        totalPages={data?.pagination?.totalPages ?? 0}
+        onPageChange={setPage}
+        isLoading={isLoading}
+        emptyMessage="No bookings found for this venue."
+      />
 
       <OfflineBookingDialog
         offlineOpen={offlineOpen}

@@ -6,7 +6,22 @@ export const VenueStatusEnum = [
   'Approved',
   'Rejected',
   'Suspended',
+  'Inactive',
 ] as const;
+
+export const ReviewIntent = {
+  CREATION: 'creation',
+  RESUBMISSION: 'resubmission',
+  VENUE_EDIT: 'venue_edit',
+  INACTIVITY_REQUEST: 'inactivity_request',
+  INACTIVITY_WITHDRAWAL: 'inactivity_withdrawal',
+  DELETION_REQUEST: 'deletion_request',
+} as const;
+
+export type ReviewIntentType = (typeof ReviewIntent)[keyof typeof ReviewIntent];
+
+export const INACTIVITY_COOLDOWN_DAYS = 15;
+export const IDEMPOTENCY_TTL_MS = 24 * 60 * 60 * 1000;
 
 export const KERALA_DISTRICTS = [
   'Thiruvananthapuram',
@@ -67,3 +82,10 @@ export const SUBMISSION_REQUIRED_FIELDS: (keyof IVenue)[] = [
   'contact',
   'coverImage',
 ];
+
+export const VENUE_CONSTANTS = {
+  MAX_SUBMISSION_ATTEMPTS: 10,
+  EDIT_WINDOW_DAYS: 30,
+  MAX_EXTENDED_DAYS: 120,
+  AUTO_SUSPEND_REASON: 'Auto-suspended: Owner did not resubmit within 30 days after rejection',
+} as const;

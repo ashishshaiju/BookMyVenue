@@ -54,6 +54,7 @@ export function AppRouter() {
 
           <Route path="/list-venue" element={<ListVenueLayout />}>
             <Route path="add-venue" element={<AddVenue />} />
+            <Route path="edit-venue/:venueId" element={<AddVenue />} />
             <Route path="my-venues" element={<MyVenues />} />
             <Route index element={<MyVenues />} />
           </Route>

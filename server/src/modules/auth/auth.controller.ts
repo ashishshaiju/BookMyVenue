@@ -7,7 +7,6 @@ import type * as authScheme from './auth.validator';
 import type { Request, Response } from 'express';
 import type { z } from 'zod';
 
-
 export const register = async (req: Request, res: Response): Promise<void> => {
   try {
     const dto = req.validated?.body as z.infer<typeof authScheme.registerSchema>;
@@ -110,7 +109,7 @@ export const resetPassword = async (req: Request, res: Response): Promise<void> 
 export const changePassword = async (req: Request, res: Response): Promise<void> => {
   try {
     const validatedData = validator.changePasswordSchema.parse(req.body);
-    
+
     if (!req.user?.userId) {
       ResponseUtil.unauthorized(res, 'User not authenticated');
       return;
