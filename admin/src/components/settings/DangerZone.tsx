@@ -129,14 +129,14 @@ export function DangerZone({ venue }: DangerZoneProps) {
                     openDialog(
                       "Unblock Bookings",
                       "Allow new bookings for this venue again.",
-                      () => unblockBookings({ venueId: venue._id }),
+                      async () => { await unblockBookings({ venueId: venue._id }); },
                       "Unblock",
                     );
                   } else {
                     openDialog(
                       "Block All Bookings",
                       "Temporarily block all new bookings. Existing bookings will not be affected.",
-                      () => blockBookings({ venueId: venue._id }),
+                      async () => { await blockBookings({ venueId: venue._id }); },
                       "Block Bookings",
                     );
                   }
@@ -177,7 +177,7 @@ export function DangerZone({ venue }: DangerZoneProps) {
                       onClick={() => openDialog(
                         "Withdraw Inactivity Request",
                         "Are you sure you want to withdraw the inactivity request? The venue will remain active.",
-                        () => withdrawInactivity({ venueId: venue._id }),
+                        async () => { await withdrawInactivity({ venueId: venue._id }); },
                         "Withdraw Request",
                       )}
                     >
@@ -235,7 +235,7 @@ export function DangerZone({ venue }: DangerZoneProps) {
                   onClick={() => openDialog(
                     "Reactivate Venue",
                     "Reactivate this venue to start accepting bookings again.",
-                    () => activateVenue({ venueId: venue._id }),
+                    async () => { await activateVenue({ venueId: venue._id }); },
                     "Reactivate",
                   )}
                 >
@@ -273,17 +273,6 @@ export function DangerZone({ venue }: DangerZoneProps) {
                       setDeleteReason("");
                     },
                     "Request Deletion",
-                    () => (
-                      <div className="space-y-2">
-                        <Label htmlFor="deleteReason">Reason for deletion</Label>
-                        <Input
-                          id="deleteReason"
-                          value={deleteReason}
-                          onChange={e => setDeleteReason(e.target.value)}
-                          placeholder="Explain why..."
-                        />
-                      </div>
-                    ),
                   )}
                 >
                   Delete Venue

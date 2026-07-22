@@ -165,7 +165,7 @@ export function VenueSettingsEdit({ venue, onCancel }: VenueSettingsEditProps) {
   const addPricingRule = useCallback(() => {
     if (!newRule.fromTime || !newRule.toTime) return;
     setFormData(prev => {
-      const pricing = (prev.pricing as ExtendedVenue["pricing"]) || {};
+      const pricing = (prev.pricing as NonNullable<ExtendedVenue["pricing"]>) || { pricingType: 'fixedPricing', basePrice: 0, pricingRules: [] };
       const rules = pricing.pricingRules || [];
       return { ...prev, pricing: { ...pricing, pricingRules: [...rules, { ...newRule }] } };
     });
@@ -174,9 +174,9 @@ export function VenueSettingsEdit({ venue, onCancel }: VenueSettingsEditProps) {
 
   const removePricingRule = useCallback((index: number) => {
     setFormData(prev => {
-      const pricing = (prev.pricing as ExtendedVenue["pricing"]) || {};
+      const pricing = (prev.pricing as NonNullable<ExtendedVenue["pricing"]>) || { pricingType: 'fixedPricing', basePrice: 0, pricingRules: [] };
       const rules = pricing.pricingRules || [];
-      return { ...prev, pricing: { ...pricing, pricingRules: rules.filter((_, i) => i !== index) } };
+      return { ...prev, pricing: { ...pricing, pricingRules: rules.filter((_: { fromTime: string; toTime: string; price: number }, i: number) => i !== index) } };
     });
   }, []);
 
@@ -769,7 +769,7 @@ export function VenueSettingsEdit({ venue, onCancel }: VenueSettingsEditProps) {
                 <Upload className="w-4 h-4 mr-1" />
                 {isUploadingImage ? "Uploading..." : "Upload Cover"}
               </Button>
-              {formData.coverImage && (
+              {Boolean(formData.coverImage) && (
                 <Button
                   type="button"
                   variant="ghost"

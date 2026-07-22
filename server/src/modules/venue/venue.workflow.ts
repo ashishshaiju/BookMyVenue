@@ -42,8 +42,9 @@ export function assertTransition(venue: IVenue, targetStatus: VenueStatus): void
 export function canSubmit(venue: IVenue): void {
   assertTransition(venue, 'PendingReview');
 
+  const venueRecord = venue as unknown as Record<string, unknown>;
   const missingFields = SUBMISSION_REQUIRED_FIELDS.filter((field) => {
-    const value = venue[field];
+    const value = venueRecord[field as string];
     if (value === null || value === undefined) return true;
     if (typeof value === 'string' && value.trim() === '') return true;
     return false;

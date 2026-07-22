@@ -125,7 +125,7 @@ export async function createOrder(params: CreateOrderParams): Promise<CreateOrde
  * @returns true if the signature is valid, false otherwise.
  */
 export function verifyWebhookSignature(rawBody: Buffer, signature: string): boolean {
-  const { webhookSecret } = razorpayConfig;
+  const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET ?? razorpayConfig.webhookSecret;
 
   if (!webhookSecret) {
     logError('RAZORPAY_WEBHOOK_SECRET is not configured', {
