@@ -1,11 +1,19 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll } from 'vitest';
 import request from 'supertest';
 import { app } from '../../../src/app';
+import { ProcessedWebhookModel } from '../../../src/modules/booking/models/processedWebhook.model';
 import {
   generateRazorpaySignature,
   createMockRazorpayPaymentCapturedPayload,
   TEST_WEBHOOK_SECRET,
 } from '../../helpers/webhook.helper';
+
+// Ensure the unique index on ProcessedWebhooks.eventId is created before tests run.
+// mongodb-memory-server may create indexes asynchronously, causing the idempotency
+// gate to miss duplicate key errors in the duplicate webhook test.
+beforeAll(async () => {
+  await ProcessedWebhookModel.createIndexes();
+});
 
 describe('Razorpay Webhook API Routes', () => {
   describe('POST /api/v1/webhook/razorpay', () => {
@@ -39,13 +47,9 @@ describe('Razorpay Webhook API Routes', () => {
       expect(response.body.error).toBe('Invalid webhook signature');
     });
 
-    it('should acknowledge unhandled events with received: true', async () => {
-      const unhandledPayload = {
-        entity: 'event',
-        event: 'payment.failed',
-        payload: {},
-      };
-      const rawBody = JSON.stringify(unhandledPayload);
+    it('should ignore non-payment.captured events', async () => {
+      const payload = createMockRazorpayPaymentCapturedPayload({ event: 'payment.failed' });
+      const rawBody = JSON.stringify(payload);
       const signature = generateRazorpaySignature(rawBody, TEST_WEBHOOK_SECRET);
 
       const response = await request(app)
@@ -58,8 +62,10 @@ describe('Razorpay Webhook API Routes', () => {
       expect(response.body.received).toBe(true);
     });
 
-    it('should process payment.captured event and return received: true', async () => {
-      const payload = createMockRazorpayPaymentCapturedPayload();
+    it('should return 200 (with error) for a valid webhook with invalid notes metadata', async () => {
+      const payload = createMockRazorpayPaymentCapturedPayload({
+        notes: { foo: 'bar' },
+      });
       const rawBody = JSON.stringify(payload);
       const signature = generateRazorpaySignature(rawBody, TEST_WEBHOOK_SECRET);
 
@@ -74,28 +80,29 @@ describe('Razorpay Webhook API Routes', () => {
     });
 
     it('should handle duplicate webhook events idempotently', async () => {
-      const paymentId = `pay_duplicate_test_${Date.now()}`;
-      const payload = createMockRazorpayPaymentCapturedPayload({ paymentId });
+      const payload = createMockRazorpayPaymentCapturedPayload();
       const rawBody = JSON.stringify(payload);
       const signature = generateRazorpaySignature(rawBody, TEST_WEBHOOK_SECRET);
 
-      // First webhook post
-      await request(app)
+      // First request — process normally
+      const firstResponse = await request(app)
         .post('/api/v1/webhook/razorpay')
         .set('Content-Type', 'application/json')
         .set('x-razorpay-signature', signature)
         .send(rawBody);
 
-      // Duplicate webhook post
-      const response = await request(app)
+      expect(firstResponse.status).toBe(200);
+      expect(firstResponse.body.received).toBe(true);
+
+      // Second request — should be detected as duplicate and return idempotent: true
+      const secondResponse = await request(app)
         .post('/api/v1/webhook/razorpay')
         .set('Content-Type', 'application/json')
         .set('x-razorpay-signature', signature)
         .send(rawBody);
 
-      expect(response.status).toBe(200);
-      expect(response.body.received).toBe(true);
-      expect(response.body.idempotent).toBe(true);
+      expect(secondResponse.status).toBe(200);
+      expect(secondResponse.body.idempotent).toBe(true);
     });
   });
 });

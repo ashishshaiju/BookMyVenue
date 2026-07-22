@@ -14,6 +14,7 @@ export function createMockRazorpayPaymentCapturedPayload(options: {
   orderId?: string;
   amount?: number;
   notes?: Record<string, unknown>;
+  event?: string;
 } = {}): object {
   const paymentId = options.paymentId ?? `pay_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
   const orderId = options.orderId ?? `order_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
@@ -22,7 +23,7 @@ export function createMockRazorpayPaymentCapturedPayload(options: {
   return {
     entity: 'event',
     account_id: 'acc_test123',
-    event: 'payment.captured',
+    event: options.event ?? 'payment.captured',
     contains: ['payment'],
     payload: {
       payment: {
