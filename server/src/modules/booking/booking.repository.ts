@@ -21,6 +21,9 @@ function resolveRefundPct(venueRaw: unknown, bookingDate: string): { pct: number
 
   const rules: IRefundRule[] = venue.cancellation.refundRules;
   if (rules.length === 0) {
+    if (venue.cancellation.refundType === 'fullRefund') {
+      return { pct: 100, label: 'Full Refund' };
+    }
     return { pct: 0, label: 'Non-refundable' };
   }
 
@@ -52,6 +55,9 @@ export function resolveRefundPctFromSnapshot(
 
   const rules = cancellation.refundRules;
   if (rules.length === 0) {
+    if (cancellation.refundType === 'fullRefund') {
+      return { pct: 100, label: 'Full Refund' };
+    }
     return { pct: 0, label: 'Non-refundable' };
   }
 

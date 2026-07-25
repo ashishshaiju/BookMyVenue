@@ -6,7 +6,9 @@ import type { IReview as IReviewModel } from './review.model';
 import type { PaginationParams, PaginatedResponse } from '../../types/pagination.types';
 import { VenueModel } from '../venue/venue.model';
 import { ConflictError, NotFoundError, ValidationError } from '../../utils/errors';
-import { logError } from '../../utils/logger';
+import { logError, logWarn } from '../../utils/logger';
+import { enqueueEmailTask } from '../../services/email.repository';
+import { EmailIntent, EmailTaskStatus } from '../../constants/email.constants';
 
 export async function submitReview(
   userId: string,
@@ -251,14 +253,37 @@ export async function moderateReview(
 
   // Send email notifications to review author
   if (dto.action === 'remove' || dto.action === 'approve_hide') {
-    const { emailService } = await import('../../services/email.service.js');
-    void emailService.sendReviewRemovedEmail(updated.userId.toString(), {
-      venueName,
-      reason: dto.reason ?? 'No reason provided',
-    });
+    try {
+      await enqueueEmailTask(
+        updated.userId.toString(),
+        EmailIntent.REVIEW_REMOVED,
+        'Your Review Has Been Removed',
+        EmailTaskStatus.PENDING,
+        { venueName, reason: dto.reason ?? 'No reason provided' }
+      );
+    } catch (err) {
+      logWarn('Failed to queue review removed email', {
+        module: 'review.service.ts/moderateReview',
+        reviewId,
+        error: (err as Error).message,
+      });
+    }
   } else if (dto.action === 'restore') {
-    const { emailService } = await import('../../services/email.service.js');
-    void emailService.sendReviewRestoredEmail(updated.userId.toString(), venueName);
+    try {
+      await enqueueEmailTask(
+        updated.userId.toString(),
+        EmailIntent.REVIEW_RESTORED,
+        'Your Review Has Been Restored',
+        EmailTaskStatus.PENDING,
+        { venueName }
+      );
+    } catch (err) {
+      logWarn('Failed to queue review restored email', {
+        module: 'review.service.ts/moderateReview',
+        reviewId,
+        error: (err as Error).message,
+      });
+    }
   }
 
   // Log activity

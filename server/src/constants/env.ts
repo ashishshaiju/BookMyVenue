@@ -21,6 +21,13 @@ export const resendConfig = {
   get frontendUrl(): string | undefined {
     return process.env.FRONTEND_URL;
   },
+  get serverUrl(): string {
+    return process.env.SERVER_URL ?? 'http://localhost:3000';
+  },
+  get logoUrl(): string {
+    const base = process.env.SERVER_URL ?? 'http://localhost:3000';
+    return `${base}/images/bmv-logo.png`;
+  },
 };
 
 export const jwtConfig = {

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router";
-import { Loader2, Building2, Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { Loader2, Mail, Lock, Eye, EyeOff } from "lucide-react";
+import bmvLogo from "@/assets/bmv-logo.png";
 
 import { Button } from "@/components/ui/button";
 import { useApiMutation } from "@/hooks/useApi";
@@ -67,13 +68,9 @@ export default function LoginPage() {
       <div className="mx-auto flex min-h-screen max-w-7xl items-center justify-center px-6 py-10">
         {/* Left Side */}
         <div className="hidden flex-1 lg:flex flex-col justify-center pr-20">
-          <div className="mb-8 flex h-20 w-20 items-center justify-center rounded-3xl bg-black shadow-xl">
-            <Building2 className="h-10 w-10 text-white" />
+          <div className="mb-10">
+            <img src={bmvLogo} alt="BookMyVenue" className="h-20 w-auto" />
           </div>
-
-          <h1 className="text-6xl font-bold tracking-tight text-zinc-900">
-            BookMyVenue
-          </h1>
 
           <p className="mt-6 max-w-md text-xl leading-8 text-zinc-600">
             Manage your properties, bookings, customers and business from one
@@ -98,10 +95,8 @@ export default function LoginPage() {
         {/* Login Card */}
         <div className="w-full max-w-md">
           <div className="rounded-3xl border border-zinc-200 bg-white/80 p-8 shadow-2xl backdrop-blur-xl">
-            <div className="flex justify-center lg:hidden">
-              <div className="mb-8 flex h-16 w-16 items-center justify-center rounded-2xl bg-black">
-                <Building2 className="h-8 w-8 text-white" />
-              </div>
+            <div className="mb-8 flex justify-center lg:hidden">
+              <img src={bmvLogo} alt="BookMyVenue" className="h-14 w-auto" />
             </div>
 
             <h2 className="text-3xl font-bold tracking-tight text-zinc-900">

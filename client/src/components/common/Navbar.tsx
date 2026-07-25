@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 
 import { Link, useLocation } from 'react-router';
+import bmvLogo from '@/assets/bmv-logo.png';
 import { AnimatePresence, motion } from 'framer-motion';
 import ProfileDropdown from './ProfileDropdown';
 import ThemeToggle from './ThemeToggle';
@@ -84,8 +85,8 @@ const Navbar = () => {
     >
       <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between bg-[var(--bg-primary)] relative z-20">
         {/* left - logo */}
-        <Link to="/" className="text-2xl font-bold text-[var(--text-primary)]">
-          BookMyVenue
+        <Link to="/" className="flex items-center gap-2">
+          <img src={bmvLogo} alt="BookMyVenue" className="h-8 w-auto" />
         </Link>
 
         {/* center nav */}
