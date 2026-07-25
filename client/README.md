@@ -1,75 +1,79 @@
-# React + TypeScript + Vite
+# BookMyVenue — Client
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+The user-facing web application for browsing venues and making bookings. Built with React 19 + Vite 8 + TailwindCSS 4.
 
-Currently, two official plugins are available:
+## Tech Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Framework**: React 19 with TypeScript ~6.0
+- **Build Tool**: Vite 8 with rolldown
+- **Styling**: TailwindCSS 4 with tw-animate-css
+- **Routing**: React Router 7
+- **Server State**: TanStack React Query 5
+- **HTTP Client**: Axios
+- **Forms**: Formik + Yup validation
+- **UI Components**: Radix UI primitives, shadcn-style with class-variance-authority
+- **Animation**: Framer Motion
+- **Maps**: Leaflet (OpenStreetMap)
+- **Date Handling**: date-fns, react-day-picker
+- **Notifications**: react-hot-toast
+- **Image Crop**: react-easy-crop
 
-## React Compiler
+## Available Scripts
 
-The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
+| Script | Description |
+|---|---|
+| `pnpm dev` | Start Vite dev server (network-exposed: `--host`) |
+| `pnpm build` | Type-check (`tsc -b`) then build (`vite build`) |
+| `pnpm test` | Run vitest tests |
+| `pnpm test:watch` | Run tests in watch mode |
+| `pnpm test:coverage` | Run tests with coverage report |
+| `pnpm lint` | ESLint check |
+| `pnpm lint:fix` | Auto-fix ESLint issues |
+| `pnpm preview` | Preview production build locally |
 
-Note: This will impact Vite dev & build performances.
+## Development
 
-## Expanding the ESLint configuration
+```bash
+# Install dependencies (from repo root)
+pnpm install
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+# Start dev server (default: http://localhost:5173)
+pnpm dev
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+# Run tests
+pnpm test
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Environment Variables
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Create `client/.env`:
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```env
+VITE_API_BASE_URL=http://localhost:3000/api/v1
 ```
+
+## Project Structure
+
+```
+src/
+├── pages/          # Page components (routed)
+├── components/     # Reusable UI components
+├── hooks/          # Custom React hooks (useApi, useAuth, useDebounce, etc.)
+├── services/       # API service layer (Axios calls)
+├── context/        # React Context providers
+├── utils/          # Utility functions
+├── constants/      # App constants
+├── types/          # TypeScript type definitions
+├── tests/          # Vitest test files
+├── router.tsx      # React Router configuration
+├── App.tsx         # Root app component
+└── main.tsx        # Entry point
+```
+
+## Key Differences from Admin
+
+- User-facing (browse venues, search, book)
+- Public routes + authenticated routes
+- Formik for form management
+- Leaflet for map display
+- Framer Motion for animations
