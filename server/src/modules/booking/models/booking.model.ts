@@ -1,6 +1,7 @@
 import mongoose, { Schema } from 'mongoose';
 import type { IBooking } from '../booking.types';
 import { BookingStatus } from '../../../constants/booking.constants';
+import { PaymentStatus } from '../../../constants/payment.constants';
 
 const BookingSchema = new Schema<IBooking>(
   {
@@ -16,6 +17,12 @@ const BookingSchema = new Schema<IBooking>(
       enum: Object.values(BookingStatus),
       required: true,
       default: BookingStatus.CONFIRMED,
+    },
+    paymentStatus: {
+      type: String,
+      enum: Object.values(PaymentStatus),
+      required: true,
+      default: PaymentStatus.PAID,
     },
     guestCount: { type: Number, required: false },
     eventType: { type: String, required: false, trim: true },
@@ -39,9 +46,11 @@ BookingSchema.index({ venueId: 1, date: 1 });
 
 BookingSchema.index({ venueId: 1, date: 1, startTime: 1, endTime: 1, status: 1 });
 
+BookingSchema.index({ paymentStatus: 1 });
+
 BookingSchema.index(
   { venueId: 1, date: 1, startTime: 1, endTime: 1 },
-  { unique: true, partialFilterExpression: { status: BookingStatus.CONFIRMED } }
+  { unique: true, partialFilterExpression: { status: { $in: [BookingStatus.CONFIRMED, BookingStatus.COMPLETED] } } }
 );
 
 export const BookingModel = mongoose.model<IBooking>('Bookings', BookingSchema, 'Bookings');
