@@ -1,6 +1,10 @@
 import type mongoose from 'mongoose';
 import type { Document } from 'mongoose';
-import type { VenueStatusEnum, VenueFields, ReviewIntentType } from '../../constants/venue.constants';
+import type {
+  VenueStatusEnum,
+  VenueFields,
+  ReviewIntentType,
+} from '../../constants/venue.constants';
 
 export type VenueStatus = (typeof VenueStatusEnum)[number];
 

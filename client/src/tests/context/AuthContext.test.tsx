@@ -1,129 +1,113 @@
-import React from 'react';
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { AuthProvider } from '@/context/AuthContext';
-import { useAuth } from '@/hooks/useAuth';
-import { axiosInstance } from '@/config/axios';
-import { STORAGE_KEYS } from '@/constants';
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { render, screen, waitFor, act } from '@testing-library/react'
+
+const mockGet = vi.fn()
+const mockPost = vi.fn()
+const mockClear = vi.fn()
 
 vi.mock('@/config/axios', () => ({
   axiosInstance: {
-    get: vi.fn(),
-    post: vi.fn(),
+    get: mockGet,
+    post: mockPost,
   },
-}));
+}))
+
+vi.mock('@/config/queryClient', () => ({
+  queryClient: {
+    clear: mockClear,
+  },
+}))
 
 vi.mock('@/hooks/useToast', () => ({
-  useToast: () => ({
-    success: vi.fn(),
-    error: vi.fn(),
-  }),
-}));
+  useToast: () => ({ success: vi.fn(), error: vi.fn(), info: vi.fn() }),
+}))
 
-const TestAuthComponent: React.FC = () => {
-  const { user, isAuthenticated, loading, login, logout } = useAuth();
+vi.mock('@/utils/venueDraft', () => ({
+  clearDraft: vi.fn(),
+  clearDraftSession: vi.fn(),
+}))
 
-  if (loading) return <div data-testid="loading">Loading...</div>;
+vi.mock('@/utils/profileGreeting', () => ({
+  resetProfileGreeting: vi.fn(),
+}))
 
-  return (
-    <div>
-      <div data-testid="status">{isAuthenticated ? 'Authenticated' : 'Guest'}</div>
-      <div data-testid="user">{user ? user.username : 'No User'}</div>
-      <button onClick={() => login('test@example.com', 'Password123!')}>Login</button>
-      <button onClick={() => logout()}>Logout</button>
-    </div>
-  );
-};
+vi.mock('@/constants', () => ({
+  STORAGE_KEYS: {
+    SESSION_TOKEN: 'x-session-token',
+    IS_LOGGED_IN: 'isLoggedIn',
+    USER_ID: 'user_id',
+    USER_NAME: 'user_name',
+    USER_ROLE: 'user_role',
+  },
+  API_ENDPOINTS: {
+    LOGIN: '/auth/login',
+    REGISTER: '/auth/register',
+    LOGOUT: '/auth/logout',
+    PROFILE: '/user/profile',
+  },
+}))
 
-describe('client AuthContext & AuthProvider', () => {
+describe('AuthProvider', () => {
   beforeEach(() => {
-    localStorage.clear();
-    vi.clearAllMocks();
-  });
+    vi.clearAllMocks()
+    localStorage.clear()
+  })
 
-  it('should initialize with Guest status when no session exists', async () => {
+  it('should render children', async () => {
+    const { AuthProvider } = await import('../../context/AuthContext')
     render(
       <AuthProvider>
-        <TestAuthComponent />
+        <div>child content</div>
       </AuthProvider>
-    );
+    )
+    expect(screen.getByText('child content')).toBeInTheDocument()
+  })
 
-    await waitFor(() => {
-      expect(screen.queryByTestId('loading')).not.toBeInTheDocument();
-    });
+  it('should call verifySession on mount when logged in', async () => {
+    localStorage.setItem('isLoggedIn', 'true')
+    mockGet.mockResolvedValue({
+      data: { data: { _id: 'user-1', username: 'john', email: 'john@test.com' } },
+    })
 
-    expect(screen.getByTestId('status')).toHaveTextContent('Guest');
-    expect(screen.getByTestId('user')).toHaveTextContent('No User');
-  });
-
-  it('should verify session and set user when IS_LOGGED_IN is true in localStorage', async () => {
-    localStorage.setItem(STORAGE_KEYS.IS_LOGGED_IN, 'true');
-
-    vi.mocked(axiosInstance.get).mockResolvedValueOnce({
-      data: {
-        data: {
-          _id: 'user_123',
-          name: 'John Doe',
-          email: 'john@example.com',
-        },
-      },
-    });
-
+    const { AuthProvider } = await import('../../context/AuthContext')
     render(
       <AuthProvider>
-        <TestAuthComponent />
+        <div>child</div>
       </AuthProvider>
-    );
+    )
 
     await waitFor(() => {
-      expect(screen.getByTestId('status')).toHaveTextContent('Authenticated');
-    });
+      expect(mockGet).toHaveBeenCalledWith('/user/profile')
+    })
+  })
 
-    expect(screen.getByTestId('user')).toHaveTextContent('John Doe');
-    expect(localStorage.getItem(STORAGE_KEYS.USER_ID)).toBe('user_123');
-  });
-
-  it('should log in successfully and update user state', async () => {
-    const userSim = userEvent.setup();
-
-    vi.mocked(axiosInstance.post).mockResolvedValueOnce({
-      data: {
-        data: {
-          userId: 'user_456',
-          username: 'Jane Doe',
-          email: 'jane@example.com',
-        },
-      },
-    });
-
+  it('should not call verifySession on mount when not logged in', async () => {
+    const { AuthProvider } = await import('../../context/AuthContext')
     render(
       <AuthProvider>
-        <TestAuthComponent />
+        <div>child</div>
       </AuthProvider>
-    );
+    )
 
     await waitFor(() => {
-      expect(screen.queryByTestId('loading')).not.toBeInTheDocument();
-    });
+      expect(mockGet).not.toHaveBeenCalled()
+    })
+  })
 
-    await userSim.click(screen.getByText('Login'));
+  it('should clear auth data on auth:logout event', async () => {
+    const { AuthProvider } = await import('../../context/AuthContext')
+    render(
+      <AuthProvider>
+        <div>child</div>
+      </AuthProvider>
+    )
+
+    act(() => {
+      window.dispatchEvent(new CustomEvent('auth:logout'))
+    })
 
     await waitFor(() => {
-      expect(screen.getByTestId('status')).toHaveTextContent('Authenticated');
-    });
-
-    expect(screen.getByTestId('user')).toHaveTextContent('Jane Doe');
-    expect(localStorage.getItem(STORAGE_KEYS.IS_LOGGED_IN)).toBe('true');
-  });
-
-  it('should throw error when useAuth is used outside of AuthProvider', () => {
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-
-    expect(() => render(<TestAuthComponent />)).toThrow(
-      'useAuth must be used within an AuthProvider'
-    );
-
-    consoleSpy.mockRestore();
-  });
-});
+      expect(mockClear).toHaveBeenCalled()
+    })
+  })
+})

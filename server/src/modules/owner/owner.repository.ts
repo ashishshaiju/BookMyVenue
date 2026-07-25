@@ -84,7 +84,10 @@ export async function createOfflineBookingRecord(
 }
 
 export async function getVenueBlockedDatesAndWorkingDays(venueId: string): Promise<IVenue | null> {
-  return VenueModel.findById(venueId).select('blockedDates workingDays temporaryBlockAfterDate inactivity.blockedAfterDate').lean().exec();
+  return VenueModel.findById(venueId)
+    .select('blockedDates workingDays temporaryBlockAfterDate inactivity.blockedAfterDate')
+    .lean()
+    .exec();
 }
 
 export async function getConfirmedBookingsAfterDate(

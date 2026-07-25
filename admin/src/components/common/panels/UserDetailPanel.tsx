@@ -20,7 +20,12 @@ export function UserDetailPanel({
   const data = rawData as unknown as UserData;
   if (!data) return null;
 
-  const statusVariant = data.status === "active" ? "default" : data.status === "suspended" ? "destructive" : "outline";
+  const statusVariant =
+    data.status === "active"
+      ? "default"
+      : data.status === "suspended"
+        ? "destructive"
+        : "outline";
 
   return (
     <div className="space-y-6 text-sm">
@@ -36,7 +41,9 @@ export function UserDetailPanel({
             {data.email}
           </div>
         </div>
-        <Badge className={`${statusVariant} border-none px-3 py-1 text-sm font-medium`}>
+        <Badge
+          className={`${statusVariant} border-none px-3 py-1 text-sm font-medium`}
+        >
           {data.status}
         </Badge>
       </div>
@@ -76,16 +83,16 @@ export function UserDetailPanel({
               <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-1">
                 Status
               </span>
-              <Badge variant={statusVariant}>
-                {data.status}
-              </Badge>
+              <Badge variant={statusVariant}>{data.status}</Badge>
             </div>
             <div>
               <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-1">
                 Registered
               </span>
               <span className="font-medium text-foreground">
-                {data.createdAt ? new Date(data.createdAt).toLocaleDateString() : "N/A"}
+                {data.createdAt
+                  ? new Date(data.createdAt).toLocaleDateString()
+                  : "N/A"}
               </span>
             </div>
             <div>

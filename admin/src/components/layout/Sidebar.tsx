@@ -242,7 +242,10 @@ export function Sidebar() {
                 <SelectItem
                   key={venue._id}
                   value={venue._id}
-                  disabled={venue.status !== VENUE_STATUS.APPROVED && venue.status !== VENUE_STATUS.INACTIVE}
+                  disabled={
+                    venue.status !== VENUE_STATUS.APPROVED &&
+                    venue.status !== VENUE_STATUS.INACTIVE
+                  }
                 >
                   {venue.name}{" "}
                   {venue.status !== VENUE_STATUS.APPROVED

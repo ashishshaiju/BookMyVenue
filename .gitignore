@@ -22,7 +22,6 @@ dist-ssr
 *.sln
 *.suo
 *.sw?
-*.md
 
 # Root
 node_modules/

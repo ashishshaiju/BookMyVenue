@@ -1,9 +1,5 @@
 import { Link } from 'react-router';
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useApiQuery } from '@/hooks/useApi';
@@ -26,11 +22,11 @@ import {
 import { format, differenceInDays } from 'date-fns';
 import { useState, useEffect } from 'react';
 
-// Status banner config 
+// Status banner config
 
 interface StatusConfig {
   icon: React.ReactNode;
-  accentClass: string;   // border color
+  accentClass: string; // border color
   bannerBg: string;
   badgeBg: string;
   badgeText: string;
@@ -53,7 +49,8 @@ const getStatusConfig = (venue: MyVenue): StatusConfig => {
         badgeBorder: 'border-amber-200 dark:border-amber-800/50',
         badgeText: 'text-amber-700 dark:text-amber-400',
         title: 'Under Review',
-        message: "Your venue is under review by our admin team. You'll be notified by email once a decision is made.",
+        message:
+          "Your venue is under review by our admin team. You'll be notified by email once a decision is made.",
       };
     case 'Rejected':
       return {
@@ -77,7 +74,8 @@ const getStatusConfig = (venue: MyVenue): StatusConfig => {
         badgeBorder: 'border-red-200 dark:border-red-800/50',
         badgeText: 'text-red-700 dark:text-red-400',
         title: 'Suspended',
-        message: 'This venue is suspended and not publicly visible. Contact support if you believe this is an error.',
+        message:
+          'This venue is suspended and not publicly visible. Contact support if you believe this is an error.',
       };
     case 'Draft':
     default:
@@ -94,7 +92,7 @@ const getStatusConfig = (venue: MyVenue): StatusConfig => {
   }
 };
 
-// Image strip 
+// Image strip
 const CompactGallery = ({ images, venueName }: { images: string[]; venueName: string }) => {
   const [idx, setIdx] = useState(0);
   if (images.length === 0) return null;
@@ -134,9 +132,19 @@ const CompactGallery = ({ images, venueName }: { images: string[]; venueName: st
   );
 };
 
-// Venue detail chips 
-const DetailChip = ({ icon, label, onClick, className }: { icon: React.ReactNode; label: string; onClick?: () => void; className?: string }) => (
-  <div 
+// Venue detail chips
+const DetailChip = ({
+  icon,
+  label,
+  onClick,
+  className,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  onClick?: () => void;
+  className?: string;
+}) => (
+  <div
     onClick={onClick}
     className={`flex items-center gap-2 px-3 py-2 rounded-xl bg-[var(--bg-primary)] border border-[var(--bg-grey)] text-sm text-[var(--text-primary)] ${onClick ? 'cursor-pointer hover:border-[var(--bg-green)]/30 hover:shadow-sm transition-all' : ''} ${className || ''}`}
   >
@@ -145,22 +153,20 @@ const DetailChip = ({ icon, label, onClick, className }: { icon: React.ReactNode
   </div>
 );
 
-//  Pricing View 
+//  Pricing View
 
 const PricingView = ({ venue, onBack }: { venue: VenueDetail; onBack: () => void }) => {
   return (
     <div className="animate-in slide-in-from-right-4 duration-300">
       <div className="flex items-center gap-3 mb-5 pb-3 border-b border-[var(--bg-grey)]">
-        <button 
+        <button
           onClick={onBack}
           className="p-1.5 rounded-lg bg-[var(--bg-primary)] hover:bg-[var(--bg-grey)] transition-colors border border-[var(--bg-grey)]"
           aria-label="Back to main view"
         >
           <ChevronLeft size={16} />
         </button>
-        <h3 className="text-base font-bold text-[var(--text-primary)]">
-          Pricing & Working Hours
-        </h3>
+        <h3 className="text-base font-bold text-[var(--text-primary)]">Pricing & Working Hours</h3>
       </div>
 
       <div className="space-y-5">
@@ -171,7 +177,10 @@ const PricingView = ({ venue, onBack }: { venue: VenueDetail; onBack: () => void
               Working Hours
             </h4>
             <div className="flex items-center justify-between text-sm">
-              <span className="font-medium text-[var(--text-primary)] line-clamp-1 mr-2" title={venue.workingDays.join(', ')}>
+              <span
+                className="font-medium text-[var(--text-primary)] line-clamp-1 mr-2"
+                title={venue.workingDays.join(', ')}
+              >
                 {venue.workingDays.join(', ')}
               </span>
               <span className="px-2.5 py-1 shrink-0 rounded-lg bg-[var(--bg-green)]/10 text-[var(--bg-green)] font-semibold text-xs border border-[var(--bg-green)]/20">
@@ -186,14 +195,23 @@ const PricingView = ({ venue, onBack }: { venue: VenueDetail; onBack: () => void
           <h4 className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wide mb-3">
             {venue.bookingType === 'fixedBooking' ? 'Fixed Packages' : 'Flexible Pricing'}
           </h4>
-          
-          {venue.bookingType === 'fixedBooking' && venue.fixedPackages && venue.fixedPackages.length > 0 ? (
+
+          {venue.bookingType === 'fixedBooking' &&
+          venue.fixedPackages &&
+          venue.fixedPackages.length > 0 ? (
             <div className="space-y-2.5">
               {venue.fixedPackages.map((pkg, i) => (
-                <div key={i} className="p-3.5 rounded-xl border border-[var(--bg-grey)] bg-[var(--bg-primary)] flex justify-between items-center group hover:border-[var(--bg-green)]/30 transition-colors">
+                <div
+                  key={i}
+                  className="p-3.5 rounded-xl border border-[var(--bg-grey)] bg-[var(--bg-primary)] flex justify-between items-center group hover:border-[var(--bg-green)]/30 transition-colors"
+                >
                   <div>
-                    <p className="font-semibold text-sm text-[var(--text-primary)]">{pkg.slotName}</p>
-                    <p className="text-xs text-[var(--text-secondary)] mt-0.5">{pkg.startTime} - {pkg.endTime}</p>
+                    <p className="font-semibold text-sm text-[var(--text-primary)]">
+                      {pkg.slotName}
+                    </p>
+                    <p className="text-xs text-[var(--text-secondary)] mt-0.5">
+                      {pkg.startTime} - {pkg.endTime}
+                    </p>
                   </div>
                   <div className="text-right">
                     <p className="font-bold text-[var(--bg-green)]">₹{pkg.price}</p>
@@ -205,32 +223,43 @@ const PricingView = ({ venue, onBack }: { venue: VenueDetail; onBack: () => void
             <div className="space-y-4">
               <div className="p-3.5 rounded-xl border border-[var(--bg-grey)] bg-[var(--bg-primary)] flex justify-between items-center">
                 <span className="text-sm font-medium text-[var(--text-primary)]">Base Price</span>
-                <span className="font-bold text-[var(--bg-green)]">₹{venue.pricing.basePrice} {venue.pricing.pricingType === 'timeBasedPricing' ? '/ hr' : '/ day'}</span>
+                <span className="font-bold text-[var(--bg-green)]">
+                  ₹{venue.pricing.basePrice}{' '}
+                  {venue.pricing.pricingType === 'timeBasedPricing' ? '/ hr' : '/ day'}
+                </span>
               </div>
-              
-              {venue.pricing.pricingType === 'timeBasedPricing' && venue.pricing.pricingRules && venue.pricing.pricingRules.length > 0 && (
-                <div className="overflow-hidden border border-[var(--bg-grey)] rounded-xl">
-                  <table className="w-full text-left text-sm">
-                    <thead className="bg-[var(--bg-grey)]/40 text-[var(--text-secondary)]">
-                      <tr>
-                        <th className="py-2 px-3 font-semibold">Time Window</th>
-                        <th className="py-2 px-3 font-semibold text-right">Price / hr</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-[var(--bg-grey)] bg-[var(--bg-primary)]">
-                      {venue.pricing.pricingRules.map((rule, i) => (
-                        <tr key={i}>
-                          <td className="py-2.5 px-3 font-medium text-[var(--text-primary)]">{rule.fromTime} - {rule.toTime}</td>
-                          <td className="py-2.5 px-3 text-right font-bold text-[var(--bg-green)]">₹{rule.price}</td>
+
+              {venue.pricing.pricingType === 'timeBasedPricing' &&
+                venue.pricing.pricingRules &&
+                venue.pricing.pricingRules.length > 0 && (
+                  <div className="overflow-hidden border border-[var(--bg-grey)] rounded-xl">
+                    <table className="w-full text-left text-sm">
+                      <thead className="bg-[var(--bg-grey)]/40 text-[var(--text-secondary)]">
+                        <tr>
+                          <th className="py-2 px-3 font-semibold">Time Window</th>
+                          <th className="py-2 px-3 font-semibold text-right">Price / hr</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+                      </thead>
+                      <tbody className="divide-y divide-[var(--bg-grey)] bg-[var(--bg-primary)]">
+                        {venue.pricing.pricingRules.map((rule, i) => (
+                          <tr key={i}>
+                            <td className="py-2.5 px-3 font-medium text-[var(--text-primary)]">
+                              {rule.fromTime} - {rule.toTime}
+                            </td>
+                            <td className="py-2.5 px-3 text-right font-bold text-[var(--bg-green)]">
+                              ₹{rule.price}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
             </div>
           ) : (
-            <p className="text-sm text-[var(--text-secondary)] italic bg-[var(--bg-primary)] p-4 rounded-xl border border-[var(--bg-grey)]">No pricing details configured.</p>
+            <p className="text-sm text-[var(--text-secondary)] italic bg-[var(--bg-primary)] p-4 rounded-xl border border-[var(--bg-grey)]">
+              No pricing details configured.
+            </p>
           )}
         </div>
       </div>
@@ -238,7 +267,7 @@ const PricingView = ({ venue, onBack }: { venue: VenueDetail; onBack: () => void
   );
 };
 
-// Skeleton 
+// Skeleton
 
 const ModalSkeleton = () => (
   <div className="space-y-4 animate-pulse">
@@ -251,7 +280,9 @@ const ModalSkeleton = () => (
     </div>
     <Skeleton className="h-20 w-full rounded-xl" />
     <div className="flex flex-wrap gap-2">
-      {[1,2,3,4].map(i => <Skeleton key={i} className="h-7 w-20 rounded-full" />)}
+      {[1, 2, 3, 4].map((i) => (
+        <Skeleton key={i} className="h-7 w-20 rounded-full" />
+      ))}
     </div>
   </div>
 );
@@ -277,7 +308,9 @@ const RejectionHistoryView = ({ myVenue, onBack }: { myVenue: MyVenue; onBack: (
 
       <div className="space-y-3">
         {history.length === 0 ? (
-          <p className="text-sm text-[var(--text-secondary)] italic">No rejection history available.</p>
+          <p className="text-sm text-[var(--text-secondary)] italic">
+            No rejection history available.
+          </p>
         ) : (
           history
             .slice()
@@ -307,7 +340,7 @@ const RejectionHistoryView = ({ myVenue, onBack }: { myVenue: MyVenue; onBack: (
   );
 };
 
-// Action button per status 
+// Action button per status
 
 const StatusAction = ({ venue }: { venue: MyVenue }) => {
   const isDeadlinePassed =
@@ -315,14 +348,22 @@ const StatusAction = ({ venue }: { venue: MyVenue }) => {
 
   if (venue.status === 'Rejected' && !isDeadlinePassed && (venue.submissionCount ?? 0) < 10) {
     return (
-      <Button size="sm" className="bg-[var(--bg-green)] text-white hover:bg-[var(--bg-green)]/90" asChild>
+      <Button
+        size="sm"
+        className="bg-[var(--bg-green)] text-white hover:bg-[var(--bg-green)]/90"
+        asChild
+      >
         <Link to={`/list-venue/edit-venue/${venue._id}`}>Edit & Resubmit</Link>
       </Button>
     );
   }
   if (venue.status === 'Draft') {
     return (
-      <Button size="sm" className="bg-[var(--bg-green)] text-white hover:bg-[var(--bg-green)]/90" asChild>
+      <Button
+        size="sm"
+        className="bg-[var(--bg-green)] text-white hover:bg-[var(--bg-green)]/90"
+        asChild
+      >
         <Link to={`/list-venue/edit-venue/${venue._id}`}>Continue Editing</Link>
       </Button>
     );
@@ -337,7 +378,7 @@ const StatusAction = ({ venue }: { venue: MyVenue }) => {
   return null;
 };
 
-// Main 
+// Main
 
 interface VenuePreviewModalProps {
   venueId: string;
@@ -370,11 +411,12 @@ const VenuePreviewModal = ({ venueId, myVenue, open, onOpenChange }: VenuePrevie
 
   const images = venue?.coverImage
     ? [venue.coverImage, ...(venue.galleryImages ?? [])]
-    : myVenue.coverImage ? [myVenue.coverImage] : [];
+    : myVenue.coverImage
+      ? [myVenue.coverImage]
+      : [];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-
       <DialogContent
         className="
           max-w-lg w-[95vw]
@@ -389,16 +431,24 @@ const VenuePreviewModal = ({ venueId, myVenue, open, onOpenChange }: VenuePrevie
         showCloseButton={false}
       >
         {/* Fixed Header (Status Banner) */}
-        <div className={`shrink-0 px-5 pt-4 pb-3 border-b ${statusConfig.accentClass} ${statusConfig.bannerBg}`}>
-          <DialogTitle className="sr-only">{myVenue.name} — {statusConfig.title}</DialogTitle>
+        <div
+          className={`shrink-0 px-5 pt-4 pb-3 border-b ${statusConfig.accentClass} ${statusConfig.bannerBg}`}
+        >
+          <DialogTitle className="sr-only">
+            {myVenue.name} — {statusConfig.title}
+          </DialogTitle>
 
           <div className="flex items-start gap-3">
-            <div className={`mt-0.5 w-8 h-8 rounded-full flex items-center justify-center shrink-0 border ${statusConfig.badgeBg} ${statusConfig.badgeBorder || 'border-transparent'}`}>
+            <div
+              className={`mt-0.5 w-8 h-8 rounded-full flex items-center justify-center shrink-0 border ${statusConfig.badgeBg} ${statusConfig.badgeBorder || 'border-transparent'}`}
+            >
               {statusConfig.icon}
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className={`text-xs font-bold px-2 py-0.5 rounded-full border ${statusConfig.badgeBg} ${statusConfig.badgeBorder || 'border-transparent'} ${statusConfig.badgeText}`}>
+                <span
+                  className={`text-xs font-bold px-2 py-0.5 rounded-full border ${statusConfig.badgeBg} ${statusConfig.badgeBorder || 'border-transparent'} ${statusConfig.badgeText}`}
+                >
                   {statusConfig.title}
                 </span>
                 <h2 className="text-base font-bold text-[var(--text-primary)] truncate">
@@ -413,15 +463,18 @@ const VenuePreviewModal = ({ venueId, myVenue, open, onOpenChange }: VenuePrevie
 
           {/* Rejection deadline */}
           {myVenue.status === 'Rejected' && myVenue.currentEditDeadline && (
-            <div className={`mt-3 flex items-center gap-2 text-xs rounded-lg px-3 py-2 border ${
-              isDeadlinePassed
-                ? 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-400'
-                : 'bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-900/50 text-amber-700 dark:text-amber-400'
-            }`}>
-              {isDeadlinePassed
-                ? <AlertCircle size={13} className="shrink-0" />
-                : <AlertTriangle size={13} className="shrink-0" />
-              }
+            <div
+              className={`mt-3 flex items-center gap-2 text-xs rounded-lg px-3 py-2 border ${
+                isDeadlinePassed
+                  ? 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-400'
+                  : 'bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-900/50 text-amber-700 dark:text-amber-400'
+              }`}
+            >
+              {isDeadlinePassed ? (
+                <AlertCircle size={13} className="shrink-0" />
+              ) : (
+                <AlertTriangle size={13} className="shrink-0" />
+              )}
               <span className="font-medium">
                 {isDeadlinePassed
                   ? 'Deadline passed'
@@ -436,7 +489,10 @@ const VenuePreviewModal = ({ venueId, myVenue, open, onOpenChange }: VenuePrevie
           {myVenue.status === 'Suspended' && myVenue.suspensionReason && (
             <div className="mt-3 flex items-start gap-2 text-xs rounded-lg px-3 py-2 border bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-400">
               <ShieldOff size={13} className="mt-0.5 shrink-0" />
-              <span><span className="font-semibold">Reason: </span>{myVenue.suspensionReason}</span>
+              <span>
+                <span className="font-semibold">Reason: </span>
+                {myVenue.suspensionReason}
+              </span>
             </div>
           )}
         </div>
@@ -452,23 +508,29 @@ const VenuePreviewModal = ({ venueId, myVenue, open, onOpenChange }: VenuePrevie
           ) : venue ? (
             <div className="animate-in slide-in-from-left-4 duration-300 space-y-4">
               {/* Compact image strip */}
-              {images.length > 0 && (
-                <CompactGallery images={images} venueName={venue.name} />
-              )}
+              {images.length > 0 && <CompactGallery images={images} venueName={venue.name} />}
 
               {/* Quick detail chips */}
               <div className="grid grid-cols-2 gap-2">
                 <DetailChip icon={<Tag size={14} />} label={venue.venueType} />
                 {venue.city && (
-                  <DetailChip icon={<MapPin size={14} />} label={`${venue.city}, ${venue.district}`} />
+                  <DetailChip
+                    icon={<MapPin size={14} />}
+                    label={`${venue.city}, ${venue.district}`}
+                  />
                 )}
                 {venue.maxCapacity && (
-                  <DetailChip icon={<Users size={14} />} label={`Up to ${venue.maxCapacity} guests`} />
+                  <DetailChip
+                    icon={<Users size={14} />}
+                    label={`Up to ${venue.maxCapacity} guests`}
+                  />
                 )}
                 {venue.bookingType && (
                   <DetailChip
                     icon={<Layers size={14} />}
-                    label={venue.bookingType === 'fixedBooking' ? 'Fixed Packages' : 'Flexible Slots'}
+                    label={
+                      venue.bookingType === 'fixedBooking' ? 'Fixed Packages' : 'Flexible Slots'
+                    }
                     onClick={() => setView('pricing')}
                   />
                 )}
@@ -490,7 +552,9 @@ const VenuePreviewModal = ({ venueId, myVenue, open, onOpenChange }: VenuePrevie
               {venue.address && (
                 <div className="flex items-start gap-2 text-sm text-[var(--text-secondary)]">
                   <MapPin size={14} className="mt-0.5 shrink-0 text-[var(--bg-green)]" />
-                  <span>{venue.address}, {venue.pincode}</span>
+                  <span>
+                    {venue.address}, {venue.pincode}
+                  </span>
                 </div>
               )}
 
@@ -545,14 +609,19 @@ const VenuePreviewModal = ({ venueId, myVenue, open, onOpenChange }: VenuePrevie
                   <p className="text-sm font-medium text-[var(--text-primary)] group-hover:text-[var(--bg-green)] transition-colors">
                     Rejection Histories ({myVenue.rejectionHistory.length}/10)
                   </p>
-                  <ChevronRight size={16} className="text-[var(--text-secondary)] group-hover:text-[var(--bg-green)] transition-colors" />
+                  <ChevronRight
+                    size={16}
+                    className="text-[var(--text-secondary)] group-hover:text-[var(--bg-green)] transition-colors"
+                  />
                 </div>
               )}
             </div>
           ) : (
             <div className="text-center py-10 text-[var(--text-secondary)]">
               <p className="text-sm">Could not load venue details.</p>
-              <p className="text-xs mt-1">{myVenue.venueType} · {myVenue.city}</p>
+              <p className="text-xs mt-1">
+                {myVenue.venueType} · {myVenue.city}
+              </p>
             </div>
           )}
         </div>

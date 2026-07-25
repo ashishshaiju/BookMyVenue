@@ -44,12 +44,20 @@ interface ExtendedVenue extends Venue {
 
 export function DangerZone({ venue }: DangerZoneProps) {
   const data = venue as unknown as ExtendedVenue;
-  const { mutateAsync: requestInactivity, isPending: isRequestingInactivity } = useRequestInactivity();
-  const { mutateAsync: withdrawInactivity, isPending: isWithdrawingInactivity } = useWithdrawInactivity();
-  const { mutateAsync: blockBookings, isPending: isBlocking } = useBlockBookings();
-  const { mutateAsync: unblockBookings, isPending: isUnblocking } = useUnblockBookings();
-  const { mutateAsync: activateVenue, isPending: isActivating } = useActivateVenue();
-  const { mutateAsync: requestDeleteVenue, isPending: isDeleting } = useRequestDeleteVenue();
+  const { mutateAsync: requestInactivity, isPending: isRequestingInactivity } =
+    useRequestInactivity();
+  const {
+    mutateAsync: withdrawInactivity,
+    isPending: isWithdrawingInactivity,
+  } = useWithdrawInactivity();
+  const { mutateAsync: blockBookings, isPending: isBlocking } =
+    useBlockBookings();
+  const { mutateAsync: unblockBookings, isPending: isUnblocking } =
+    useUnblockBookings();
+  const { mutateAsync: activateVenue, isPending: isActivating } =
+    useActivateVenue();
+  const { mutateAsync: requestDeleteVenue, isPending: isDeleting } =
+    useRequestDeleteVenue();
 
   const [inactivityReason, setInactivityReason] = useState("");
   const [deleteReason, setDeleteReason] = useState("");
@@ -60,10 +68,15 @@ export function DangerZone({ venue }: DangerZoneProps) {
     confirmText: string;
   } | null>(null);
 
-  const isPendingReview = data.pendingReview?.intent && data.pendingReview.intent !== "DELETION_REQUEST";
+  const isPendingReview =
+    data.pendingReview?.intent &&
+    data.pendingReview.intent !== "DELETION_REQUEST";
   const isDeletePending = data.pendingReview?.intent === "DELETION_REQUEST";
   const isInactive = !!data.inactivity?.inactiveAt;
-  const isInactivityPending = !!data.inactivity?.requestedAt && !data.inactivity?.approvedAt && !data.inactivity?.inactiveAt;
+  const isInactivityPending =
+    !!data.inactivity?.requestedAt &&
+    !data.inactivity?.approvedAt &&
+    !data.inactivity?.inactiveAt;
   const isWithdrawalRequested = !!data.inactivity?.withdrawalRequestedAt;
   const isBlocked = !!data.temporaryBlockAfterDate;
   const isActive = data.status === "Approved";
@@ -91,7 +104,8 @@ export function DangerZone({ venue }: DangerZoneProps) {
           <h3 className="font-semibold text-amber-800">Review Pending</h3>
         </div>
         <p className="text-sm text-amber-700">
-          A review request is currently pending approval. No danger zone actions are available until the review is resolved.
+          A review request is currently pending approval. No danger zone actions
+          are available until the review is resolved.
         </p>
       </Card>
     );
@@ -129,14 +143,18 @@ export function DangerZone({ venue }: DangerZoneProps) {
                     openDialog(
                       "Unblock Bookings",
                       "Allow new bookings for this venue again.",
-                      async () => { await unblockBookings({ venueId: venue._id }); },
+                      async () => {
+                        await unblockBookings({ venueId: venue._id });
+                      },
                       "Unblock",
                     );
                   } else {
                     openDialog(
                       "Block All Bookings",
                       "Temporarily block all new bookings. Existing bookings will not be affected.",
-                      async () => { await blockBookings({ venueId: venue._id }); },
+                      async () => {
+                        await blockBookings({ venueId: venue._id });
+                      },
                       "Block Bookings",
                     );
                   }
@@ -173,13 +191,19 @@ export function DangerZone({ venue }: DangerZoneProps) {
                     <Button
                       variant="outline"
                       size="sm"
-                      disabled={isWithdrawingInactivity || isWithdrawalRequested}
-                      onClick={() => openDialog(
-                        "Withdraw Inactivity Request",
-                        "Are you sure you want to withdraw the inactivity request? The venue will remain active.",
-                        async () => { await withdrawInactivity({ venueId: venue._id }); },
-                        "Withdraw Request",
-                      )}
+                      disabled={
+                        isWithdrawingInactivity || isWithdrawalRequested
+                      }
+                      onClick={() =>
+                        openDialog(
+                          "Withdraw Inactivity Request",
+                          "Are you sure you want to withdraw the inactivity request? The venue will remain active.",
+                          async () => {
+                            await withdrawInactivity({ venueId: venue._id });
+                          },
+                          "Withdraw Request",
+                        )
+                      }
                     >
                       Withdraw Request
                     </Button>
@@ -189,15 +213,20 @@ export function DangerZone({ venue }: DangerZoneProps) {
                       className="cursor-pointer"
                       size="sm"
                       disabled={isRequestingInactivity}
-                      onClick={() => openDialog(
-                        "Request Inactivity",
-                        "This will mark your venue as inactive and block new bookings. Existing bookings will be fulfilled. You can reactivate later.",
-                        async () => {
-                          await requestInactivity({ venueId: venue._id, reason: inactivityReason || undefined });
-                          setInactivityReason("");
-                        },
-                        "Request Inactivity",
-                      )}
+                      onClick={() =>
+                        openDialog(
+                          "Request Inactivity",
+                          "This will mark your venue as inactive and block new bookings. Existing bookings will be fulfilled. You can reactivate later.",
+                          async () => {
+                            await requestInactivity({
+                              venueId: venue._id,
+                              reason: inactivityReason || undefined,
+                            });
+                            setInactivityReason("");
+                          },
+                          "Request Inactivity",
+                        )
+                      }
                     >
                       Request Inactivity
                     </Button>
@@ -205,15 +234,18 @@ export function DangerZone({ venue }: DangerZoneProps) {
                 </div>
               </div>
               {isInactivityPending && (
-                <p className="text-xs text-amber-600">Inactivity request pending approval.</p>
+                <p className="text-xs text-amber-600">
+                  Inactivity request pending approval.
+                </p>
               )}
               {isWithdrawalRequested && (
-                <p className="text-xs text-amber-600">Withdrawal of inactivity is pending admin approval.</p>
+                <p className="text-xs text-amber-600">
+                  Withdrawal of inactivity is pending admin approval.
+                </p>
               )}
             </div>
           )}
 
-          
           {isInactive && (
             <div className="border border-destructive/20 rounded-lg p-4 space-y-3">
               <div className="flex items-center justify-between">
@@ -232,12 +264,16 @@ export function DangerZone({ venue }: DangerZoneProps) {
                   variant="default"
                   size="sm"
                   disabled={isActivating}
-                  onClick={() => openDialog(
-                    "Reactivate Venue",
-                    "Reactivate this venue to start accepting bookings again.",
-                    async () => { await activateVenue({ venueId: venue._id }); },
-                    "Reactivate",
-                  )}
+                  onClick={() =>
+                    openDialog(
+                      "Reactivate Venue",
+                      "Reactivate this venue to start accepting bookings again.",
+                      async () => {
+                        await activateVenue({ venueId: venue._id });
+                      },
+                      "Reactivate",
+                    )
+                  }
                 >
                   Reactivate Venue
                 </Button>
@@ -265,28 +301,35 @@ export function DangerZone({ venue }: DangerZoneProps) {
                   className="cursor-pointer"
                   size="sm"
                   disabled={isDeleting}
-                  onClick={() => openDialog(
-                    "Delete Venue",
-                    "This action is irreversible. All future bookings will be cancelled. Are you sure you want to proceed?",
-                    async () => {
-                      await requestDeleteVenue({ venueId: venue._id, reason: deleteReason || "No reason provided" });
-                      setDeleteReason("");
-                    },
-                    "Request Deletion",
-                  )}
+                  onClick={() =>
+                    openDialog(
+                      "Delete Venue",
+                      "This action is irreversible. All future bookings will be cancelled. Are you sure you want to proceed?",
+                      async () => {
+                        await requestDeleteVenue({
+                          venueId: venue._id,
+                          reason: deleteReason || "No reason provided",
+                        });
+                        setDeleteReason("");
+                      },
+                      "Request Deletion",
+                    )
+                  }
                 >
                   Delete Venue
                 </Button>
               )}
             </div>
             {isDeletePending && (
-              <p className="text-xs text-amber-600">Deletion requested, awaiting admin approval.</p>
+              <p className="text-xs text-amber-600">
+                Deletion requested, awaiting admin approval.
+              </p>
             )}
           </div>
         </div>
       </Card>
 
-      <Dialog open={!!dialog} onOpenChange={open => !open && setDialog(null)}>
+      <Dialog open={!!dialog} onOpenChange={(open) => !open && setDialog(null)}>
         {dialog && (
           <DialogContent>
             <DialogHeader>
@@ -299,24 +342,28 @@ export function DangerZone({ venue }: DangerZoneProps) {
                 <Input
                   id="dialogDeleteReason"
                   value={deleteReason}
-                  onChange={e => setDeleteReason(e.target.value)}
+                  onChange={(e) => setDeleteReason(e.target.value)}
                   placeholder="Explain why..."
                 />
               </div>
             )}
             {dialog.title === "Request Inactivity" && (
               <div className="space-y-2 py-2">
-                <Label htmlFor="dialogInactivityReason">Reason (optional)</Label>
+                <Label htmlFor="dialogInactivityReason">
+                  Reason (optional)
+                </Label>
                 <Input
                   id="dialogInactivityReason"
                   value={inactivityReason}
-                  onChange={e => setInactivityReason(e.target.value)}
+                  onChange={(e) => setInactivityReason(e.target.value)}
                   placeholder="Why are you requesting inactivity?"
                 />
               </div>
             )}
             <DialogFooter>
-              <Button variant="outline" onClick={() => setDialog(null)}>Cancel</Button>
+              <Button variant="outline" onClick={() => setDialog(null)}>
+                Cancel
+              </Button>
               <Button variant="destructive" onClick={handleConfirm}>
                 {dialog.confirmText}
               </Button>

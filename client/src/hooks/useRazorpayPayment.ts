@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import { useNavigate } from 'react-router';
 import { useApiMutation } from '@/hooks/useApi';
 import { API_ENDPOINTS, RAZORPAY_KEY_ID } from '@/constants';
@@ -79,11 +80,15 @@ export function useRazorpayPayment({
   const navigate = useNavigate();
   const { error: showError } = useToast();
 
+  const checkoutIdempotencyKeyRef = useRef(crypto.randomUUID());
+
   const { mutate: initCheckout } = useApiMutation(
-    {
+    (variables) => ({
       url: API_ENDPOINTS.CHECKOUT,
       method: 'POST',
-    },
+      data: variables,
+      headers: { 'Idempotency-Key': checkoutIdempotencyKeyRef.current },
+    }),
     {
       onSuccess: async (data: CheckoutResponse) => {
         const { orderId, amount, currency } = data;

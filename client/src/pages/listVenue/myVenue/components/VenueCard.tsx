@@ -52,11 +52,16 @@ const getStatusBadge = (status: MyVenue['status']) => {
 
 const getPreviewButtonLabel = (status: MyVenue['status']): string => {
   switch (status) {
-    case 'PendingReview': return 'View Submission';
-    case 'Rejected':      return 'View Submission';
-    case 'Suspended':     return 'View Details';
-    case 'Draft':         return 'Preview';
-    default:              return 'View Details';
+    case 'PendingReview':
+      return 'View Submission';
+    case 'Rejected':
+      return 'View Submission';
+    case 'Suspended':
+      return 'View Details';
+    case 'Draft':
+      return 'Preview';
+    default:
+      return 'View Details';
   }
 };
 
@@ -64,19 +69,20 @@ const VenueCard = ({ venue }: VenueCardProps) => {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
 
-  const isDeadlinePassed = venue.currentEditDeadline && new Date() > new Date(venue.currentEditDeadline);
+  const isDeadlinePassed =
+    venue.currentEditDeadline && new Date() > new Date(venue.currentEditDeadline);
   const daysLeft = venue.currentEditDeadline
     ? differenceInDays(new Date(venue.currentEditDeadline), new Date())
     : null;
 
   const isApproved = venue.status === 'Approved';
 
-  const latestReason = venue.rejectionReason
-    ?? venue.rejectionHistory?.[venue.rejectionHistory.length - 1]?.reason
-    ?? '';
-  const truncatedReason = latestReason.length > 10
-    ? latestReason.slice(0, 10) + '…'
-    : latestReason || 'N/A';
+  const latestReason =
+    venue.rejectionReason ??
+    venue.rejectionHistory?.[venue.rejectionHistory.length - 1]?.reason ??
+    '';
+  const truncatedReason =
+    latestReason.length > 10 ? latestReason.slice(0, 10) + '…' : latestReason || 'N/A';
 
   return (
     <>
@@ -100,36 +106,45 @@ const VenueCard = ({ venue }: VenueCardProps) => {
         <div className="p-5 flex-1 flex flex-col">
           <h3 className="text-xl font-bold text-[var(--text-primary)] mb-1 truncate flex items-center gap-1.5">
             {venue.name}
-            {venue.isFeatured && <span className="text-amber-500 shrink-0" title="Featured venue">&#9733;</span>}
+            {venue.isFeatured && (
+              <span className="text-amber-500 shrink-0" title="Featured venue">
+                &#9733;
+              </span>
+            )}
           </h3>
 
           <div className="flex items-center text-[var(--text-secondary)] text-sm mb-4">
             <MdOutlineLocationOn className="mr-1 text-lg" />
             <span className="truncate">
-              {venue.city}, {venue.district ? `${venue.district}, ` : ''}{venue.state}
+              {venue.city}, {venue.district ? `${venue.district}, ` : ''}
+              {venue.state}
             </span>
           </div>
 
-          {venue.status === 'Rejected' && venue.rejectionHistory && venue.rejectionHistory.length > 0 && (
-            <button
-              onClick={() => setHistoryOpen(true)}
-              className="mb-2 w-full flex items-center justify-between gap-2 p-2 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-100 dark:border-red-900 text-xs hover:bg-red-100 dark:hover:bg-red-950/50 transition-colors"
-            >
-              <span className="text-red-700 dark:text-red-300 truncate min-w-0">
-                <span className="font-semibold">Rejected:</span> {truncatedReason}
-              </span>
-              <span className="text-red-500 font-semibold shrink-0 ml-1">
-                History ({venue.rejectionHistory.length})
-              </span>
-            </button>
-          )}
+          {venue.status === 'Rejected' &&
+            venue.rejectionHistory &&
+            venue.rejectionHistory.length > 0 && (
+              <button
+                onClick={() => setHistoryOpen(true)}
+                className="mb-2 w-full flex items-center justify-between gap-2 p-2 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-100 dark:border-red-900 text-xs hover:bg-red-100 dark:hover:bg-red-950/50 transition-colors"
+              >
+                <span className="text-red-700 dark:text-red-300 truncate min-w-0">
+                  <span className="font-semibold">Rejected:</span> {truncatedReason}
+                </span>
+                <span className="text-red-500 font-semibold shrink-0 ml-1">
+                  History ({venue.rejectionHistory.length})
+                </span>
+              </button>
+            )}
 
           {venue.status === 'Rejected' && venue.currentEditDeadline && (
-            <div className={`mb-2 flex items-center gap-1.5 text-xs rounded-lg px-2.5 py-1.5 border ${
-              isDeadlinePassed
-                ? 'bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 border-red-200 dark:border-red-900'
-                : 'bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-900'
-            }`}>
+            <div
+              className={`mb-2 flex items-center gap-1.5 text-xs rounded-lg px-2.5 py-1.5 border ${
+                isDeadlinePassed
+                  ? 'bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 border-red-200 dark:border-red-900'
+                  : 'bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-900'
+              }`}
+            >
               {isDeadlinePassed ? (
                 <AlertCircle size={12} className="shrink-0" />
               ) : (
@@ -141,7 +156,9 @@ const VenueCard = ({ venue }: VenueCardProps) => {
                   : `${daysLeft} day${daysLeft !== 1 ? 's' : ''} left`}
               </span>
               {!isDeadlinePassed && (
-                <span className="opacity-60">· {format(new Date(venue.currentEditDeadline), 'PP')}</span>
+                <span className="opacity-60">
+                  · {format(new Date(venue.currentEditDeadline), 'PP')}
+                </span>
               )}
             </div>
           )}
@@ -153,11 +170,7 @@ const VenueCard = ({ venue }: VenueCardProps) => {
                 <Link to={`/venue/${venue._id}`}>View Details</Link>
               </Button>
             ) : (
-              <Button
-                variant="outline"
-                className="flex-1"
-                onClick={() => setPreviewOpen(true)}
-              >
+              <Button variant="outline" className="flex-1" onClick={() => setPreviewOpen(true)}>
                 {getPreviewButtonLabel(venue.status)}
               </Button>
             )}
@@ -177,20 +190,25 @@ const VenueCard = ({ venue }: VenueCardProps) => {
               </Button>
             )}
 
-            {venue.status === 'Rejected' && !isDeadlinePassed && venue.submissionCount && venue.submissionCount < 10 && (
-              <Button
-                className="flex-1 bg-[var(--bg-green)] text-white hover:bg-[var(--bg-green)]/90"
-                asChild
-              >
-                <Link to={`/list-venue/edit-venue/${venue._id}`}>Edit & Resubmit</Link>
-              </Button>
-            )}
+            {venue.status === 'Rejected' &&
+              !isDeadlinePassed &&
+              venue.submissionCount &&
+              venue.submissionCount < 10 && (
+                <Button
+                  className="flex-1 bg-[var(--bg-green)] text-white hover:bg-[var(--bg-green)]/90"
+                  asChild
+                >
+                  <Link to={`/list-venue/edit-venue/${venue._id}`}>Edit & Resubmit</Link>
+                </Button>
+              )}
 
-            {venue.status === 'Rejected' && venue.submissionCount && venue.submissionCount >= 10 && (
-              <p className="flex-1 text-center text-sm text-red-500 py-2">
-                Max retries (10) exceeded
-              </p>
-            )}
+            {venue.status === 'Rejected' &&
+              venue.submissionCount &&
+              venue.submissionCount >= 10 && (
+                <p className="flex-1 text-center text-sm text-red-500 py-2">
+                  Max retries (10) exceeded
+                </p>
+              )}
           </div>
         </div>
       </div>

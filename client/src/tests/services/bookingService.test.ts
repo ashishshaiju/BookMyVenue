@@ -1,88 +1,122 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { getMyBookings, getBookingById, saveBookerDetails, cancelBooking } from '@/services/bookingService';
-import { axiosInstance as api } from '@/config/axios';
-import { API_ENDPOINTS } from '@/constants';
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+
+const mockGet = vi.fn()
+const mockPatch = vi.fn()
+const mockDelete = vi.fn()
 
 vi.mock('@/config/axios', () => ({
   axiosInstance: {
-    get: vi.fn(),
-    post: vi.fn(),
-    patch: vi.fn(),
-    delete: vi.fn(),
+    get: mockGet,
+    patch: mockPatch,
+    delete: mockDelete,
   },
-}));
+}))
 
-describe('client bookingService', () => {
+vi.mock('@/constants', () => ({
+  API_ENDPOINTS: {
+    MY_BOOKINGS: '/bookings/my-bookings',
+    BOOKING_BY_ID: (id: string) => `/bookings/${id}`,
+    SAVE_BOOKER_DETAILS: '/bookings/booker-details',
+    CANCEL_BOOKING: (id: string) => `/bookings/${id}`,
+  },
+}))
+
+describe('bookingService', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
-  });
+    vi.clearAllMocks()
+  })
 
-  it('should fetch user bookings via getMyBookings', async () => {
-    const mockData = {
-      success: true,
-      data: {
-        bookings: { upcoming: [], completed: [], cancelled: [] },
-      },
-    };
+  describe('getMyBookings', () => {
+    it('should GET my-bookings and return response data', async () => {
+      const responseData = {
+        success: true,
+        data: {
+          bookings: {
+            upcoming: [{ _id: 'b1' }],
+            completed: [],
+            cancelled: [],
+          },
+        },
+      }
+      mockGet.mockResolvedValue({ data: responseData })
 
-    vi.mocked(api.get).mockResolvedValueOnce({ data: mockData });
+      const { getMyBookings } = await import('../../services/bookingService')
+      const result = await getMyBookings()
 
-    const response = await getMyBookings();
+      expect(mockGet).toHaveBeenCalledWith('/bookings/my-bookings')
+      expect(result).toEqual(responseData)
+    })
+  })
 
-    expect(api.get).toHaveBeenCalledWith(API_ENDPOINTS.MY_BOOKINGS);
-    expect(response).toEqual(mockData);
-  });
+  describe('getBookingById', () => {
+    it('should GET booking by id and return response data', async () => {
+      const responseData = {
+        success: true,
+        data: {
+          _id: 'b1',
+          venueName: 'Grand Hall',
+          bookingRef: 'REF-001',
+        },
+      }
+      mockGet.mockResolvedValue({ data: responseData })
 
-  it('should fetch booking by ID via getBookingById', async () => {
-    const mockBooking = {
-      success: true,
-      data: { bookingRefId: 'BMV-123456' },
-    };
+      const { getBookingById } = await import('../../services/bookingService')
+      const result = await getBookingById('b1')
 
-    vi.mocked(api.get).mockResolvedValueOnce({ data: mockBooking });
+      expect(mockGet).toHaveBeenCalledWith('/bookings/b1')
+      expect(result).toEqual(responseData)
+    })
+  })
 
-    const response = await getBookingById('BMV-123456');
+  describe('saveBookerDetails', () => {
+    it('should PATCH booker details with lockId', async () => {
+      mockPatch.mockResolvedValue({ data: { success: true, data: null } })
 
-    expect(api.get).toHaveBeenCalledWith(API_ENDPOINTS.BOOKING_BY_ID('BMV-123456'));
-    expect(response).toEqual(mockBooking);
-  });
-
-  it('should send formatted payload to saveBookerDetails', async () => {
-    vi.mocked(api.patch).mockResolvedValueOnce({ data: { success: true, data: null } });
-
-    await saveBookerDetails({
-      lockId: 'lock_123',
-      guestCount: 150,
-      eventType: 'Wedding Reception',
-      name: 'John Doe',
-      phone: '9876543210',
-      email: 'john@example.com',
-      place: 'Kochi',
-    });
-
-    expect(api.patch).toHaveBeenCalledWith(API_ENDPOINTS.SAVE_BOOKER_DETAILS, {
-      lockId: 'lock_123',
-      guestCount: 150,
-      eventType: 'Wedding Reception',
-      bookerInfo: {
-        name: 'John Doe',
+      const { saveBookerDetails } = await import('../../services/bookingService')
+      const result = await saveBookerDetails({
+        lockId: 'lock-1',
+        guestCount: 50,
+        eventType: 'wedding',
+        name: 'John',
+        email: 'john@test.com',
         phone: '9876543210',
-        email: 'john@example.com',
         place: 'Kochi',
-      },
-    });
-  });
+      })
 
-  it('should cancel booking via cancelBooking with reason', async () => {
-    vi.mocked(api.delete).mockResolvedValueOnce({
-      data: { success: true, data: { refundAmount: 1000 } },
-    });
+      expect(mockPatch).toHaveBeenCalledWith('/bookings/booker-details', {
+        lockId: 'lock-1',
+        guestCount: 50,
+        eventType: 'wedding',
+        bookerInfo: {
+          name: 'John',
+          email: 'john@test.com',
+          phone: '9876543210',
+          place: 'Kochi',
+        },
+      })
+      expect(result).toEqual({ success: true, data: null })
+    })
+  })
 
-    const response = await cancelBooking('bk_123', 'Change of plans');
+  describe('cancelBooking', () => {
+    it('should DELETE booking with reason', async () => {
+      mockDelete.mockResolvedValue({ data: { success: true, data: { refundAmount: 500 } } })
 
-    expect(api.delete).toHaveBeenCalledWith(API_ENDPOINTS.CANCEL_BOOKING('bk_123'), {
-      data: { reason: 'Change of plans' },
-    });
-    expect(response.success).toBe(true);
-  });
-});
+      const { cancelBooking } = await import('../../services/bookingService')
+      const result = await cancelBooking('b1', 'Changed mind')
+
+      expect(mockDelete).toHaveBeenCalledWith('/bookings/b1', { data: { reason: 'Changed mind' } })
+      expect(result).toEqual({ success: true, data: { refundAmount: 500 } })
+    })
+
+    it('should cancel without reason', async () => {
+      mockDelete.mockResolvedValue({ data: { success: true, data: { refundAmount: 0 } } })
+
+      const { cancelBooking } = await import('../../services/bookingService')
+      const result = await cancelBooking('b1')
+
+      expect(mockDelete).toHaveBeenCalledWith('/bookings/b1', { data: { reason: undefined } })
+      expect(result).toEqual({ success: true, data: { refundAmount: 0 } })
+    })
+  })
+})

@@ -43,18 +43,19 @@ export function useApiQuery<T = unknown>(
 
 // Generic mutation hook
 export function useApiMutation<T = unknown, TVariables = unknown>(
-  config: AxiosRequestConfig,
+  configOrBuilder: AxiosRequestConfig | ((variables: TVariables) => AxiosRequestConfig),
   options?: UseMutationOptions<T, Error, TVariables>
 ) {
   const { error: showError } = useToast();
 
   return useMutation<T, Error, TVariables>({
     mutationFn: async (variables: TVariables) => {
+      const config =
+        typeof configOrBuilder === 'function'
+          ? configOrBuilder(variables)
+          : { ...configOrBuilder, data: variables };
       try {
-        const response = await axiosInstance({
-          ...config,
-          data: variables,
-        });
+        const response = await axiosInstance(config);
         return response.data?.data ?? response.data;
       } catch (error) {
         showError(getErrorMessage(error));

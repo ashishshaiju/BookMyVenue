@@ -1,5 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { changePassword, getSessions, revokeSession, logoutOtherSessions } from '@/services/authService';
+import {
+  changePassword,
+  getSessions,
+  revokeSession,
+  logoutOtherSessions,
+} from '@/services/authService';
 import { axiosInstance } from '@/config/axios';
 import { API_ENDPOINTS } from '@/constants';
 

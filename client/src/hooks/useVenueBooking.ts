@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router';
 import { useApiQuery, useApiMutation } from '@/hooks/useApi';
 import { useToast } from '@/hooks/useToast';
@@ -18,6 +18,7 @@ export function useVenueBooking(venueId: string | undefined, venue: VenueDetail 
   const [calendarVisible, setCalendarVisible] = useState<boolean>(true);
   const [bookingOpen, setBookingOpen] = useState(false);
   const [showFab, setShowFab] = useState(false);
+  const blockIdempotencyKeyRef = useRef(crypto.randomUUID());
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -146,10 +147,12 @@ export function useVenueBooking(venueId: string | undefined, venue: VenueDetail 
   };
 
   const { mutate: blockSlot, isPending: isBlocking } = useApiMutation(
-    {
+    (variables) => ({
       url: API_ENDPOINTS.BLOCK_SLOT(venueId as string),
       method: 'POST',
-    },
+      data: variables,
+      headers: { 'Idempotency-Key': blockIdempotencyKeyRef.current },
+    }),
     {
       onSuccess: (data) => {
         navigate('/booking/summary', {
@@ -182,6 +185,7 @@ export function useVenueBooking(venueId: string | undefined, venue: VenueDetail 
       return;
     }
 
+    blockIdempotencyKeyRef.current = crypto.randomUUID();
     blockSlot({
       date: selectedDate,
       selectedSlots: sortedSelection.map((slot) => ({

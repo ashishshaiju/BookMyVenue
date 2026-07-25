@@ -99,9 +99,7 @@ export interface AggregatedBooking {
   contractSnapshot?: IContractSnapshot;
 }
 
-export async function fetchMyBookings(
-  userId: string
-): Promise<{
+export async function fetchMyBookings(userId: string): Promise<{
   bookings: {
     upcoming: Record<string, unknown>[];
     cancelled: Record<string, unknown>[];

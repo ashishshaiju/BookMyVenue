@@ -102,7 +102,11 @@ export async function getVenueSettingsService(venueId: string): Promise<IVenue> 
   return venue;
 }
 
-export async function requestInactivityService(venueId: string, userId: string, reason?: string): Promise<IVenue> {
+export async function requestInactivityService(
+  venueId: string,
+  userId: string,
+  reason?: string
+): Promise<IVenue> {
   const venue = await requireOwnVenue(venueId, userId);
   venueWorkflow.canRequestInactivity(venue);
 
@@ -142,7 +146,10 @@ export async function blockBookingsService(venueId: string, userId: string): Pro
     venueId: new mongoose.Types.ObjectId(venueId),
     status: BookingStatus.CONFIRMED,
     date: { $gte: today },
-  }).sort({ date: -1 }).lean().exec();
+  })
+    .sort({ date: -1 })
+    .lean()
+    .exec();
 
   let blockedAfterDate: Date;
   if (latestBooking) {
@@ -196,7 +203,11 @@ export async function activateVenueService(venueId: string, userId: string): Pro
   return updated;
 }
 
-export async function requestDeleteVenueService(venueId: string, userId: string, reason: string): Promise<IVenue> {
+export async function requestDeleteVenueService(
+  venueId: string,
+  userId: string,
+  reason: string
+): Promise<IVenue> {
   const venue = await requireOwnVenue(venueId, userId);
   venueWorkflow.canRequestDelete(venue);
 

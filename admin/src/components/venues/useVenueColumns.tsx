@@ -61,7 +61,11 @@ export function useVenueColumns({
   setRejectDialog: (state: VenueDialogState) => void;
   setSuspendDialog: (state: VenueDialogState) => void;
   setFeatureDialog: (state: VenueDialogState) => void;
-  setExtendDeadlineDialog: (state: { open: boolean; venueId: string; currentDeadline: string }) => void;
+  setExtendDeadlineDialog: (state: {
+    open: boolean;
+    venueId: string;
+    currentDeadline: string;
+  }) => void;
   success: (msg: string) => void;
   error: (msg: string) => void;
 }) {
@@ -167,9 +171,7 @@ export function useVenueColumns({
           <p className="font-medium group-hover:text-primary transition-colors hover:underline">
             {row.original.name}
           </p>
-          <p className="text-xs text-muted-foreground">
-            {row.original.city}
-          </p>
+          <p className="text-xs text-muted-foreground">{row.original.city}</p>
         </div>
       ),
     },
@@ -353,22 +355,24 @@ export function useVenueColumns({
                 </DropdownMenuItem>
               )}
 
-              {venue.status === "Rejected" && venue.currentEditDeadline && (() => {
-                const deadline = venue.currentEditDeadline;
-                return (
-                  <DropdownMenuItem
-                    onClick={() =>
-                      setExtendDeadlineDialog({
-                        open: true,
-                        venueId: venue._id,
-                        currentDeadline: deadline,
-                      })
-                    }
-                  >
-                    ⏰ Extend Deadline…
-                  </DropdownMenuItem>
-                );
-              })()}
+              {venue.status === "Rejected" &&
+                venue.currentEditDeadline &&
+                (() => {
+                  const deadline = venue.currentEditDeadline;
+                  return (
+                    <DropdownMenuItem
+                      onClick={() =>
+                        setExtendDeadlineDialog({
+                          open: true,
+                          venueId: venue._id,
+                          currentDeadline: deadline,
+                        })
+                      }
+                    >
+                      ⏰ Extend Deadline…
+                    </DropdownMenuItem>
+                  );
+                })()}
             </DropdownMenuContent>
           </DropdownMenu>
         );

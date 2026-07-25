@@ -20,13 +20,15 @@ export function useOwnerBookingColumns({
         return (
           <span
             className="font-mono text-sm font-medium cursor-pointer text-primary hover:underline"
-            onClick={() => openModal({
-              title: `Booking Details`,
-              size: "xl",
-              component: BookingDetailPanel,
-              data: row.original,
-              actions: [],
-            })}
+            onClick={() =>
+              openModal({
+                title: `Booking Details`,
+                size: "xl",
+                component: BookingDetailPanel,
+                data: row.original,
+                actions: [],
+              })
+            }
           >
             <span className="inline-flex items-center gap-1">
               BMV-{id.slice(-6).toUpperCase()}
@@ -57,13 +59,18 @@ export function useOwnerBookingColumns({
       accessorKey: "bookerName",
       header: "Customer",
       cell: ({ row }) => (
-        <div className="cursor-pointer hover:text-primary" onClick={() => openModal({
-          title: `Booking Details`,
-          size: "xl",
-          component: BookingDetailPanel,
-          data: row.original,
-          actions: [],
-        })}>
+        <div
+          className="cursor-pointer hover:text-primary"
+          onClick={() =>
+            openModal({
+              title: `Booking Details`,
+              size: "xl",
+              component: BookingDetailPanel,
+              data: row.original,
+              actions: [],
+            })
+          }
+        >
           <p className="font-medium">{row.original.bookerName ?? "—"}</p>
           <p className="text-xs text-muted-foreground">
             {row.original.bookerPhone ?? ""}
@@ -100,7 +107,12 @@ export function useOwnerBookingColumns({
       cell: ({ row }) => {
         const displayStatus = row.original.uiStatus ?? row.original.status;
         return (
-          <Badge variant={STATUS_VARIANT[(displayStatus as string).toUpperCase()] ?? "outline"}>
+          <Badge
+            variant={
+              STATUS_VARIANT[(displayStatus as string).toUpperCase()] ??
+              "outline"
+            }
+          >
             {(displayStatus as string).toUpperCase()}
           </Badge>
         );

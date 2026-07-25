@@ -61,7 +61,7 @@ const ModerationPage = () => {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card 
+        <Card
           className={`p-4 cursor-pointer transition-colors border-[var(--bg-grey)] ${activeTab === "flagged" ? "bg-yellow-50/50 dark:bg-yellow-950/20 border-yellow-200" : "bg-[var(--bg-primary)] hover:bg-[var(--bg-grey)]"}`}
           onClick={() => setActiveTab("flagged")}
         >
@@ -71,10 +71,12 @@ const ModerationPage = () => {
               Flagged Reviews
             </h2>
           </div>
-          <p className="text-2xl font-bold text-[var(--text-primary)]">{flaggedReviews.length}</p>
+          <p className="text-2xl font-bold text-[var(--text-primary)]">
+            {flaggedReviews.length}
+          </p>
         </Card>
 
-        <Card 
+        <Card
           className={`p-4 cursor-pointer transition-colors border-[var(--bg-grey)] ${activeTab === "hide_requests" ? "bg-orange-50/50 dark:bg-orange-950/20 border-orange-200" : "bg-[var(--bg-primary)] hover:bg-[var(--bg-grey)]"}`}
           onClick={() => setActiveTab("hide_requests")}
         >
@@ -84,10 +86,12 @@ const ModerationPage = () => {
               Hide Requests
             </h2>
           </div>
-          <p className="text-2xl font-bold text-[var(--text-primary)]">{hideRequests.length}</p>
+          <p className="text-2xl font-bold text-[var(--text-primary)]">
+            {hideRequests.length}
+          </p>
         </Card>
 
-        <Card 
+        <Card
           className={`p-4 cursor-pointer transition-colors border-[var(--bg-grey)] ${activeTab === "suspended" ? "bg-gray-50/50 dark:bg-gray-800/20 border-gray-300" : "bg-[var(--bg-primary)] hover:bg-[var(--bg-grey)]"}`}
           onClick={() => setActiveTab("suspended")}
         >
@@ -97,10 +101,12 @@ const ModerationPage = () => {
               Suspended Venues
             </h2>
           </div>
-          <p className="text-2xl font-bold text-[var(--text-primary)]">{suspendedVenues.length}</p>
+          <p className="text-2xl font-bold text-[var(--text-primary)]">
+            {suspendedVenues.length}
+          </p>
         </Card>
 
-        <Card 
+        <Card
           className={`p-4 cursor-pointer transition-colors border-[var(--bg-grey)] ${activeTab === "banned" ? "bg-red-50/50 dark:bg-red-950/20 border-red-200" : "bg-[var(--bg-primary)] hover:bg-[var(--bg-grey)]"}`}
           onClick={() => setActiveTab("banned")}
         >
@@ -110,11 +116,17 @@ const ModerationPage = () => {
               Banned Users
             </h2>
           </div>
-          <p className="text-2xl font-bold text-[var(--text-primary)]">{bannedUsers.length}</p>
+          <p className="text-2xl font-bold text-[var(--text-primary)]">
+            {bannedUsers.length}
+          </p>
         </Card>
       </div>
 
-      <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as ModerationTab)} className="w-full">
+      <Tabs
+        value={activeTab}
+        onValueChange={(val) => setActiveTab(val as ModerationTab)}
+        className="w-full"
+      >
         <TabsList className="mb-4" variant="line">
           <TabsTrigger value="flagged">Flagged Reviews</TabsTrigger>
           <TabsTrigger value="hide_requests">Hide Requests</TabsTrigger>
@@ -130,8 +142,12 @@ const ModerationPage = () => {
                 Flagged Reviews
               </h2>
               {flaggedReviews.length > 0 && (
-                <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-300">
-                  {flaggedReviews.length} Action{flaggedReviews.length !== 1 ? "s" : ""} Needed
+                <Badge
+                  variant="outline"
+                  className="bg-yellow-50 text-yellow-700 border-yellow-300"
+                >
+                  {flaggedReviews.length} Action
+                  {flaggedReviews.length !== 1 ? "s" : ""} Needed
                 </Badge>
               )}
             </div>
@@ -151,7 +167,10 @@ const ModerationPage = () => {
                 Hide Requests
               </h2>
               {hideRequests.length > 0 && (
-                <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-300">
+                <Badge
+                  variant="outline"
+                  className="bg-orange-50 text-orange-700 border-orange-300"
+                >
                   {hideRequests.length} Pending
                 </Badge>
               )}
@@ -172,7 +191,10 @@ const ModerationPage = () => {
                 Suspended Venues
               </h2>
               {suspendedVenues.length > 0 && (
-                <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-300">
+                <Badge
+                  variant="outline"
+                  className="bg-gray-50 text-gray-700 border-gray-300"
+                >
                   {suspendedVenues.length} Total
                 </Badge>
               )}
@@ -192,7 +214,10 @@ const ModerationPage = () => {
                 Banned Users
               </h2>
               {bannedUsers.length > 0 && (
-                <Badge variant="outline" className="bg-red-50 text-red-700 border-red-300">
+                <Badge
+                  variant="outline"
+                  className="bg-red-50 text-red-700 border-red-300"
+                >
                   {bannedUsers.length} Total
                 </Badge>
               )}
@@ -217,4 +242,3 @@ const ModerationPage = () => {
 };
 
 export default ModerationPage;
-

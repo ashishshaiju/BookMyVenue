@@ -77,8 +77,10 @@ export default function CalendarPage() {
 
   const isBooked = (date: Date) => bookedSet.has(toLocalDateStr(date));
   const isBlocked = (date: Date) => blockedSet.has(toLocalDateStr(date));
-  const isTempBlocked = (date: Date) => tempBlockedSet.has(toLocalDateStr(date));
-  const isInactivityBlocked = (date: Date) => inactivityBlockedSet.has(toLocalDateStr(date));
+  const isTempBlocked = (date: Date) =>
+    tempBlockedSet.has(toLocalDateStr(date));
+  const isInactivityBlocked = (date: Date) =>
+    inactivityBlockedSet.has(toLocalDateStr(date));
   const isPast = (date: Date) => date < today;
   const isTooFar = (date: Date) => date > sixMonthsFromNow;
   const isNonWorkingDay = (date: Date) => {
@@ -87,7 +89,12 @@ export default function CalendarPage() {
     return !workingDaysSet.has(dayName);
   };
   const isDisabledDay = (date: Date) =>
-    isPast(date) || isTooFar(date) || isBooked(date) || isNonWorkingDay(date) || isTempBlocked(date) || isInactivityBlocked(date);
+    isPast(date) ||
+    isTooFar(date) ||
+    isBooked(date) ||
+    isNonWorkingDay(date) ||
+    isTempBlocked(date) ||
+    isInactivityBlocked(date);
 
   const [tablePage, setTablePage] = useState(1);
 
@@ -211,7 +218,9 @@ export default function CalendarPage() {
 
       {/* Blocked Dates Data Table */}
       <div className="mt-8">
-        <h2 className="text-xl font-bold tracking-tight mb-4">Blocked Dates List</h2>
+        <h2 className="text-xl font-bold tracking-tight mb-4">
+          Blocked Dates List
+        </h2>
         <BlockedDatesTable
           tablePage={tablePage}
           setTablePage={setTablePage}

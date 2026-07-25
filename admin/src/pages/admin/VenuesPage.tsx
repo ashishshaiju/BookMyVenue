@@ -81,7 +81,11 @@ export default function VenuesPage() {
     if (!rejectDialog.venueId) return;
 
     rejectMutation.mutate(
-      { id: rejectDialog.venueId, reason: rejectReason, extendedDeadline: extendedDeadline || undefined },
+      {
+        id: rejectDialog.venueId,
+        reason: rejectReason,
+        extendedDeadline: extendedDeadline || undefined,
+      },
       {
         onSuccess: () => {
           success("Venue rejected successfully");
@@ -263,7 +267,9 @@ export default function VenuesPage() {
 
           <ExtendDeadlineDialog
             open={extendDeadlineDialog.open}
-            setOpen={(open) => setExtendDeadlineDialog((prev) => ({ ...prev, open }))}
+            setOpen={(open) =>
+              setExtendDeadlineDialog((prev) => ({ ...prev, open }))
+            }
             venueId={extendDeadlineDialog.venueId}
             currentDeadline={extendDeadlineDialog.currentDeadline}
             onExtend={handleExtendDeadline}

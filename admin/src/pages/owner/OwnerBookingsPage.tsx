@@ -105,7 +105,9 @@ export default function OwnerBookingsPage() {
             disabled={isInactive}
             className={cn(
               "bg-primary text-primary-foreground shadow-sm",
-              isInactive ? "opacity-50 cursor-not-allowed" : "hover:bg-primary/90"
+              isInactive
+                ? "opacity-50 cursor-not-allowed"
+                : "hover:bg-primary/90",
             )}
           >
             <Plus size={18} className="mr-2" />

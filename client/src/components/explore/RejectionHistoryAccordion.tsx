@@ -16,18 +16,21 @@ export function RejectionHistoryAccordion({ rejectionHistory }: RejectionHistory
           <span className="font-medium text-[var(--text-primary)]">
             Rejection History ({rejectionHistory.length}/10)
           </span>
-          <ChevronDown 
+          <ChevronDown
             className="text-[var(--text-secondary)] transition-transform group-open:rotate-180"
             size={16}
           />
         </summary>
-        
+
         <div className="mt-3 space-y-3 pl-4 border-l-2 border-[var(--bg-grey)]">
           {rejectionHistory
             .slice()
             .reverse()
             .map((entry, idx) => (
-              <div key={idx} className="p-3 rounded-lg bg-[var(--bg-tertiary)] border border-[var(--bg-grey)]">
+              <div
+                key={idx}
+                className="p-3 rounded-lg bg-[var(--bg-tertiary)] border border-[var(--bg-grey)]"
+              >
                 <div className="flex items-center justify-between text-xs text-[var(--text-secondary)] mb-1">
                   <span>Attempt #{entry.submissionNumber}</span>
                   <span>Deadline: {format(new Date(entry.editDeadline), 'PPp')}</span>

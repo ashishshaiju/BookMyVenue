@@ -101,7 +101,6 @@ export function mapFormToDTO(values: AddVenueFormValues, imageUrls: string[]) {
 }
 
 export function mapVenueToForm(venue: VenueDetail): AddVenueFormValues {
-  
   return {
     VenueName: venue.name,
     VenueDescription: venue.description,
@@ -120,14 +119,15 @@ export function mapVenueToForm(venue: VenueDetail): AddVenueFormValues {
     maxCapacity: venue.maxCapacity?.toString() || '',
     bookingType: venue.bookingType,
     workingDays: venue.workingDays || [],
-    fixedPackages: venue.bookingType === 'fixedBooking' && venue.fixedPackages?.length
-      ? venue.fixedPackages.map((p: IFixedPackage) => ({
-          slotName: p.slotName,
-          startTime: p.startTime,
-          endTime: p.endTime,
-          price: p.price,
-        }))
-      : [{ slotName: '', startTime: '', endTime: '', price: 0 }],
+    fixedPackages:
+      venue.bookingType === 'fixedBooking' && venue.fixedPackages?.length
+        ? venue.fixedPackages.map((p: IFixedPackage) => ({
+            slotName: p.slotName,
+            startTime: p.startTime,
+            endTime: p.endTime,
+            price: p.price,
+          }))
+        : [{ slotName: '', startTime: '', endTime: '', price: 0 }],
     workingHours: venue.workingHours || { open: '', close: '' },
     flexibleBooking: venue.flexibleBooking || { slotDuration: '', bufferTime: '' },
     pricing: venue.pricing || { pricingType: '', basePrice: 0, pricingRules: [] },

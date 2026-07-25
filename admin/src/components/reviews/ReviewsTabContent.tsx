@@ -1,11 +1,6 @@
 import { useState } from "react";
 import { format } from "date-fns";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -20,7 +15,10 @@ const INTENT_LABELS: Record<string, string> = {
   deletion_request: "Deletion Requests",
 };
 
-const INTENT_BADGE_VARIANTS: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
+const INTENT_BADGE_VARIANTS: Record<
+  string,
+  "default" | "secondary" | "destructive" | "outline"
+> = {
   venue_edit: "default",
   inactivity_request: "secondary",
   inactivity_withdrawal: "outline",
@@ -32,9 +30,19 @@ export function ReviewsTabContent() {
   const [approveTarget, setApproveTarget] = useState<Venue | null>(null);
   const [rejectTarget, setRejectTarget] = useState<Venue | null>(null);
 
-  if (isLoading) return <div className="py-8 text-center text-muted-foreground">Loading reviews...</div>;
+  if (isLoading)
+    return (
+      <div className="py-8 text-center text-muted-foreground">
+        Loading reviews...
+      </div>
+    );
 
-  if (error) return <div className="py-8 text-center text-destructive">Failed to load reviews.</div>;
+  if (error)
+    return (
+      <div className="py-8 text-center text-destructive">
+        Failed to load reviews.
+      </div>
+    );
 
   const venues = data?.venues ?? [];
   if (venues.length === 0) {
@@ -73,35 +81,62 @@ export function ReviewsTabContent() {
                   <div className="text-sm text-muted-foreground">
                     Owner: {venue.ownerUserId?.username ?? "N/A"}
                     {venue.pendingReview?.requestedAt && (
-                      <> — Requested: {format(new Date(venue.pendingReview.requestedAt), "MMM d, yyyy")}</>
+                      <>
+                        {" "}
+                        — Requested:{" "}
+                        {format(
+                          new Date(venue.pendingReview.requestedAt),
+                          "MMM d, yyyy",
+                        )}
+                      </>
                     )}
                   </div>
                 </CardHeader>
                 <CardContent>
-                  {intent === "venue_edit" && venue.pendingReview?.details?.changedFields && (
-                    <div className="mb-4">
-                      <p className="text-sm font-medium mb-1.5">Changed fields:</p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {venue.pendingReview.details.changedFields.map((field) => (
-                          <Badge key={field} variant="outline" className="capitalize">
-                            {field.replace(/([A-Z])/g, " $1").trim()}
-                          </Badge>
-                        ))}
+                  {intent === "venue_edit" &&
+                    venue.pendingReview?.details?.changedFields && (
+                      <div className="mb-4">
+                        <p className="text-sm font-medium mb-1.5">
+                          Changed fields:
+                        </p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {venue.pendingReview.details.changedFields.map(
+                            (field) => (
+                              <Badge
+                                key={field}
+                                variant="outline"
+                                className="capitalize"
+                              >
+                                {field.replace(/([A-Z])/g, " $1").trim()}
+                              </Badge>
+                            ),
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
                   {intent === "inactivity_request" && (
-                    <p className="text-sm text-muted-foreground">Requesting to close venue</p>
+                    <p className="text-sm text-muted-foreground">
+                      Requesting to close venue
+                    </p>
                   )}
                   {intent === "inactivity_withdrawal" && (
-                    <p className="text-sm text-muted-foreground">Withdrawing closing request</p>
+                    <p className="text-sm text-muted-foreground">
+                      Withdrawing closing request
+                    </p>
                   )}
                   {intent === "deletion_request" && (
-                    <p className="text-sm text-muted-foreground">Requesting venue deletion</p>
+                    <p className="text-sm text-muted-foreground">
+                      Requesting venue deletion
+                    </p>
                   )}
                   <div className="flex gap-2 mt-4">
-                    <Button onClick={() => setApproveTarget(venue)}>Approve</Button>
-                    <Button variant="destructive" onClick={() => setRejectTarget(venue)}>
+                    <Button onClick={() => setApproveTarget(venue)}>
+                      Approve
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      onClick={() => setRejectTarget(venue)}
+                    >
                       Reject
                     </Button>
                   </div>
