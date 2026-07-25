@@ -108,13 +108,11 @@ describe("useApiMutation", () => {
 
     const { result } = renderHook(
       () =>
-        useApiMutation<unknown, { itemId: string }>(
-          (vars) => ({
-            method: "POST",
-            url: `/items/${vars.itemId}/process`,
-            data: { action: "approve" },
-          }),
-        ),
+        useApiMutation<unknown, { itemId: string }>((vars) => ({
+          method: "POST",
+          url: `/items/${vars.itemId}/process`,
+          data: { action: "approve" },
+        })),
       { wrapper: createWrapper() },
     );
 

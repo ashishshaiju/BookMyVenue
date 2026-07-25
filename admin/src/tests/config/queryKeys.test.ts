@@ -27,19 +27,35 @@ describe("config queryKeys", () => {
   });
 
   it("should generate dynamic OWNER_ANALYTICS key", () => {
-    expect(QUERY_KEYS.OWNER_ANALYTICS("v_123")).toEqual(["owner", "analytics", "v_123"]);
+    expect(QUERY_KEYS.OWNER_ANALYTICS("v_123")).toEqual([
+      "owner",
+      "analytics",
+      "v_123",
+    ]);
   });
 
   it("should generate dynamic OWNER_BOOKINGS key", () => {
-    expect(QUERY_KEYS.OWNER_BOOKINGS("v_123")).toEqual(["owner", "bookings", "v_123"]);
+    expect(QUERY_KEYS.OWNER_BOOKINGS("v_123")).toEqual([
+      "owner",
+      "bookings",
+      "v_123",
+    ]);
   });
 
   it("should generate dynamic OWNER_REVIEWS key", () => {
-    expect(QUERY_KEYS.OWNER_REVIEWS("v_123")).toEqual(["owner", "reviews", "v_123"]);
+    expect(QUERY_KEYS.OWNER_REVIEWS("v_123")).toEqual([
+      "owner",
+      "reviews",
+      "v_123",
+    ]);
   });
 
   it("should generate dynamic OWNER_AVAILABILITY key", () => {
-    expect(QUERY_KEYS.OWNER_AVAILABILITY("v_123")).toEqual(["owner", "availability", "v_123"]);
+    expect(QUERY_KEYS.OWNER_AVAILABILITY("v_123")).toEqual([
+      "owner",
+      "availability",
+      "v_123",
+    ]);
   });
 
   it("should define MODERATION_SUMMARY key", () => {
@@ -55,6 +71,9 @@ describe("config queryKeys", () => {
   });
 
   it("should define OWNER_VENUE_SETTINGS key", () => {
-    expect(QUERY_KEYS.OWNER_VENUE_SETTINGS).toEqual(["owner", "venue-settings"]);
+    expect(QUERY_KEYS.OWNER_VENUE_SETTINGS).toEqual([
+      "owner",
+      "venue-settings",
+    ]);
   });
 });

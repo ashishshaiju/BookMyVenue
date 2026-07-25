@@ -176,7 +176,11 @@ export function Sidebar() {
     <div className="flex h-screen w-64 flex-col bg-[var(--sidebar-bg)] border-r border-[var(--sidebar-border)] text-[var(--sidebar-text)]">
       {/* Brand */}
       <div className="flex h-20 items-center gap-3 px-6">
-        <img src={bmvLogo} alt="BookMyVenue" className="h-8 w-auto bg-white rounded p-1" />
+        <img
+          src={bmvLogo}
+          alt="BookMyVenue"
+          className="h-8 w-auto bg-white rounded p-1"
+        />
         <span className="rounded-full bg-zinc-800 px-2 py-0.5 text-xs font-medium text-zinc-300">
           Admin
         </span>

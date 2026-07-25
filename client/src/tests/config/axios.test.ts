@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('@/constants', () => ({
   API_BASE_URL: 'http://test.local',
@@ -35,53 +35,53 @@ vi.mock('@/constants', () => ({
     SEARCH: '/search',
     DASHBOARD: '/dashboard',
   },
-}))
+}));
 
 describe('createAxiosInstance', () => {
   beforeEach(() => {
-    vi.resetModules()
-    vi.clearAllMocks()
-    localStorage.clear()
-  })
+    vi.resetModules();
+    vi.clearAllMocks();
+    localStorage.clear();
+  });
 
   it('should create an axios instance with correct defaults', async () => {
-    const { createAxiosInstance } = await import('../../config/axios')
-    const instance = createAxiosInstance()
-    expect(instance.defaults.baseURL).toBe('http://test.local/api/v1')
-    expect(instance.defaults.withCredentials).toBe(true)
-    expect(instance.defaults.timeout).toBe(30000)
-  })
+    const { createAxiosInstance } = await import('../../config/axios');
+    const instance = createAxiosInstance();
+    expect(instance.defaults.baseURL).toBe('http://test.local/api/v1');
+    expect(instance.defaults.withCredentials).toBe(true);
+    expect(instance.defaults.timeout).toBe(30000);
+  });
 
   it('should set session token in request interceptor', async () => {
-    localStorage.setItem('x-session-token', 'test-token-123')
-    const { createAxiosInstance } = await import('../../config/axios')
-    const instance = createAxiosInstance()
-    const interceptor = instance.interceptors.request
-    expect(interceptor).toBeDefined()
-  })
+    localStorage.setItem('x-session-token', 'test-token-123');
+    const { createAxiosInstance } = await import('../../config/axios');
+    const instance = createAxiosInstance();
+    const interceptor = instance.interceptors.request;
+    expect(interceptor).toBeDefined();
+  });
 
   it('should generate session token on request', async () => {
-    const { createAxiosInstance } = await import('../../config/axios')
-    const instance = createAxiosInstance()
-    instance.interceptors.request.handlers[0].fulfilled({ headers: {} } as never)
-    const token = localStorage.getItem('x-session-token')
-    expect(token).toBeTruthy()
-    expect(token?.length).toBeGreaterThan(0)
-  })
+    const { createAxiosInstance } = await import('../../config/axios');
+    const instance = createAxiosInstance();
+    instance.interceptors.request.handlers[0].fulfilled({ headers: {} } as never);
+    const token = localStorage.getItem('x-session-token');
+    expect(token).toBeTruthy();
+    expect(token?.length).toBeGreaterThan(0);
+  });
 
   it('should export a singleton axiosInstance', async () => {
-    const { axiosInstance } = await import('../../config/axios')
-    expect(axiosInstance).toBeDefined()
-    expect(axiosInstance.defaults.baseURL).toBe('http://test.local/api/v1')
-  })
+    const { axiosInstance } = await import('../../config/axios');
+    expect(axiosInstance).toBeDefined();
+    expect(axiosInstance.defaults.baseURL).toBe('http://test.local/api/v1');
+  });
 
   it('should handle error extraction from AxiosError message', () => {
-    const error = new Error('Request failed')
-    expect(error.message).toBe('Request failed')
-  })
+    const error = new Error('Request failed');
+    expect(error.message).toBe('Request failed');
+  });
 
   it('should handle errors without response', () => {
-    const error = new Error('Network Error')
-    expect(error.message).toBe('Network Error')
-  })
-})
+    const error = new Error('Network Error');
+    expect(error.message).toBe('Network Error');
+  });
+});

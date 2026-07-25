@@ -22,10 +22,10 @@ export const resendConfig = {
     return process.env.FRONTEND_URL;
   },
   get serverUrl(): string {
-    return process.env.SERVER_URL ?? 'http://localhost:3000';
+    return process.env.SERVER_URL ?? 'http://localhost:3003';
   },
   get logoUrl(): string {
-    const base = process.env.SERVER_URL ?? 'http://localhost:3000';
+    const base = process.env.SERVER_URL ?? 'http://localhost:3003';
     return `${base}/images/bmv-logo.png`;
   },
 };

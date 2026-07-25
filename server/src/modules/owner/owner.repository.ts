@@ -10,7 +10,7 @@ export async function getVenueAnalyticsData(venueId: string): Promise<Record<str
     {
       $match: {
         venueId: new Types.ObjectId(venueId),
-        status: BookingStatus.COMPLETED,
+        status: { $in: [BookingStatus.CONFIRMED, BookingStatus.COMPLETED] },
       },
     },
     {

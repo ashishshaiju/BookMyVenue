@@ -52,8 +52,8 @@ export const createAxiosInstance = (): AxiosInstance => {
 
     // config.headers["x-session-token"] = sessionToken;
 
-    if (import.meta.env.MODE === 'development') {
-      config.headers.skip_zrok_interstitial = 'true';
+    if (import.meta.env.MODE === "development") {
+      config.headers.skip_zrok_interstitial = "true";
     }
 
     return config;

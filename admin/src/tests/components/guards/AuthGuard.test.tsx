@@ -35,10 +35,19 @@ function renderAuthGuard(mockReturn: object) {
     <MemoryRouter initialEntries={["/dashboard"]}>
       <Routes>
         <Route element={<AuthGuard />}>
-          <Route path="/dashboard" element={<div data-testid="protected-content">Dashboard</div>} />
+          <Route
+            path="/dashboard"
+            element={<div data-testid="protected-content">Dashboard</div>}
+          />
         </Route>
-        <Route path="/login" element={<div data-testid="login-page">Login</div>} />
-        <Route path="/unauthorized" element={<div data-testid="unauthorized-page">Unauthorized</div>} />
+        <Route
+          path="/login"
+          element={<div data-testid="login-page">Login</div>}
+        />
+        <Route
+          path="/unauthorized"
+          element={<div data-testid="unauthorized-page">Unauthorized</div>}
+        />
       </Routes>
     </MemoryRouter>,
   );
@@ -46,7 +55,11 @@ function renderAuthGuard(mockReturn: object) {
 
 describe("AuthGuard", () => {
   it("should show spinner while loading", () => {
-    const { container } = renderAuthGuard({ data: undefined, isLoading: true, isError: false });
+    const { container } = renderAuthGuard({
+      data: undefined,
+      isLoading: true,
+      isError: false,
+    });
 
     expect(screen.queryByTestId("protected-content")).not.toBeInTheDocument();
     expect(container.querySelector("svg.animate-spin")).toBeInTheDocument();
@@ -74,7 +87,12 @@ describe("AuthGuard", () => {
 
   it("should render outlet when authenticated with superAdmin role", () => {
     renderAuthGuard({
-      data: { _id: "3", name: "SuperAdmin", email: "super@test.com", role: "superAdmin" },
+      data: {
+        _id: "3",
+        name: "SuperAdmin",
+        email: "super@test.com",
+        role: "superAdmin",
+      },
       isLoading: false,
       isError: false,
     });
