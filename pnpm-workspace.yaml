@@ -11,3 +11,4 @@ onlyBuiltDependencies:
   - '@scarf/scarf'
   - bcrypt
   - esbuild
+  - mongodb-memory-server

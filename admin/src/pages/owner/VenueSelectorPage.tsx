@@ -45,37 +45,43 @@ const getStatusBadge = (status: MyVenue["status"]) => {
   switch (status) {
     case "Draft":
       return (
-        <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-muted/40 text-muted-foreground border border-border">
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-slate-100/90 text-slate-700 border border-slate-200/80 backdrop-blur-md shadow-xs">
+          <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
           Draft
         </span>
       );
     case "PendingReview":
       return (
-        <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-50/95 text-amber-800 border border-amber-200/80 backdrop-blur-md shadow-xs">
+          <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
           Under Review
         </span>
       );
     case "Approved":
       return (
-        <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800">
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50/95 text-emerald-800 border border-emerald-200/80 backdrop-blur-md shadow-xs">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
           Approved
         </span>
       );
     case "Rejected":
       return (
-        <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800">
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-rose-50/95 text-rose-800 border border-rose-200/80 backdrop-blur-md shadow-xs">
+          <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
           Rejected
         </span>
       );
     case "Suspended":
       return (
-        <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800">
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-red-50/95 text-red-800 border border-red-200/80 backdrop-blur-md shadow-xs">
+          <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
           Suspended
         </span>
       );
     case "Inactive":
       return (
-        <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-800">
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-purple-50/95 text-purple-800 border border-purple-200/80 backdrop-blur-md shadow-xs">
+          <span className="w-1.5 h-1.5 rounded-full bg-purple-500" />
           Inactive
         </span>
       );
@@ -125,7 +131,7 @@ const VenueCardItem = ({
           {getStatusBadge(venue.status)}
         </div>
         <div className="absolute top-3 left-3">
-          <span className="px-2 py-1 rounded-md text-xs font-medium bg-black/60 text-white backdrop-blur-sm capitalize">
+          <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-slate-900/70 text-white backdrop-blur-md border border-white/20 capitalize shadow-xs">
             {venue.venueType || "Venue"}
           </span>
         </div>
@@ -150,10 +156,10 @@ const VenueCardItem = ({
           <div className="mt-auto space-y-2 pt-2">
             {venue.status === VENUE_STATUS.REJECTED &&
               venue.rejectionReason && (
-                <div className="flex gap-2.5 items-start bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 p-3 rounded-lg text-xs leading-relaxed border border-red-100 dark:border-red-900">
-                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                <div className="flex gap-2.5 items-start bg-rose-50 text-rose-800 p-3 rounded-xl text-xs leading-relaxed border border-rose-200/80 shadow-2xs">
+                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-600" />
                   <span>
-                    <strong className="font-semibold block mb-0.5">
+                    <strong className="font-semibold block mb-0.5 text-rose-900">
                       Rejected
                     </strong>{" "}
                     {venue.rejectionReason}
@@ -162,10 +168,10 @@ const VenueCardItem = ({
               )}
             {venue.status === VENUE_STATUS.SUSPENDED &&
               venue.suspensionReason && (
-                <div className="flex gap-2.5 items-start bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 p-3 rounded-lg text-xs leading-relaxed border border-red-100 dark:border-red-900">
-                  <Lock className="w-4 h-4 shrink-0 mt-0.5" />
+                <div className="flex gap-2.5 items-start bg-red-50 text-red-800 p-3 rounded-xl text-xs leading-relaxed border border-red-200/80 shadow-2xs">
+                  <Lock className="w-4 h-4 shrink-0 mt-0.5 text-red-600" />
                   <span>
-                    <strong className="font-semibold block mb-0.5">
+                    <strong className="font-semibold block mb-0.5 text-red-900">
                       Suspended
                     </strong>{" "}
                     {venue.suspensionReason}
@@ -173,8 +179,8 @@ const VenueCardItem = ({
                 </div>
               )}
             {venue.status === VENUE_STATUS.PENDING_REVIEW && (
-              <div className="flex gap-2.5 items-start bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 p-3 rounded-lg text-xs leading-relaxed border border-amber-100 dark:border-amber-900">
-                <Info className="w-4 h-4 shrink-0 mt-0.5" />
+              <div className="flex gap-2.5 items-start bg-amber-50 text-amber-800 p-3 rounded-xl text-xs leading-relaxed border border-amber-200/80 shadow-2xs">
+                <Info className="w-4 h-4 shrink-0 mt-0.5 text-amber-600" />
                 <span>
                   Our team is currently reviewing your venue. We'll notify you
                   once it's approved.
@@ -185,8 +191,8 @@ const VenueCardItem = ({
         )}
         {venue.status === VENUE_STATUS.INACTIVE && (
           <div className="mt-auto pt-2">
-            <div className="flex gap-2.5 items-start bg-purple-50 dark:bg-purple-950/30 text-purple-700 dark:text-purple-400 p-3 rounded-lg text-xs leading-relaxed border border-purple-100 dark:border-purple-900">
-              <Info className="w-4 h-4 shrink-0 mt-0.5" />
+            <div className="flex gap-2.5 items-start bg-purple-50 text-purple-800 p-3 rounded-xl text-xs leading-relaxed border border-purple-200/80 shadow-2xs">
+              <Info className="w-4 h-4 shrink-0 mt-0.5 text-purple-600" />
               <span>
                 This venue is inactive. You can manage settings and reactivate
                 from the dashboard.
@@ -261,8 +267,8 @@ export default function VenueSelectorPage() {
           <div className="h-10 w-48 bg-muted rounded-lg animate-pulse mb-2"></div>
           <div className="h-5 w-96 bg-muted rounded-lg animate-pulse"></div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-          {[1, 2, 3, 4].map((i) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[1, 2, 3].map((i) => (
             <div
               key={i}
               className="rounded-2xl border bg-card overflow-hidden shadow-sm"
@@ -341,11 +347,11 @@ export default function VenueSelectorPage() {
               <h2 className="text-xl font-bold text-foreground">
                 Needs Attention
               </h2>
-              <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
+              <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200/80">
                 {flaggedVenues.length}
               </span>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {flaggedVenues.map((venue) => (
                 <VenueCardItem
                   key={venue._id}
@@ -363,11 +369,11 @@ export default function VenueSelectorPage() {
               <h2 className="text-xl font-bold text-foreground">
                 Active Venues
               </h2>
-              <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800">
+              <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200/80">
                 {approvedVenues.length}
               </span>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {approvedVenues.map((venue) => (
                 <VenueCardItem
                   key={venue._id}

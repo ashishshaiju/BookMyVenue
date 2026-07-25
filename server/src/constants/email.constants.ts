@@ -15,6 +15,7 @@ export const EmailIntent = {
   VENUE_REJECTED: 'venue_rejected',
   VENUE_SUSPENDED: 'venue_suspended',
   VENUE_UNSUSPENDED: 'venue_unsuspended',
+  VENUE_DEADLINE_EXTENDED: 'venue_deadline_extended',
   USER_BANNED: 'user_banned',
   USER_UNBANNED: 'user_unbanned',
   REVIEW_REMOVED: 'review_removed',

@@ -7,6 +7,9 @@ let isShuttingDown = false;
 let pollingInterval: ReturnType<typeof setInterval> | null = null;
 let activeTasks = 0;
 
+const FIFTEEN_MIN_MS = 15 * 60 * 1000;
+const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+
 async function dispatch(task: IEmailTask): Promise<void> {
   const { intent, recipient, metadata } = task;
 
@@ -103,6 +106,128 @@ async function dispatch(task: IEmailTask): Promise<void> {
       }
       break;
     }
+    case EmailIntent.VENUE_APPROVED: {
+      const { venueName } = metadata;
+      if (!venueName) {
+        throw new Error(`Missing venueName in metadata for ${EmailIntent.VENUE_APPROVED} intent`);
+      }
+      const result = await emailService.sendVenueApprovedEmail(recipient, venueName);
+      if (!result.success) {
+        throw new Error('Failed to send venue approved email via Resend');
+      }
+      break;
+    }
+    case EmailIntent.VENUE_REJECTED: {
+      const { venueName, reason, editDeadline, submissionNumber } = metadata;
+      if (!venueName || !reason || !editDeadline || !submissionNumber) {
+        throw new Error(
+          `Missing required metadata fields for ${EmailIntent.VENUE_REJECTED} intent`
+        );
+      }
+      const result = await emailService.sendVenueRejectedEmail(
+        recipient,
+        venueName,
+        reason,
+        new Date(editDeadline),
+        parseInt(submissionNumber, 10)
+      );
+      if (!result.success) {
+        throw new Error('Failed to send venue rejected email via Resend');
+      }
+      break;
+    }
+    case EmailIntent.VENUE_SUSPENDED: {
+      const { venueName, reason } = metadata;
+      if (!venueName || !reason) {
+        throw new Error(
+          `Missing required metadata fields for ${EmailIntent.VENUE_SUSPENDED} intent`
+        );
+      }
+      const result = await emailService.sendVenueSuspendedEmail(recipient, venueName, reason);
+      if (!result.success) {
+        throw new Error('Failed to send venue suspended email via Resend');
+      }
+      break;
+    }
+    case EmailIntent.VENUE_UNSUSPENDED: {
+      const { venueName } = metadata;
+      if (!venueName) {
+        throw new Error(
+          `Missing venueName in metadata for ${EmailIntent.VENUE_UNSUSPENDED} intent`
+        );
+      }
+      const result = await emailService.sendVenueUnsuspendedEmail(recipient, venueName);
+      if (!result.success) {
+        throw new Error('Failed to send venue unsuspended email via Resend');
+      }
+      break;
+    }
+    case EmailIntent.VENUE_DEADLINE_EXTENDED: {
+      const { venueName, newDeadline } = metadata;
+      if (!venueName || !newDeadline) {
+        throw new Error(
+          `Missing required metadata fields for ${EmailIntent.VENUE_DEADLINE_EXTENDED} intent`
+        );
+      }
+      const result = await emailService.sendVenueDeadlineExtendedEmail(
+        recipient,
+        venueName,
+        new Date(newDeadline)
+      );
+      if (!result.success) {
+        throw new Error('Failed to send venue deadline extended email via Resend');
+      }
+      break;
+    }
+    case EmailIntent.USER_BANNED: {
+      const { scope, reason, expiresAt, venueName } = metadata;
+      if (!scope || !reason) {
+        throw new Error(
+          `Missing required metadata fields for ${EmailIntent.USER_BANNED} intent`
+        );
+      }
+      const result = await emailService.sendUserBannedEmail(recipient, {
+        scope,
+        reason,
+        expiresAt: expiresAt ? new Date(expiresAt) : null,
+        venueName: venueName || undefined,
+      });
+      if (!result.success) {
+        throw new Error('Failed to send user banned email via Resend');
+      }
+      break;
+    }
+    case EmailIntent.USER_UNBANNED: {
+      const result = await emailService.sendUserUnbannedEmail(recipient);
+      if (!result.success) {
+        throw new Error('Failed to send user unbanned email via Resend');
+      }
+      break;
+    }
+    case EmailIntent.REVIEW_REMOVED: {
+      const { venueName, reason } = metadata;
+      if (!venueName || !reason) {
+        throw new Error(
+          `Missing required metadata fields for ${EmailIntent.REVIEW_REMOVED} intent`
+        );
+      }
+      const result = await emailService.sendReviewRemovedEmail(recipient, { venueName, reason });
+      if (!result.success) {
+        throw new Error('Failed to send review removed email via Resend');
+      }
+      break;
+    }
+    case EmailIntent.REVIEW_RESTORED: {
+      const { venueName } = metadata;
+      if (!venueName) {
+        throw new Error(`Missing venueName in metadata for ${EmailIntent.REVIEW_RESTORED} intent`);
+      }
+      const result = await emailService.sendReviewRestoredEmail(recipient, venueName);
+      if (!result.success) {
+        throw new Error('Failed to send review restored email via Resend');
+      }
+      break;
+    }
     default:
       throw new Error(`Unknown email intent: ${intent}`);
   }
@@ -139,15 +264,21 @@ async function processNextTask(): Promise<void> {
     try {
       await dispatch(task);
       task.status = EmailTaskStatus.COMPLETED;
+      // Completed tasks expire after 15 minutes
+      task.lockedAt = null;
+      task.deleteAt = new Date(Date.now() + FIFTEEN_MIN_MS);
       await task.save();
       logInfo(`Email task completed`, { taskId: task._id.toString() });
     } catch (e) {
       const error = e as Error;
       task.retries += 1;
       task.lastError = error.message;
+      task.lockedAt = null; // Release lock so polling can re-acquire
 
       if (task.retries >= EmailConstants.MAX_RETRIES) {
         task.status = EmailTaskStatus.FAILED;
+        // Failed tasks persist for 7 days for debugging
+        task.deleteAt = new Date(Date.now() + SEVEN_DAYS_MS);
         logError(`Email task failed permanently`, {
           module: 'email.worker.ts/processNextTask',
           taskId: task._id.toString(),
@@ -155,9 +286,10 @@ async function processNextTask(): Promise<void> {
         });
       } else {
         task.status = EmailTaskStatus.PENDING;
-        // Exponential backoff
+        // Fix: schedule retry via retryAfter, not lockedAt
         const backoffMs = 2 ** task.retries * 30000; // 30s, 60s, 120s...
-        task.lockedAt = new Date(Date.now() + backoffMs);
+        task.retryAfter = new Date(Date.now() + backoffMs);
+        // Failed retry tasks keep the 7-day deleteAt from creation
         logWarn(`Email task failed, scheduling retry`, {
           taskId: task._id.toString(),
           retryInSeconds: backoffMs / 1000,

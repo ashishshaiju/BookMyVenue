@@ -25,9 +25,10 @@ import { RoleModel } from '../../models/role.model';
 import { findUserEmailById } from '../user/user.repository';
 import * as authRepo from '../auth/auth.repository';
 import { getUserRole } from '../../services/roles.service';
-import { emailService } from '../../services/email.service';
+import { enqueueEmailTask } from '../../services/email.repository';
+import { EmailIntent, EmailTaskStatus } from '../../constants/email.constants';
 import mongoose from 'mongoose';
-import { logError } from '../../utils/logger';
+import { logError, logWarn } from '../../utils/logger';
 import { BookingModel } from '../booking/models/booking.model';
 import { BookingStatus } from '../../constants/booking.constants';
 
@@ -470,7 +471,21 @@ export async function approveVenue(venueId: string, adminId: string): Promise<IV
 
   const ownerEmail = await findUserEmailById(venue.ownerUserId.toString());
   if (ownerEmail) {
-    void emailService.sendVenueApprovedEmail(ownerEmail, venue.name);
+    try {
+      await enqueueEmailTask(
+        ownerEmail,
+        EmailIntent.VENUE_APPROVED,
+        `Your Venue "${venue.name}" has been Approved!`,
+        EmailTaskStatus.PENDING,
+        { venueName: venue.name }
+      );
+    } catch (err) {
+      logWarn('Failed to queue venue approved email', {
+        module: 'venue.service.ts/approveVenue',
+        venueId,
+        error: (err as Error).message,
+      });
+    }
   }
 
   return updated;
@@ -544,13 +559,26 @@ export async function rejectVenue(
 
   const ownerEmail = await findUserEmailById(venue.ownerUserId.toString());
   if (ownerEmail && dto.rejectionReason) {
-    void emailService.sendVenueRejectedEmail(
-      ownerEmail,
-      venue.name,
-      dto.rejectionReason,
-      editDeadline,
-      rejectionEntry.submissionNumber
-    );
+    try {
+      await enqueueEmailTask(
+        ownerEmail,
+        EmailIntent.VENUE_REJECTED,
+        `Application Update: Venue "${venue.name}"`,
+        EmailTaskStatus.PENDING,
+        {
+          venueName: venue.name,
+          reason: dto.rejectionReason,
+          editDeadline: editDeadline.toISOString(),
+          submissionNumber: String(rejectionEntry.submissionNumber),
+        }
+      );
+    } catch (err) {
+      logWarn('Failed to queue venue rejected email', {
+        module: 'venue.service.ts/rejectVenue',
+        venueId,
+        error: (err as Error).message,
+      });
+    }
   }
 
   // Log activity
@@ -581,7 +609,21 @@ export async function suspendVenue(
 
   const ownerEmail = await findUserEmailById(venue.ownerUserId.toString());
   if (ownerEmail) {
-    void emailService.sendVenueSuspendedEmail(ownerEmail, venue.name, dto.suspensionReason);
+    try {
+      await enqueueEmailTask(
+        ownerEmail,
+        EmailIntent.VENUE_SUSPENDED,
+        `Important: Your Venue "${venue.name}" has been Suspended`,
+        EmailTaskStatus.PENDING,
+        { venueName: venue.name, reason: dto.suspensionReason }
+      );
+    } catch (err) {
+      logWarn('Failed to queue venue suspended email', {
+        module: 'venue.service.ts/suspendVenue',
+        venueId,
+        error: (err as Error).message,
+      });
+    }
   }
 
   // Log activity
@@ -602,7 +644,21 @@ export async function unsuspendVenue(venueId: string, adminId: string): Promise<
 
   const ownerEmail = await findUserEmailById(venue.ownerUserId.toString());
   if (ownerEmail) {
-    void emailService.sendVenueUnsuspendedEmail(ownerEmail, venue.name);
+    try {
+      await enqueueEmailTask(
+        ownerEmail,
+        EmailIntent.VENUE_UNSUSPENDED,
+        `Your Venue "${venue.name}" has been Reactivated`,
+        EmailTaskStatus.PENDING,
+        { venueName: venue.name }
+      );
+    } catch (err) {
+      logWarn('Failed to queue venue unsuspended email', {
+        module: 'venue.service.ts/unsuspendVenue',
+        venueId,
+        error: (err as Error).message,
+      });
+    }
   }
 
   // Log activity
@@ -680,7 +736,21 @@ export async function extendVenueEditDeadline(
   // Email owner about extension
   const ownerEmail = await findUserEmailById(venue.ownerUserId.toString());
   if (ownerEmail) {
-    void emailService.sendVenueDeadlineExtendedEmail(ownerEmail, venue.name, newDeadline);
+    try {
+      await enqueueEmailTask(
+        ownerEmail,
+        EmailIntent.VENUE_DEADLINE_EXTENDED,
+        `Edit Deadline Extended for "${venue.name}"`,
+        EmailTaskStatus.PENDING,
+        { venueName: venue.name, newDeadline: newDeadline.toISOString() }
+      );
+    } catch (err) {
+      logWarn('Failed to queue venue deadline extended email', {
+        module: 'venue.service.ts/extendVenueEditDeadline',
+        venueId,
+        error: (err as Error).message,
+      });
+    }
   }
 
   return updated;

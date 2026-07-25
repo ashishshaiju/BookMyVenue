@@ -16,7 +16,7 @@ const definition: OAS3Definition = {
       description: 'Development server (localhost)',
     },
     {
-      url: 'https://bmvserver.zrok.io/api/v1',
+      url: 'https://bmvserver.shares.zrok.io/api/v1',
       description: 'zrok tunnel (HTTPS)',
     },
   ],

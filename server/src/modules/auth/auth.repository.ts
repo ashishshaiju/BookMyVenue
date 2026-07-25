@@ -188,7 +188,11 @@ export async function createEmailTask(
   },
   session?: mongoose.ClientSession
 ): Promise<void> {
-  await EmailTaskModel.create([{ ...data, retryAfter: new Date() }], { session });
+  const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+  await EmailTaskModel.create(
+    [{ ...data, retryAfter: new Date(), deleteAt: new Date(Date.now() + SEVEN_DAYS_MS) }],
+    { session }
+  );
 }
 
 export async function markPasswordResetTokenAsUsed(
