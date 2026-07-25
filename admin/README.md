@@ -1,75 +1,81 @@
-# React + TypeScript + Vite
+# BookMyVenue — Admin Dashboard
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+The owner and admin dashboard for managing venues, bookings, users, and moderation. Built with React 19 + Vite 8 + Zustand + TanStack React Table.
 
-Currently, two official plugins are available:
+## Tech Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Framework**: React 19 with TypeScript ~6.0
+- **Build Tool**: Vite 8 with rolldown
+- **Styling**: TailwindCSS 4
+- **Routing**: React Router 7
+- **Server State**: TanStack React Query 5
+- **Client State**: Zustand 5
+- **HTTP Client**: Axios
+- **Tables**: TanStack React Table 8
+- **Charts**: Recharts
+- **UI Components**: Radix UI (Dialog, Slot, Tooltip), class-variance-authority
+- **Date Handling**: date-fns, react-day-picker
+- **Notifications**: react-hot-toast
 
-## React Compiler
+## Available Scripts
 
-The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
+| Script | Description |
+|---|---|
+| `pnpm dev` | Start Vite dev server (local only) |
+| `pnpm build` | Type-check (`tsc -b`) then build (`vite build`) |
+| `pnpm test` | Run vitest tests |
+| `pnpm test:watch` | Run tests in watch mode |
+| `pnpm test:coverage` | Run tests with coverage report |
+| `pnpm lint` | ESLint check |
+| `pnpm lint:fix` | Auto-fix ESLint issues |
+| `pnpm preview` | Preview production build locally |
 
-Note: This will impact Vite dev & build performances.
+## Development
 
-## Expanding the ESLint configuration
+```bash
+# Install dependencies (from repo root)
+pnpm install
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+# Start dev server (default: http://localhost:5174)
+pnpm dev
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+# Run tests
+pnpm test
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Environment Variables
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Create `admin/.env`:
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```env
+VITE_API_BASE_URL=http://localhost:3003/api/v1
+VITE_CLIENT_URL=http://localhost:5173
 ```
+
+## Project Structure
+
+```
+src/
+├── pages/          # Page components (routed)
+├── components/     # Reusable UI components
+│   └── guards/     # Auth guards (AuthGuard, RoleGuard, OwnerGuard)
+├── hooks/          # Custom React hooks (useApi, useModal, useToast)
+├── services/       # API service layer (Axios)
+├── store/          # Zustand stores (useAuthStore, useAppStore, useModalStore)
+├── utils/          # Utility functions
+├── constants/      # App constants
+├── types/          # TypeScript type definitions
+├── tests/          # Vitest test files
+├── config/         # Axios instance and query client config
+├── App.tsx         # Root app component
+└── main.tsx        # Entry point
+```
+
+## Key Differences from Client
+
+- Owner/admin dashboard (authenticated-only routes)
+- Zustand for client state management (no React Context)
+- TanStack React Table for data tables
+- Recharts for analytics charts
+- Auth guards (AuthGuard, RoleGuard, OwnerGuard) for route protection
+- No map or animation libraries
