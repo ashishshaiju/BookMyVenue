@@ -40,7 +40,12 @@ export function useReportReview() {
   const queryClient = useQueryClient();
   return useApiMutation<
     unknown,
-    { venueId: string; reviewId: string; reason: string; action: 'hide' | 'flag' }
+    {
+      venueId: string;
+      reviewId: string;
+      reason: string;
+      action: "hide" | "flag";
+    }
   >(
     (vars) => ({
       method: "POST",

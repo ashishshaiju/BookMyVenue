@@ -263,7 +263,14 @@ export async function getVenueById(
 }
 
 const CRITICAL_FIELDS = new Set([
-  'name', 'contact', 'address', 'city', 'district', 'pincode', 'venueType', 'bookingType',
+  'name',
+  'contact',
+  'address',
+  'city',
+  'district',
+  'pincode',
+  'venueType',
+  'bookingType',
 ]);
 
 function buildPatch(
@@ -294,7 +301,9 @@ export async function updateVenue(
 
   // Optimistic concurrency check
   if (dto.expectedVersion !== undefined && venue.__v !== dto.expectedVersion) {
-    throw new ConflictError('Venue has been modified by another request. Please reload and try again.');
+    throw new ConflictError(
+      'Venue has been modified by another request. Please reload and try again.'
+    );
   }
 
   if (dto.name && dto.name !== venue.name) {
@@ -336,7 +345,7 @@ export async function updateVenue(
     if (changedCritical.length > 0) {
       // Apply all fields immediately (Option B — snapshot is for rollback on reject)
       const patch = buildPatch(venue, dtoAny, userId);
-    const updated = await repo.updateVenue(venueId, patch as UpdateVenueData);
+      const updated = await repo.updateVenue(venueId, patch as UpdateVenueData);
       if (!updated) throw new NotFoundError('Venue not found');
 
       // Mark pending review with snapshot
@@ -705,7 +714,7 @@ export async function unfeatureVenue(venueId: string): Promise<void> {
 
 export async function getReviewsList(): Promise<IVenue[]> {
   return VenueModel.find({
-    'pendingReview': { $exists: true, $ne: null },
+    pendingReview: { $exists: true, $ne: null },
     deleted: false,
   })
     .select('name city status pendingReview inactivity ownerUserId')
@@ -805,7 +814,9 @@ export async function approveReview(
     }
 
     default:
-      throw new ValidationError(`Cannot approve review with intent "${venue.pendingReview.intent}"`);
+      throw new ValidationError(
+        `Cannot approve review with intent "${venue.pendingReview.intent}"`
+      );
   }
 }
 

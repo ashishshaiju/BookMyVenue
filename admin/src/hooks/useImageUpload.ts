@@ -11,7 +11,9 @@ export function useImageUpload() {
 
   const uploadFile = async (file: File): Promise<string> => {
     if (!ALLOWED_TYPES.includes(file.type)) {
-      throw new Error(`Invalid file type: ${file.name}. Only JPG, PNG and WEBP are allowed.`);
+      throw new Error(
+        `Invalid file type: ${file.name}. Only JPG, PNG and WEBP are allowed.`,
+      );
     }
     if (file.size > MAX_SIZE) {
       throw new Error(`File too large: ${file.name}. Maximum size is 5MB.`);

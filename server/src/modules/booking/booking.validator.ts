@@ -62,7 +62,7 @@ export function validateDateForVenue(
     dateObj.setHours(0, 0, 0, 0);
     blockDate.setHours(0, 0, 0, 0);
     if (dateObj >= blockDate) {
-      return { valid: false, reason: 'This date is after the venue\'s temporary booking block' };
+      return { valid: false, reason: "This date is after the venue's temporary booking block" };
     }
   }
 
@@ -72,7 +72,7 @@ export function validateDateForVenue(
     dateObj.setHours(0, 0, 0, 0);
     blockDate.setHours(0, 0, 0, 0);
     if (dateObj >= blockDate) {
-      return { valid: false, reason: 'This date falls within the venue\'s closing period' };
+      return { valid: false, reason: "This date falls within the venue's closing period" };
     }
   }
 

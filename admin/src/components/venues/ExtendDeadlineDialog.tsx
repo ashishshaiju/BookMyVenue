@@ -47,8 +47,11 @@ export function ExtendDeadlineDialog({
         <DialogHeader>
           <DialogTitle>Extend Edit Deadline</DialogTitle>
           <DialogDescription>
-            Current deadline: {currentDeadline ? format(new Date(currentDeadline), 'PPP') : 'None'}.
-            Set a new deadline (max 120 days from today).
+            Current deadline:{" "}
+            {currentDeadline
+              ? format(new Date(currentDeadline), "PPP")
+              : "None"}
+            . Set a new deadline (max 120 days from today).
           </DialogDescription>
         </DialogHeader>
         <div className="py-4 space-y-4">
@@ -59,10 +62,14 @@ export function ExtendDeadlineDialog({
               <Input
                 id="new-deadline"
                 type="date"
-                value={format(newDeadline, 'yyyy-MM-dd')}
-                onChange={(e) => setNewDeadline(e.target.value ? new Date(e.target.value) : newDeadline)}
-                min={format(minDate, 'yyyy-MM-dd')}
-                max={format(maxDate, 'yyyy-MM-dd')}
+                value={format(newDeadline, "yyyy-MM-dd")}
+                onChange={(e) =>
+                  setNewDeadline(
+                    e.target.value ? new Date(e.target.value) : newDeadline,
+                  )
+                }
+                min={format(minDate, "yyyy-MM-dd")}
+                max={format(maxDate, "yyyy-MM-dd")}
                 className="w-48"
               />
               <span className="text-xs text-[var(--text-secondary)]">
@@ -72,10 +79,7 @@ export function ExtendDeadlineDialog({
           </div>
         </div>
         <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={() => setOpen(false)}
-          >
+          <Button variant="outline" onClick={() => setOpen(false)}>
             Cancel
           </Button>
           <Button

@@ -5,7 +5,10 @@ import { logWarn } from '../utils/logger';
 export function idempotencyMiddleware() {
   return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const key = req.headers['idempotency-key'] as string;
-    if (!key) { next(); return; }
+    if (!key) {
+      next();
+      return;
+    }
 
     try {
       const existing = await IdempotencyKeyModel.findOne({ key }).lean().exec();
@@ -17,11 +20,15 @@ export function idempotencyMiddleware() {
 
       const originalJson = res.json.bind(res);
       res.json = function (body: unknown): Response {
-        IdempotencyKeyModel.create({
-          key,
-          response: { status: res.statusCode, body },
-          createdAt: new Date(),
-        }).catch((err: unknown) => { logWarn('Failed to cache idempotency key', { key, error: err }); });
+        if (res.statusCode < 500) {
+          IdempotencyKeyModel.create({
+            key,
+            response: { status: res.statusCode, body },
+            createdAt: new Date(),
+          }).catch((err: unknown) => {
+            logWarn('Failed to cache idempotency key', { key, error: err });
+          });
+        }
         return originalJson(body);
       };
 

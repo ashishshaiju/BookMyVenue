@@ -350,7 +350,9 @@ export function VenueSettingsView({ venue }: VenueSettingsViewProps) {
           <h3 className="font-semibold">Booking Configuration</h3>
         </div>
 
-        {data.bookingType === "fixedBooking" && data.fixedPackages && data.fixedPackages.length > 0 ? (
+        {data.bookingType === "fixedBooking" &&
+        data.fixedPackages &&
+        data.fixedPackages.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-1">
             {data.fixedPackages.map((pkg, i) => (
               <div
@@ -549,8 +551,6 @@ export function VenueSettingsView({ venue }: VenueSettingsViewProps) {
           </div>
         ) : null}
       </Card>
-
-
 
       {/* Lightbox */}
       {galleryOpen &&

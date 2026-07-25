@@ -17,5 +17,7 @@ const IdempotencyKeySchema = new Schema<IIdempotencyKey>({
 });
 
 export const IdempotencyKeyModel = mongoose.model<IIdempotencyKey>(
-  'IdempotencyKeys', IdempotencyKeySchema, 'IdempotencyKeys'
+  'IdempotencyKeys',
+  IdempotencyKeySchema,
+  'IdempotencyKeys'
 );

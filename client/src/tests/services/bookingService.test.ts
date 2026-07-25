@@ -1,5 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { getMyBookings, getBookingById, saveBookerDetails, cancelBooking } from '@/services/bookingService';
+import {
+  getMyBookings,
+  getBookingById,
+  saveBookerDetails,
+  cancelBooking,
+} from '@/services/bookingService';
 import { axiosInstance as api } from '@/config/axios';
 import { API_ENDPOINTS } from '@/constants';
 

@@ -5,7 +5,11 @@ interface AppState {
   activeVenueName: string | null;
   activeVenueStatus: string | null;
   lastVenueSubRoute: string;
-  setActiveVenue: (id: string | null, name: string | null, status?: string | null) => void;
+  setActiveVenue: (
+    id: string | null,
+    name: string | null,
+    status?: string | null,
+  ) => void;
   setLastVenueSubRoute: (route: string) => void;
 }
 
@@ -15,7 +19,10 @@ export const useAppStore = create<AppState>((set) => ({
   activeVenueStatus: null,
   lastVenueSubRoute: "bookings",
   setActiveVenue: (id, name, status = null) =>
-    set({ activeVenueId: id, activeVenueName: name, activeVenueStatus: status }),
-  setLastVenueSubRoute: (route) =>
-    set({ lastVenueSubRoute: route }),
+    set({
+      activeVenueId: id,
+      activeVenueName: name,
+      activeVenueStatus: status,
+    }),
+  setLastVenueSubRoute: (route) => set({ lastVenueSubRoute: route }),
 }));

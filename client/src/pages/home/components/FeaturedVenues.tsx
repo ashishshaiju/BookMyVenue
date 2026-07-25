@@ -52,14 +52,16 @@ export function FeaturedVenues({
                   </div>
                 </div>
               ))
-            : featuredVenues.slice(0, 8).map((venue: PublicVenue) => (
-                <CompactVenueCard
-                  key={venue._id}
-                  venue={venue}
-                  onToggleWishlist={handleToggleWishlist}
-                  isLoadingWishlist={togglingVenues.has(venue._id)}
-                />
-              ))}
+            : featuredVenues
+                .slice(0, 8)
+                .map((venue: PublicVenue) => (
+                  <CompactVenueCard
+                    key={venue._id}
+                    venue={venue}
+                    onToggleWishlist={handleToggleWishlist}
+                    isLoadingWishlist={togglingVenues.has(venue._id)}
+                  />
+                ))}
         </div>
       </div>
     </section>

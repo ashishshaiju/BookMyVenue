@@ -8,7 +8,12 @@ interface ImageUploadProps {
   maxFiles?: number;
 }
 
-export function ImageUpload({ fieldName, existingUrls, onChange, maxFiles = 10 }: ImageUploadProps) {
+export function ImageUpload({
+  fieldName,
+  existingUrls,
+  onChange,
+  maxFiles = 10,
+}: ImageUploadProps) {
   const [previewUrls, setPreviewUrls] = useState<string[]>(() => existingUrls);
   const [files, setFiles] = useState<File[]>([]);
   const [isDragging, setIsDragging] = useState(false);
@@ -44,7 +49,7 @@ export function ImageUpload({ fieldName, existingUrls, onChange, maxFiles = 10 }
 
   const removeImage = (index: number) => {
     const isExisting = index < existingUrls.length;
-    
+
     if (isExisting) {
       const newExisting = existingUrls.filter((_, i) => i !== index);
       setPreviewUrls((prev) => {
@@ -65,7 +70,10 @@ export function ImageUpload({ fieldName, existingUrls, onChange, maxFiles = 10 }
         return prev.filter((_, i) => i !== index);
       });
       setFiles((prev) => prev.filter((_, i) => i !== fileIndex));
-      onChange(files.filter((_, i) => i !== fileIndex), existingUrls);
+      onChange(
+        files.filter((_, i) => i !== fileIndex),
+        existingUrls
+      );
     }
   };
 
@@ -95,14 +103,14 @@ export function ImageUpload({ fieldName, existingUrls, onChange, maxFiles = 10 }
     <div className="space-y-3">
       <label className="block text-sm font-medium text-[var(--text-primary)]">
         {isCoverImage ? 'Cover Image' : 'Gallery Images'}
-        <span className="text-[var(--text-secondary)] ml-1">({previewUrls.length}/{maxAllowed})</span>
+        <span className="text-[var(--text-secondary)] ml-1">
+          ({previewUrls.length}/{maxAllowed})
+        </span>
       </label>
 
       <div
         className={`relative border-2 rounded-xl p-4 transition-colors ${
-          isDragging
-            ? 'border-[var(--bg-green)] bg-[var(--bg-green)]/5'
-            : 'border-[var(--bg-grey)]'
+          isDragging ? 'border-[var(--bg-green)] bg-[var(--bg-green)]/5' : 'border-[var(--bg-grey)]'
         }`}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -110,12 +118,11 @@ export function ImageUpload({ fieldName, existingUrls, onChange, maxFiles = 10 }
       >
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
           {previewUrls.map((url, index) => (
-            <div key={index} className="relative aspect-square rounded-lg overflow-hidden border border-[var(--bg-grey)]">
-              <img
-                src={url}
-                alt={`Preview ${index + 1}`}
-                className="w-full h-full object-cover"
-              />
+            <div
+              key={index}
+              className="relative aspect-square rounded-lg overflow-hidden border border-[var(--bg-grey)]"
+            >
+              <img src={url} alt={`Preview ${index + 1}`} className="w-full h-full object-cover" />
               <button
                 type="button"
                 onClick={() => removeImage(index)}
@@ -126,11 +133,15 @@ export function ImageUpload({ fieldName, existingUrls, onChange, maxFiles = 10 }
               </button>
             </div>
           ))}
-          
+
           {canAddMore && (
-            <label className={`relative aspect-square rounded-lg border-2 border-dashed flex items-center justify-center cursor-pointer transition-colors ${
-              isDragging ? 'border-[var(--bg-green)] bg-[var(--bg-green)]/5' : 'border-[var(--bg-grey)] hover:border-[var(--bg-green)]'
-            }`}>
+            <label
+              className={`relative aspect-square rounded-lg border-2 border-dashed flex items-center justify-center cursor-pointer transition-colors ${
+                isDragging
+                  ? 'border-[var(--bg-green)] bg-[var(--bg-green)]/5'
+                  : 'border-[var(--bg-grey)] hover:border-[var(--bg-green)]'
+              }`}
+            >
               <input
                 type="file"
                 accept="image/*"

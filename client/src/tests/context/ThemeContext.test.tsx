@@ -56,9 +56,7 @@ describe('client ThemeContext & ThemeProvider', () => {
   it('should throw error when useTheme is used outside of ThemeProvider', () => {
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-    expect(() => render(<TestComponent />)).toThrow(
-      'useTheme must be used within a ThemeProvider'
-    );
+    expect(() => render(<TestComponent />)).toThrow('useTheme must be used within a ThemeProvider');
 
     consoleSpy.mockRestore();
   });

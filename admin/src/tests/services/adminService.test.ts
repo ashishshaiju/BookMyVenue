@@ -30,7 +30,7 @@ describe("admin adminService API handlers", () => {
       const data = await adminService.getVenues(1, 10, "PendingReview");
 
       expect(axiosInstance.get).toHaveBeenCalledWith(
-        `${API_ENDPOINTS.ADMIN_VENUES}?page=1&limit=10&status=PendingReview`
+        `${API_ENDPOINTS.ADMIN_VENUES}?page=1&limit=10&status=PendingReview`,
       );
       expect(data).toEqual(mockResult);
     });
@@ -42,7 +42,9 @@ describe("admin adminService API handlers", () => {
 
       const res = await adminService.approveVenue("v_123");
 
-      expect(axiosInstance.post).toHaveBeenCalledWith(`${API_ENDPOINTS.VENUES}/v_123/approve`);
+      expect(axiosInstance.post).toHaveBeenCalledWith(
+        `${API_ENDPOINTS.VENUES}/v_123/approve`,
+      );
       expect(res.success).toBe(true);
     });
 
@@ -51,11 +53,14 @@ describe("admin adminService API handlers", () => {
         data: { success: true, message: "Venue rejected" },
       });
 
-      const res = await adminService.rejectVenue("v_123", "Incomplete address documents");
+      const res = await adminService.rejectVenue(
+        "v_123",
+        "Incomplete address documents",
+      );
 
       expect(axiosInstance.post).toHaveBeenCalledWith(
         `${API_ENDPOINTS.VENUES}/v_123/reject`,
-        { reason: "Incomplete address documents" }
+        { reason: "Incomplete address documents" },
       );
       expect(res.success).toBe(true);
     });
@@ -69,9 +74,12 @@ describe("admin adminService API handlers", () => {
 
       const res = await adminService.promoteToAdmin("newadmin@example.com");
 
-      expect(axiosInstance.post).toHaveBeenCalledWith(API_ENDPOINTS.RBAC_PROMOTE, {
-        email: "newadmin@example.com",
-      });
+      expect(axiosInstance.post).toHaveBeenCalledWith(
+        API_ENDPOINTS.RBAC_PROMOTE,
+        {
+          email: "newadmin@example.com",
+        },
+      );
       expect(res.success).toBe(true);
     });
 
@@ -80,15 +88,22 @@ describe("admin adminService API handlers", () => {
         data: { success: true, message: "User banned successfully" },
       });
 
-      const res = await adminService.banUser("user_999", "global", "Terms violation");
+      const res = await adminService.banUser(
+        "user_999",
+        "global",
+        "Terms violation",
+      );
 
-      expect(axiosInstance.post).toHaveBeenCalledWith(API_ENDPOINTS.MODERATION_BANS, {
-        userId: "user_999",
-        scope: "global",
-        reason: "Terms violation",
-        venueId: undefined,
-        expiresAt: undefined,
-      });
+      expect(axiosInstance.post).toHaveBeenCalledWith(
+        API_ENDPOINTS.MODERATION_BANS,
+        {
+          userId: "user_999",
+          scope: "global",
+          reason: "Terms violation",
+          venueId: undefined,
+          expiresAt: undefined,
+        },
+      );
       expect(res.success).toBe(true);
     });
 
@@ -100,7 +115,7 @@ describe("admin adminService API handlers", () => {
       const res = await adminService.unbanUser("user_999");
 
       expect(axiosInstance.post).toHaveBeenCalledWith(
-        `${API_ENDPOINTS.TOGGLE_USER_STATUS}/user_999/unban`
+        `${API_ENDPOINTS.TOGGLE_USER_STATUS}/user_999/unban`,
       );
       expect(res.success).toBe(true);
     });
@@ -112,11 +127,15 @@ describe("admin adminService API handlers", () => {
         data: { success: true, message: "Review removed" },
       });
 
-      const res = await adminService.moderateReview("rev_555", "remove", "Abusive language");
+      const res = await adminService.moderateReview(
+        "rev_555",
+        "remove",
+        "Abusive language",
+      );
 
       expect(axiosInstance.post).toHaveBeenCalledWith(
         `${API_ENDPOINTS.REVIEWS}/rev_555/moderate`,
-        { action: "remove", reason: "Abusive language" }
+        { action: "remove", reason: "Abusive language" },
       );
       expect(res.success).toBe(true);
     });

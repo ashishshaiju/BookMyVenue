@@ -22,10 +22,11 @@ export function useBookingColumns({
   const { data: profile } = useApiQuery<UserProfile>(
     QUERY_KEYS.PROFILE,
     { method: "GET", url: API_ENDPOINTS.PROFILE },
-    { staleTime: PROFILE_STALE_TIME }
+    { staleTime: PROFILE_STALE_TIME },
   );
 
-  const isAdmin = profile?.role === ROLES.ADMIN || profile?.role === ROLES.SUPER_ADMIN;
+  const isAdmin =
+    profile?.role === ROLES.ADMIN || profile?.role === ROLES.SUPER_ADMIN;
 
   const getDisplayStatus = (booking: Booking) => {
     const uiStatus = booking.uiStatus ?? booking.status;
@@ -150,7 +151,10 @@ export function useBookingColumns({
       header: "Amount",
       cell: ({ row }: { row: { original: Booking } }) => (
         <span className="font-semibold text-green-600">
-          ₹{row.original.price != null ? (row.original.price as number).toLocaleString("en-IN") : "0"}
+          ₹
+          {row.original.price != null
+            ? (row.original.price as number).toLocaleString("en-IN")
+            : "0"}
         </span>
       ),
     },

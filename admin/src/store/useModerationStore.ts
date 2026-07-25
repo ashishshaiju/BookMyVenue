@@ -1,6 +1,10 @@
 import { create } from "zustand";
 
-export type ModerationTab = "flagged" | "hide_requests" | "suspended" | "banned";
+export type ModerationTab =
+  | "flagged"
+  | "hide_requests"
+  | "suspended"
+  | "banned";
 
 interface ModerationStore {
   activeTab: ModerationTab;

@@ -2,7 +2,12 @@ import { RotateCcw } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import type { ModerationSummary } from "@/types";
 import type { UseMutationResult } from "@tanstack/react-query";
 
@@ -41,7 +46,7 @@ export function SuspendedVenuesTable({
       }: {
         row: { original: ModerationSummary["suspendedVenues"][0] };
       }) => (
-        <p 
+        <p
           className="text-sm text-[var(--text-secondary)] max-w-xs truncate cursor-help"
           title={row.original.suspensionReason}
         >

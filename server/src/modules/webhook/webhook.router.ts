@@ -20,7 +20,7 @@ const router: Router = Router();
 
 /**
  * @openapi
- * /webhooks/razorpay:
+ * /webhook/razorpay:
  *   post:
  *     tags: [Webhooks]
  *     summary: Receive a Razorpay payment event

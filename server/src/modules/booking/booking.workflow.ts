@@ -23,7 +23,23 @@ const LOCK_TTL_SECONDS = 600;
 const CHECKOUT_BUFFER_MS = 60 * 1000;
 
 function buildContractSnapshot(
-  venue: { name: string; city: string; district: string; bookingType: string; fixedPackages?: { slotName: string; startTime: string; endTime: string; price: number }[]; pricing?: { basePrice: number; pricingType: string; pricingRules: { fromTime: string; toTime: string; price: number }[] }; cancellation?: { policy: 'refundable' | 'nonRefundable'; refundType?: 'fullRefund' | 'timeBasedRefund'; refundRules: { daysBefore: number; refundPercentage: number }[] } },
+  venue: {
+    name: string;
+    city: string;
+    district: string;
+    bookingType: string;
+    fixedPackages?: { slotName: string; startTime: string; endTime: string; price: number }[];
+    pricing?: {
+      basePrice: number;
+      pricingType: string;
+      pricingRules: { fromTime: string; toTime: string; price: number }[];
+    };
+    cancellation?: {
+      policy: 'refundable' | 'nonRefundable';
+      refundType?: 'fullRefund' | 'timeBasedRefund';
+      refundRules: { daysBefore: number; refundPercentage: number }[];
+    };
+  },
   selectedSlots: { startTime: number; endTime: number }[],
   serverPrice: number
 ): IContractSnapshot {

@@ -26,9 +26,13 @@ export default function VenueSettingsPage() {
       <div className="flex items-center justify-center min-h-[60vh]">
         <Card className="p-6 max-w-md text-center space-y-3">
           <AlertCircle className="w-10 h-10 text-destructive mx-auto" />
-          <h2 className="text-lg font-semibold">Failed to load venue settings</h2>
+          <h2 className="text-lg font-semibold">
+            Failed to load venue settings
+          </h2>
           <p className="text-sm text-muted-foreground">
-            {error instanceof Error ? error.message : "Unable to fetch venue data. Please try again."}
+            {error instanceof Error
+              ? error.message
+              : "Unable to fetch venue data. Please try again."}
           </p>
         </Card>
       </div>
@@ -44,13 +48,17 @@ export default function VenueSettingsPage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold">Venue Settings</h1>
-            <p className="text-sm text-muted-foreground">Manage your venue configuration</p>
+            <p className="text-sm text-muted-foreground">
+              Manage your venue configuration
+            </p>
           </div>
         </div>
         {!isEditing ? (
           <Button onClick={() => setIsEditing(true)}>Edit</Button>
         ) : (
-          <Button variant="outline" onClick={() => setIsEditing(false)}>Cancel</Button>
+          <Button variant="outline" onClick={() => setIsEditing(false)}>
+            Cancel
+          </Button>
         )}
       </div>
 

@@ -9,8 +9,8 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <AppRouter />
-        <Toaster 
-          position="top-right" 
+        <Toaster
+          position="top-right"
           containerStyle={{
             top: 32,
             right: 32,

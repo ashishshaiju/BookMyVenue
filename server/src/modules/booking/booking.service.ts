@@ -172,13 +172,15 @@ export async function processCapturedPayment(
             city: fallbackVenue.city,
             district: fallbackVenue.district,
           },
-          packages: [{
-            pkgName: `${String(lock.startTime)}-${String(lock.endTime)}`,
-            pkgType: fallbackVenue.bookingType === 'fixedBooking' ? 'fixed' : 'flexible',
-            startTime: lock.startTime,
-            endTime: lock.endTime,
-            price: totalPrice,
-          }],
+          packages: [
+            {
+              pkgName: `${String(lock.startTime)}-${String(lock.endTime)}`,
+              pkgType: fallbackVenue.bookingType === 'fixedBooking' ? 'fixed' : 'flexible',
+              startTime: lock.startTime,
+              endTime: lock.endTime,
+              price: totalPrice,
+            },
+          ],
           financial: { basePrice: totalPrice, taxes: 0, platformFee: 0, totalPaid: totalPrice },
           cancellation: fallbackVenue.cancellation,
         };
@@ -379,9 +381,7 @@ export async function getAllBookings(
   return findAllBookings(paginationParams, filters);
 }
 
-export async function getMyBookings(
-  userId: string
-): Promise<{
+export async function getMyBookings(userId: string): Promise<{
   bookings: {
     upcoming: Record<string, unknown>[];
     cancelled: Record<string, unknown>[];

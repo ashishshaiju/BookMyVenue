@@ -24,7 +24,9 @@ import ReportsPage from "./pages/owner/ReportsPage";
 import OwnerBookingsPage from "./pages/owner/OwnerBookingsPage";
 import ReviewsPage from "./pages/owner/ReviewsPage";
 import CalendarPage from "./pages/owner/CalendarPage";
-const VenueSettingsPage = React.lazy(() => import("@/pages/owner/VenueSettingsPage"));
+const VenueSettingsPage = React.lazy(
+  () => import("@/pages/owner/VenueSettingsPage"),
+);
 
 export function AppRouter() {
   return (

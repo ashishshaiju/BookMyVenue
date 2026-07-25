@@ -5,7 +5,14 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
 import { useImageUpload } from '@/hooks/useImageUpload';
 import Spinner from '@/components/common/Spinner';
-import { createVenue, updateVenue, submitVenue, getVenueById, getMyDraft, upsertVenueDraft } from '@/services/venueService';
+import {
+  createVenue,
+  updateVenue,
+  submitVenue,
+  getVenueById,
+  getMyDraft,
+  upsertVenueDraft,
+} from '@/services/venueService';
 import { mapFormToDTO, mapVenueToForm } from '@/utils/venueFormMapper';
 import {
   saveDraftSession,
@@ -92,14 +99,21 @@ const AddVenue = () => {
   }, []);
 
   // Determine if deadline has passed
-  const isDeadlinePassed = venueData?.currentEditDeadline 
+  const isDeadlinePassed = venueData?.currentEditDeadline
     ? now > new Date(venueData.currentEditDeadline)
     : false;
 
   // Calculate days left
-  const daysLeft = venueData?.currentEditDeadline && !isDeadlinePassed
-    ? Math.max(0, Math.ceil((new Date(venueData.currentEditDeadline).getTime() - now.getTime()) / (24 * 60 * 60 * 1000)))
-    : 0;
+  const daysLeft =
+    venueData?.currentEditDeadline && !isDeadlinePassed
+      ? Math.max(
+          0,
+          Math.ceil(
+            (new Date(venueData.currentEditDeadline).getTime() - now.getTime()) /
+              (24 * 60 * 60 * 1000)
+          )
+        )
+      : 0;
 
   // Load venue data for edit mode
   useEffect(() => {
@@ -208,19 +222,19 @@ const AddVenue = () => {
             await updateVenue(venueId, dto);
             // Then submit for review
             await submitVenue(venueId);
-            
+
             clearDraftSession(user.id);
             clearDraft(user.id);
             showSuccess('Venue resubmitted for review successfully!');
           } else {
             // Create new venue
             await createVenue(dto);
-            
+
             clearDraftSession(user.id);
             clearDraft(user.id);
             showSuccess('Venue submitted for review successfully!');
           }
-          
+
           navigate('/list-venue/my-venues');
         } catch (error) {
           console.error('Submission failed:', error);
@@ -309,35 +323,63 @@ const AddVenue = () => {
 
             {/* Deadline banner for edit mode */}
             {isEditMode && venueData?.currentEditDeadline && (
-              <div className={`mb-6 p-4 rounded-xl border ${
-                isDeadlinePassed
-                  ? 'bg-red-50 dark:bg-red-950/30 border-red-200'
-                  : 'bg-amber-50 dark:bg-amber-950/30 border-amber-200'
-              }`}>
+              <div
+                className={`mb-6 p-4 rounded-xl border ${
+                  isDeadlinePassed
+                    ? 'bg-red-50 dark:bg-red-950/30 border-red-200'
+                    : 'bg-amber-50 dark:bg-amber-950/30 border-amber-200'
+                }`}
+              >
                 <div className="flex items-start gap-3">
                   {isDeadlinePassed ? (
-                    <svg className="text-red-500 mt-0.5" width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <svg
+                      className="text-red-500 mt-0.5"
+                      width={20}
+                      height={20}
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
                       <circle cx="12" cy="12" r="10" />
                       <line x1="12" y1="8" x2="12" y2="12" />
                       <line x1="12" y1="16" x2="12.01" y2="16" />
                     </svg>
                   ) : (
-                    <svg className="text-amber-500 mt-0.5" width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <svg
+                      className="text-amber-500 mt-0.5"
+                      width={20}
+                      height={20}
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
                       <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
                       <line x1="12" y1="9" x2="12" y2="13" />
                       <line x1="12" y1="17" x2="12.01" y2="17" />
                     </svg>
                   )}
                   <div>
-                    <p className={`font-semibold ${isDeadlinePassed ? 'text-red-800' : 'text-amber-800'}`}>
-                      {isDeadlinePassed 
-                        ? 'Edit Window Expired' 
+                    <p
+                      className={`font-semibold ${isDeadlinePassed ? 'text-red-800' : 'text-amber-800'}`}
+                    >
+                      {isDeadlinePassed
+                        ? 'Edit Window Expired'
                         : `⏰ ${daysLeft} day(s) left to resubmit`}
                     </p>
                     <p className="text-sm text-[var(--text-secondary)] mt-1">
-                      Deadline: {new Date(venueData.currentEditDeadline!).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}.
-                      {isDeadlinePassed 
-                        ? ' This venue has been auto-suspended and cannot be resubmitted.' 
+                      Deadline:{' '}
+                      {new Date(venueData.currentEditDeadline!).toLocaleDateString('en-IN', {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                      .
+                      {isDeadlinePassed
+                        ? ' This venue has been auto-suspended and cannot be resubmitted.'
                         : ' After this, the venue will be auto-suspended.'}
                     </p>
                   </div>
@@ -392,10 +434,10 @@ const AddVenue = () => {
                   disabled={isSubmitting || isUploading || hasErrors || isDeadlinePassed}
                   className="bg-[var(--bg-green)] text-white px-6 py-2.5 rounded-xl transition-opacity disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
                 >
-                  {isSubmitting || isUploading 
-                    ? 'Submitting…' 
-                    : isEditMode 
-                      ? 'Resubmit for Review' 
+                  {isSubmitting || isUploading
+                    ? 'Submitting…'
+                    : isEditMode
+                      ? 'Resubmit for Review'
                       : 'Submit Venue'}
                 </button>
               )}
