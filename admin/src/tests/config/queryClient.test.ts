@@ -3,7 +3,9 @@ import { queryClient } from "@/config/queryClient";
 
 describe("config queryClient", () => {
   it("should have staleTime of 5 minutes", () => {
-    expect(queryClient.getDefaultOptions().queries?.staleTime).toBe(5 * 60 * 1000);
+    expect(queryClient.getDefaultOptions().queries?.staleTime).toBe(
+      5 * 60 * 1000,
+    );
   });
 
   it("should have gcTime of 5 minutes", () => {
@@ -11,7 +13,9 @@ describe("config queryClient", () => {
   });
 
   it("should have refetchOnWindowFocus set to false", () => {
-    expect(queryClient.getDefaultOptions().queries?.refetchOnWindowFocus).toBe(false);
+    expect(queryClient.getDefaultOptions().queries?.refetchOnWindowFocus).toBe(
+      false,
+    );
   });
 
   it("mutations should not retry by default", () => {

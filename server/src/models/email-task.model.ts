@@ -43,7 +43,7 @@ const EmailTaskSchema = new Schema<IEmailTask>(
     retryAfter: { type: Date, required: true },
     retries: { type: Number, default: 0 },
     lastError: { type: String, default: null },
-    deleteAt: { type: Date, required: true },  // TTL: completed → 15 min, pending/failed → 7 days
+    deleteAt: { type: Date, required: true }, // TTL: completed → 15 min, pending/failed → 7 days
   },
   { timestamps: true }
 );

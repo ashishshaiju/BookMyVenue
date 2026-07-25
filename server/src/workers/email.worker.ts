@@ -182,9 +182,7 @@ async function dispatch(task: IEmailTask): Promise<void> {
     case EmailIntent.USER_BANNED: {
       const { scope, reason, expiresAt, venueName } = metadata;
       if (!scope || !reason) {
-        throw new Error(
-          `Missing required metadata fields for ${EmailIntent.USER_BANNED} intent`
-        );
+        throw new Error(`Missing required metadata fields for ${EmailIntent.USER_BANNED} intent`);
       }
       const result = await emailService.sendUserBannedEmail(recipient, {
         scope,

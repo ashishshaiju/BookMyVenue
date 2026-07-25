@@ -79,7 +79,6 @@ export async function banUser(
     });
   }
 
-
   // Log activity
   const { logModerationAction } = await import('./moderationActivity.service.js');
   await logModerationAction(adminId, 'ban_user', userId, 'user', reason, { scope, ...options });
