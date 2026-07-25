@@ -64,7 +64,18 @@ export function BookingCard({ booking, activeTab, onReviewClick }: BookingCardPr
         <div className="mt-auto pt-4 border-t border-[var(--bg-grey)] space-y-3">
           <div className="flex justify-between items-center">
             <span className="text-sm text-[var(--text-secondary)] font-medium">Total Paid</span>
-            <span className="font-bold text-[var(--text-primary)]">₹{booking.totalPrice}</span>
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-[var(--text-primary)]">₹{booking.totalPrice}</span>
+              {booking.paymentStatus && booking.paymentStatus !== 'paid' && (
+                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                  booking.paymentStatus === 'pending'
+                    ? 'bg-yellow-100 text-yellow-700'
+                    : 'bg-gray-100 text-gray-600'
+                }`}>
+                  {booking.paymentStatus === 'pending' ? 'PAYMENT PENDING' : booking.paymentStatus.toUpperCase()}
+                </span>
+              )}
+            </div>
           </div>
           {activeTab === BOOKING_UI_STATUS.COMPLETED && !booking.hasReview && (
             <button

@@ -115,6 +115,7 @@ export interface Booking {
   startTime: number;
   endTime: number;
   status: "pending" | "confirmed" | "completed" | "cancelled";
+  paymentStatus?: "pending" | "paid" | "refunded";
   uiStatus?: "confirmed" | "completed" | "cancelled";
   price: number;
   createdAt: string;

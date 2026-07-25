@@ -49,6 +49,7 @@ export interface BookingCardDTO {
   eventType?: string;
   totalPrice: number;
   paymentMethod?: string;
+  paymentStatus?: 'pending' | 'paid' | 'refunded';
   uiStatus: 'upcoming' | 'completed' | 'cancelled';
   hasReview?: boolean;
 }
