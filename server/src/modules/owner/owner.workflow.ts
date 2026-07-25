@@ -2,9 +2,7 @@ import * as repo from './owner.repository';
 import * as service from './owner.service';
 import type { IBooking } from '../booking/booking.types';
 
-export async function getVenueAvailabilityCalendarWorkflow(
-  venueId: string
-): Promise<{
+export async function getVenueAvailabilityCalendarWorkflow(venueId: string): Promise<{
   bookedDates: string[];
   blockedDates: string[];
   workingDays: unknown;

@@ -283,10 +283,7 @@ export async function requestHideReview(
   ).exec();
 }
 
-export async function flagReview(
-  reviewId: string,
-  reason: string
-): Promise<IReview | null> {
+export async function flagReview(reviewId: string, reason: string): Promise<IReview | null> {
   return ReviewModel.findByIdAndUpdate(
     toObjectId(reviewId),
     {

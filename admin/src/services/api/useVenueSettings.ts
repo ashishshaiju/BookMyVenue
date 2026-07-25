@@ -7,23 +7,37 @@ import type { Venue } from "@/types";
 export function useVenueSettings(venueId: string) {
   return useApiQuery<Venue>(
     [...QUERY_KEYS.OWNER_VENUE_SETTINGS, venueId],
-    { method: "GET", url: `${API_ENDPOINTS.OWNER_VENUE_SETTINGS}/${venueId}/settings` },
+    {
+      method: "GET",
+      url: `${API_ENDPOINTS.OWNER_VENUE_SETTINGS}/${venueId}/settings`,
+    },
     { enabled: !!venueId },
   );
 }
 
 export function useUpdateVenue() {
   const queryClient = useQueryClient();
-  return useApiMutation<Venue, { id: string; data: Record<string, unknown>; idempotencyKey: string }>(
+  return useApiMutation<
+    Venue,
+    { id: string; data: Record<string, unknown>; idempotencyKey: string }
+  >(
     (vars) => ({
       method: "PUT",
       url: `${API_ENDPOINTS.VENUES}/${vars.id}`,
-      data: { ...vars.data, expectedVersion: (vars.data as Record<string, unknown>).expectedVersion },
-      headers: { "Idempotency-Key": vars.idempotencyKey } as Record<string, string>,
+      data: {
+        ...vars.data,
+        expectedVersion: (vars.data as Record<string, unknown>).expectedVersion,
+      },
+      headers: { "Idempotency-Key": vars.idempotencyKey } as Record<
+        string,
+        string
+      >,
     }),
     {
       onSuccess: (_data, vars) => {
-        queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.OWNER_VENUE_SETTINGS, vars.id] });
+        queryClient.invalidateQueries({
+          queryKey: [...QUERY_KEYS.OWNER_VENUE_SETTINGS, vars.id],
+        });
         queryClient.invalidateQueries({ queryKey: QUERY_KEYS.MY_VENUES });
       },
     },
@@ -40,7 +54,9 @@ export function useRequestInactivity() {
     }),
     {
       onSuccess: (_data, vars) => {
-        queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.OWNER_VENUE_SETTINGS, vars.venueId] });
+        queryClient.invalidateQueries({
+          queryKey: [...QUERY_KEYS.OWNER_VENUE_SETTINGS, vars.venueId],
+        });
       },
     },
   );
@@ -55,7 +71,9 @@ export function useWithdrawInactivity() {
     }),
     {
       onSuccess: (_data, vars) => {
-        queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.OWNER_VENUE_SETTINGS, vars.venueId] });
+        queryClient.invalidateQueries({
+          queryKey: [...QUERY_KEYS.OWNER_VENUE_SETTINGS, vars.venueId],
+        });
       },
     },
   );
@@ -70,7 +88,9 @@ export function useBlockBookings() {
     }),
     {
       onSuccess: (_data, vars) => {
-        queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.OWNER_VENUE_SETTINGS, vars.venueId] });
+        queryClient.invalidateQueries({
+          queryKey: [...QUERY_KEYS.OWNER_VENUE_SETTINGS, vars.venueId],
+        });
       },
     },
   );
@@ -85,7 +105,9 @@ export function useUnblockBookings() {
     }),
     {
       onSuccess: (_data, vars) => {
-        queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.OWNER_VENUE_SETTINGS, vars.venueId] });
+        queryClient.invalidateQueries({
+          queryKey: [...QUERY_KEYS.OWNER_VENUE_SETTINGS, vars.venueId],
+        });
       },
     },
   );
@@ -100,7 +122,9 @@ export function useActivateVenue() {
     }),
     {
       onSuccess: (_data, vars) => {
-        queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.OWNER_VENUE_SETTINGS, vars.venueId] });
+        queryClient.invalidateQueries({
+          queryKey: [...QUERY_KEYS.OWNER_VENUE_SETTINGS, vars.venueId],
+        });
         queryClient.invalidateQueries({ queryKey: QUERY_KEYS.MY_VENUES });
       },
     },
@@ -117,7 +141,9 @@ export function useRequestDeleteVenue() {
     }),
     {
       onSuccess: (_data, vars) => {
-        queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.OWNER_VENUE_SETTINGS, vars.venueId] });
+        queryClient.invalidateQueries({
+          queryKey: [...QUERY_KEYS.OWNER_VENUE_SETTINGS, vars.venueId],
+        });
       },
     },
   );

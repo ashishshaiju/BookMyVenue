@@ -5,7 +5,7 @@ import eslintComments from '@eslint-community/eslint-plugin-eslint-comments';
 
 export default tseslint.config(
   {
-    ignores: ['dist/**', 'scripts/**', 'eslint.config.mjs'],
+    ignores: ['dist/**', 'scripts/**', 'coverage/**', 'eslint.config.mjs'],
   },
   js.configs.recommended,
   ...tseslint.configs.strictTypeChecked,

@@ -1,5 +1,8 @@
 import type { IVenue, VenueStatus } from './venue.types';
-import { INACTIVITY_COOLDOWN_DAYS, SUBMISSION_REQUIRED_FIELDS } from '../../constants/venue.constants';
+import {
+  INACTIVITY_COOLDOWN_DAYS,
+  SUBMISSION_REQUIRED_FIELDS,
+} from '../../constants/venue.constants';
 import { WorkflowError, ValidationError } from '../../utils/errors';
 import { timeStringToMinutes } from '../../utils/timeUtils';
 
@@ -169,14 +172,20 @@ export function canActivate(venue: IVenue): void {
 export function canEdit(venue: IVenue): void {
   const editableStatuses: VenueStatus[] = ['Draft', 'Rejected'];
   if (!editableStatuses.includes(venue.status)) {
-    throw new WorkflowError(venue.status, 'edit -- only Draft or Rejected venues can be directly edited');
+    throw new WorkflowError(
+      venue.status,
+      'edit -- only Draft or Rejected venues can be directly edited'
+    );
   }
 }
 
 export function canDelete(venue: IVenue): void {
   const deletableStatuses: VenueStatus[] = ['Draft', 'Rejected'];
   if (!deletableStatuses.includes(venue.status)) {
-    throw new WorkflowError(venue.status, 'delete -- only Draft or Rejected venues can be directly deleted');
+    throw new WorkflowError(
+      venue.status,
+      'delete -- only Draft or Rejected venues can be directly deleted'
+    );
   }
 }
 

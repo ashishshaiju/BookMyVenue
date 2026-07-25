@@ -56,7 +56,7 @@ export function RejectVenueDialog({
               placeholder="e.g. Incomplete documentation, inappropriate photos…"
             />
           </div>
-          
+
           <div className="space-y-2">
             <Label className="flex items-center gap-2 cursor-pointer">
               <input
@@ -75,10 +75,14 @@ export function RejectVenueDialog({
                 <Calendar className="text-[var(--text-secondary)]" size={18} />
                 <Input
                   type="date"
-                  value={format(extendedDeadline, 'yyyy-MM-dd')}
-                  onChange={(e) => setExtendedDeadline(e.target.value ? new Date(e.target.value) : null)}
-                  min={format(minDate, 'yyyy-MM-dd')}
-                  max={format(maxDate, 'yyyy-MM-dd')}
+                  value={format(extendedDeadline, "yyyy-MM-dd")}
+                  onChange={(e) =>
+                    setExtendedDeadline(
+                      e.target.value ? new Date(e.target.value) : null,
+                    )
+                  }
+                  min={format(minDate, "yyyy-MM-dd")}
+                  max={format(maxDate, "yyyy-MM-dd")}
                   className="w-48"
                 />
                 <span className="text-xs text-[var(--text-secondary)]">

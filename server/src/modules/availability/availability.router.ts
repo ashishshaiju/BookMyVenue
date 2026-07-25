@@ -6,6 +6,7 @@ import {
   validateQuery,
 } from '../../middlewares/validation.middleware';
 import { verifyAccessToken, verifyAccessTokenOptional } from '../../middlewares/auth.middleware';
+import { idempotencyMiddleware } from '../../middlewares/idempotency.middleware';
 import { requirePermission } from '../../middlewares/rbac.middleware';
 import { PERMISSIONS as P } from '../../constants/permissions';
 import { venueIdParamSchema } from '../venue/venue.validator';
@@ -133,6 +134,7 @@ router
   .route('/:id/block')
   .post(
     verifyAccessToken,
+    idempotencyMiddleware(),
     requirePermission(P.bookings.create),
     validateParams(venueIdParamSchema),
     validateBody(blockSlotBodySchema),

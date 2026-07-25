@@ -355,10 +355,7 @@ export async function requestHideForReview(
   return updated;
 }
 
-export async function flagReview(
-  reviewId: string,
-  reason: string
-): Promise<IReviewModel> {
+export async function flagReview(reviewId: string, reason: string): Promise<IReviewModel> {
   const review = await repo.findReviewById(reviewId);
   if (!review) {
     throw new NotFoundError('Review not found');

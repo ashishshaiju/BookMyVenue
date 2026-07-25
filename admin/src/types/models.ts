@@ -32,7 +32,13 @@ export interface Venue {
   name: string;
   venueType: string;
   maxCapacity: number;
-  status: "Draft" | "PendingReview" | "Approved" | "Rejected" | "Suspended" | "Inactive";
+  status:
+    | "Draft"
+    | "PendingReview"
+    | "Approved"
+    | "Rejected"
+    | "Suspended"
+    | "Inactive";
   city: string;
   ownerUserId: {
     _id: string;
@@ -98,7 +104,13 @@ export interface Booking {
   _id: string;
   bookingRefId: string;
   venueId: string;
-  venue?: { _id: string; name: string; city?: string; district?: string; address?: string };
+  venue?: {
+    _id: string;
+    name: string;
+    city?: string;
+    district?: string;
+    address?: string;
+  };
   date: string;
   startTime: number;
   endTime: number;

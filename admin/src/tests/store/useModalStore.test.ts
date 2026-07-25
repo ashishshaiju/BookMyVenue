@@ -25,7 +25,10 @@ describe("admin useModalStore (Zustand)", () => {
     expect(modal).not.toBeNull();
     expect(modal?.title).toBe("Approve Venue Confirmation");
     expect(modal?.id).toBeDefined();
-    expect(modal?.data).toEqual({ venueId: "v_123", venueName: "Grand Palace" });
+    expect(modal?.data).toEqual({
+      venueId: "v_123",
+      venueName: "Grand Palace",
+    });
   });
 
   it("should close open modal", () => {

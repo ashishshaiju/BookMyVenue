@@ -9,12 +9,16 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { useApproveReview, useRejectReview } from "@/services/api/useAdminReviews";
+import {
+  useApproveReview,
+  useRejectReview,
+} from "@/services/api/useAdminReviews";
 import { useToast } from "@/hooks/useToast";
 import type { Venue } from "@/types";
 
 const INTENT_DESCRIPTIONS: Record<string, string> = {
-  venue_edit: "This will apply the venue edits and mark the review as approved.",
+  venue_edit:
+    "This will apply the venue edits and mark the review as approved.",
   inactivity_request: "This will mark the venue as inactive.",
   inactivity_withdrawal: "This will cancel the inactivity request.",
   deletion_request: "This will permanently delete the venue.",
@@ -72,7 +76,15 @@ export function ReviewActionDialogs({
 
   return (
     <>
-      <Dialog open={!!approveTarget} onOpenChange={(open) => { if (!open) { setApproveTarget(null); setApproveNote(""); } }}>
+      <Dialog
+        open={!!approveTarget}
+        onOpenChange={(open) => {
+          if (!open) {
+            setApproveTarget(null);
+            setApproveNote("");
+          }
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Approve Review — {approveTarget?.name}</DialogTitle>
@@ -95,22 +107,40 @@ export function ReviewActionDialogs({
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => { setApproveTarget(null); setApproveNote(""); }}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setApproveTarget(null);
+                setApproveNote("");
+              }}
+            >
               Cancel
             </Button>
-            <Button onClick={handleApprove} disabled={approveMutation.isPending}>
+            <Button
+              onClick={handleApprove}
+              disabled={approveMutation.isPending}
+            >
               {approveMutation.isPending ? "Approving..." : "Approve"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!rejectTarget} onOpenChange={(open) => { if (!open) { setRejectTarget(null); setRejectNote(""); } }}>
+      <Dialog
+        open={!!rejectTarget}
+        onOpenChange={(open) => {
+          if (!open) {
+            setRejectTarget(null);
+            setRejectNote("");
+          }
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Reject Review — {rejectTarget?.name}</DialogTitle>
             <DialogDescription>
-              Provide a reason for rejection. This will be communicated to the venue owner.
+              Provide a reason for rejection. This will be communicated to the
+              venue owner.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -123,11 +153,19 @@ export function ReviewActionDialogs({
                 onChange={(e) => setRejectNote(e.target.value)}
                 placeholder="Required reason for rejection..."
               />
-              <p className="text-xs text-muted-foreground text-right">{rejectNote.length} characters</p>
+              <p className="text-xs text-muted-foreground text-right">
+                {rejectNote.length} characters
+              </p>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => { setRejectTarget(null); setRejectNote(""); }}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setRejectTarget(null);
+                setRejectNote("");
+              }}
+            >
               Cancel
             </Button>
             <Button

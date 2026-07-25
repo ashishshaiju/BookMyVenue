@@ -64,9 +64,12 @@ export function ReportDialog({
                   onChange={() => setReportAction("hide")}
                 />
                 <div className="flex flex-col">
-                  <span className="block text-sm font-medium">Hide Request</span>
+                  <span className="block text-sm font-medium">
+                    Hide Request
+                  </span>
                   <span className="mt-1 flex items-center text-xs text-muted-foreground">
-                    Dispute this review. It stays visible until an admin approves your request.
+                    Dispute this review. It stays visible until an admin
+                    approves your request.
                   </span>
                 </div>
               </label>
@@ -89,7 +92,8 @@ export function ReportDialog({
                 <div className="flex flex-col">
                   <span className="block text-sm font-medium">Flag Review</span>
                   <span className="mt-1 flex items-center text-xs text-muted-foreground">
-                    Report abuse or spam. It will be hidden immediately pending admin review.
+                    Report abuse or spam. It will be hidden immediately pending
+                    admin review.
                   </span>
                 </div>
               </label>

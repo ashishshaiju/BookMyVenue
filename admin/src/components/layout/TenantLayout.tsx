@@ -15,7 +15,13 @@ interface MyVenue {
   city: string;
   venueType: string;
   coverImage: string;
-  status: "Draft" | "PendingReview" | "Approved" | "Rejected" | "Suspended" | "Inactive";
+  status:
+    | "Draft"
+    | "PendingReview"
+    | "Approved"
+    | "Rejected"
+    | "Suspended"
+    | "Inactive";
   rejectionReason?: string;
 }
 
@@ -52,11 +58,7 @@ export function TenantLayout() {
   const isInactive = venue?.status === VENUE_STATUS.INACTIVE;
 
   const isAccessDenied =
-    !isLoading &&
-    !isError &&
-    !!myVenues &&
-    !!venueId &&
-    !venue;
+    !isLoading && !isError && !!myVenues && !!venueId && !venue;
   const isBlockedStatus =
     venue &&
     venue.status !== VENUE_STATUS.APPROVED &&

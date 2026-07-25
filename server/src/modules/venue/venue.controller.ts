@@ -404,7 +404,10 @@ export const unfeatureVenue = async (req: Request, res: Response): Promise<void>
 export const getReviewsList = async (_req: Request, res: Response): Promise<void> => {
   try {
     const venues = await service.getReviewsList();
-    ResponseUtil.success(res, 'Review list retrieved successfully', { count: venues.length, venues });
+    ResponseUtil.success(res, 'Review list retrieved successfully', {
+      count: venues.length,
+      venues,
+    });
   } catch (e) {
     handleError(res, e, 'getReviewsList');
   }

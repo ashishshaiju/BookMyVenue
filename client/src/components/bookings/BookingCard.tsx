@@ -37,7 +37,7 @@ export function BookingCard({ booking, activeTab, onReviewClick }: BookingCardPr
 
       <div className="p-6 flex-grow flex flex-col">
         <div className="flex justify-between items-start mb-2">
-          <h3 
+          <h3
             className="text-lg font-bold text-[var(--text-primary)] line-clamp-1 hover:underline cursor-pointer"
             onClick={(e) => {
               e.stopPropagation();

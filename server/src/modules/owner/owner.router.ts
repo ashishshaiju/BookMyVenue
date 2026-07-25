@@ -62,14 +62,15 @@ router.get(
  *         application/json:
  *           schema:
  *             type: object
- *             required: [startDate, endDate]
+ *             required: [dates]
  *             properties:
- *               startDate:
- *                 type: string
- *                 format: date
- *               endDate:
- *                 type: string
- *                 format: date
+ *               dates:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   format: date
+ *                   example: '2025-12-25'
+ *                 description: Array of dates to block (YYYY-MM-DD, up to 6 months ahead)
  *     responses:
  *       200:
  *         description: Dates blocked successfully
@@ -108,14 +109,15 @@ router.post(
  *         application/json:
  *           schema:
  *             type: object
- *             required: [startDate, endDate]
+ *             required: [dates]
  *             properties:
- *               startDate:
- *                 type: string
- *                 format: date
- *               endDate:
- *                 type: string
- *                 format: date
+ *               dates:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   format: date
+ *                   example: '2025-12-25'
+ *                 description: Array of dates to unblock (YYYY-MM-DD)
  *     responses:
  *       200:
  *         description: Dates unblocked successfully

@@ -51,7 +51,11 @@ const HomePage = () => {
     navigate(`/explore?venueTypes=${encodeURIComponent(category)}`);
   };
 
-  const { data: featuredVenues = [], isLoading, isSuccess } = useApiQuery<PublicVenue[]>(['featured-venues'], {
+  const {
+    data: featuredVenues = [],
+    isLoading,
+    isSuccess,
+  } = useApiQuery<PublicVenue[]>(['featured-venues'], {
     method: 'GET',
     url: API_ENDPOINTS.FEATURED_VENUES,
   });

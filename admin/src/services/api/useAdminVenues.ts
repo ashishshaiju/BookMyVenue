@@ -35,11 +35,17 @@ export function useApproveVenue() {
 
 export function useRejectVenue() {
   const queryClient = useQueryClient();
-  return useApiMutation<unknown, { id: string; reason: string; extendedDeadline?: Date }>(
+  return useApiMutation<
+    unknown,
+    { id: string; reason: string; extendedDeadline?: Date }
+  >(
     (vars) => ({
       method: "POST",
       url: `${API_ENDPOINTS.VENUES}/${vars.id}/reject`,
-      data: { rejectionReason: vars.reason, extendedDeadline: vars.extendedDeadline },
+      data: {
+        rejectionReason: vars.reason,
+        extendedDeadline: vars.extendedDeadline,
+      },
     }),
     {
       onSuccess: () => {

@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { verifyAccessToken } from '../../middlewares/auth.middleware';
+import { idempotencyMiddleware } from '../../middlewares/idempotency.middleware';
 import { requireRole, requirePermission } from '../../middlewares/rbac.middleware';
 import {
   validateBody,
@@ -77,6 +78,7 @@ router
   .route('/checkout')
   .post(
     verifyAccessToken,
+    idempotencyMiddleware(),
     requirePermission(P.bookings.create),
     validateBody(checkoutBodySchema),
     controller.initCheckout
@@ -97,9 +99,39 @@ router
  *         application/json:
  *           schema:
  *             type: object
+ *             required: [lockId, guestCount, eventType, bookerInfo]
+ *             properties:
+ *               lockId:
+ *                 type: string
+ *                 description: MongoDB ObjectId from slot block
+ *               guestCount:
+ *                 type: integer
+ *                 description: Number of guests attending
+ *               eventType:
+ *                 type: string
+ *                 description: Type of event (e.g. wedding, corporate)
+ *               bookerInfo:
+ *                 type: object
+ *                 required: [name, email, phone, place]
+ *                 properties:
+ *                   name:
+ *                     type: string
+ *                   email:
+ *                     type: string
+ *                     format: email
+ *                   phone:
+ *                     type: string
+ *                   place:
+ *                     type: string
+ *                   note:
+ *                     type: string
  *     responses:
  *       200:
- *         description: Successfully saved
+ *         description: Booker details saved successfully
+ *       400:
+ *         description: Validation error
+ *       401:
+ *         description: Not authenticated
  */
 router
   .route('/booker-details')
@@ -160,18 +192,9 @@ router
  * /bookings/my-bookings:
  *   get:
  *     tags: [Bookings]
- *     summary: Get all bookings for the authenticated user
+ *     summary: Get all bookings for the authenticated user (grouped by status)
  *     security:
  *       - bearerAuth: []
- *     parameters:
- *       - in: query
- *         name: page
- *         schema:
- *           type: integer
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
  *     responses:
  *       200:
  *         description: List of user's bookings
@@ -195,14 +218,27 @@ router
  *         name: page
  *         schema:
  *           type: integer
+ *           default: 1
  *       - in: query
  *         name: limit
  *         schema:
  *           type: integer
+ *           default: 20
  *       - in: query
  *         name: status
  *         schema:
  *           type: string
+ *           enum: [confirmed, pending, cancelled, completed]
+ *       - in: query
+ *         name: venueId
+ *         schema:
+ *           type: string
+ *         description: Filter by venue (MongoDB ObjectId)
+ *       - in: query
+ *         name: sort
+ *         schema:
+ *           type: string
+ *         description: Sort order field
  *     responses:
  *       200:
  *         description: Paginated list of all bookings

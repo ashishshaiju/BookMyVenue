@@ -2,7 +2,12 @@ import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
 import { StarRating } from "@/components/common/StarRating";
 import { Check, X, ExternalLink } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { CLIENT_APP_URL } from "@/constants";
 import type { ModerationSummary } from "@/types";
 import type { ReviewActionDialogState } from "@/types/ui";
@@ -84,7 +89,7 @@ export function HideRequestsTable({
       }: {
         row: { original: ModerationSummary["hideRequests"][0] };
       }) => (
-        <p 
+        <p
           className="text-sm text-orange-600 dark:text-orange-400 max-w-xs truncate cursor-help"
           title={row.original.hideRequestReason}
         >

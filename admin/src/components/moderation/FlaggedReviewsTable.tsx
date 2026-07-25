@@ -2,7 +2,12 @@ import { Trash2, RotateCcw, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
 import { StarRating } from "@/components/common/StarRating";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { CLIENT_APP_URL } from "@/constants";
 import type { ModerationSummary } from "@/types";
 import type { ReviewActionDialogState } from "@/types/ui";
@@ -81,7 +86,7 @@ export function FlaggedReviewsTable({
       }: {
         row: { original: ModerationSummary["flaggedReviews"][0] };
       }) => (
-        <p 
+        <p
           className="text-sm text-red-600 dark:text-red-400 max-w-xs truncate cursor-help"
           title={row.original.moderationReason || "No reason provided"}
         >

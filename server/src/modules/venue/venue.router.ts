@@ -13,8 +13,7 @@ import rateLimit from 'express-rate-limit';
 import { paginationMiddleware } from '../../middlewares/pagination.middleware';
 import { idempotencyMiddleware } from '../../middlewares/idempotency.middleware';
 
-const 
-router: Router = Router();
+const router: Router = Router();
 
 const uploadSignatureLimiter = rateLimit({
   windowMs: 30 * 60 * 1000,
@@ -92,7 +91,7 @@ router
  *         description: Insufficient permissions
  *   get:
  *     tags: [Venues]
- *     summary: List active venues (public, paginated)
+ *     summary: List active venues (public, paginated, filterable)
  *     parameters:
  *       - in: query
  *         name: page
@@ -103,23 +102,71 @@ router
  *         name: limit
  *         schema:
  *           type: integer
- *           default: 10
+ *           default: 20
  *       - in: query
- *         name: city
+ *         name: searchTerm
  *         schema:
  *           type: string
+ *         description: Search venues by name or description
  *       - in: query
- *         name: category
+ *         name: minPrice
  *         schema:
- *           type: string
- *       - in: query
- *         name: minCapacity
- *         schema:
- *           type: integer
+ *           type: number
  *       - in: query
  *         name: maxPrice
  *         schema:
  *           type: number
+ *       - in: query
+ *         name: venueType
+ *         schema:
+ *           type: string
+ *         description: Filter by venue type
+ *       - in: query
+ *         name: district
+ *         schema:
+ *           type: string
+ *         description: Filter by Kerala district
+ *       - in: query
+ *         name: capacity
+ *         schema:
+ *           type: integer
+ *         description: Minimum capacity required
+ *       - in: query
+ *         name: spaceAttributes
+ *         schema:
+ *           type: string
+ *         description: Comma-separated or single space attribute
+ *       - in: query
+ *         name: seatingConfigurations
+ *         schema:
+ *           type: string
+ *         description: Comma-separated or single seating configuration
+ *       - in: query
+ *         name: amenities
+ *         schema:
+ *           type: string
+ *         description: Comma-separated or single amenity
+ *       - in: query
+ *         name: lat
+ *         schema:
+ *           type: number
+ *         description: Latitude for geo-search (must be paired with lng)
+ *       - in: query
+ *         name: lng
+ *         schema:
+ *           type: number
+ *         description: Longitude for geo-search (must be paired with lat)
+ *       - in: query
+ *         name: radiusKm
+ *         schema:
+ *           type: number
+ *           default: 25
+ *         description: Search radius in km for geo queries
+ *       - in: query
+ *         name: sortBy
+ *         schema:
+ *           type: string
+ *           enum: [price-low, price-high, rating, distance]
  *     responses:
  *       200:
  *         description: Paginated list of active venues
@@ -313,10 +360,10 @@ router
 
 /**
  * @openapi
- * /venues:
+ * /venues/all:
  *   get:
  *     tags: [Venues]
- *     summary: Get venue by ID or all venues (authenticated users get venue details, public gets basic info)
+ *     summary: List all venues across all statuses (admin only, paginated)
  *     security:
  *       - bearerAuth: []
  *     parameters:
