@@ -19,18 +19,20 @@ export function idempotencyMiddleware() {
       }
 
       const originalJson = res.json.bind(res);
-      res.json = function (body: unknown): Response {
+      res.json = (async function (body: unknown): Promise<Response> {
         if (res.statusCode < 500) {
-          IdempotencyKeyModel.create({
-            key,
-            response: { status: res.statusCode, body },
-            createdAt: new Date(),
-          }).catch((err: unknown) => {
+          try {
+            await IdempotencyKeyModel.create({
+              key,
+              response: { status: res.statusCode, body },
+              createdAt: new Date(),
+            });
+          } catch (err: unknown) {
             logWarn('Failed to cache idempotency key', { key, error: err });
-          });
+          }
         }
         return originalJson(body);
-      };
+      } as unknown) as typeof res.json;
 
       next();
     } catch (err) {
