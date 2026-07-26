@@ -1,7 +1,9 @@
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { BOOKING_STATUS_COLORS } from "@/constants/bookings";
+import { STATUS_VARIANT } from "@/constants/statusVariants";
 import { minutesToTime } from "@/utils/bookingUtils";
+import { cn } from "@/lib/utils";
 import {
   Clock,
   Calendar as CalendarIcon,
@@ -31,8 +33,12 @@ interface BookingData {
   eventType?: string;
   price?: number;
   paymentMethod?: string;
+  paymentStatus?: string;
   userId?: string;
-  user?: Record<string, unknown>;
+  user?: { _id?: string; username?: string; email?: string; phone?: string };
+  bookerName?: string;
+  bookerEmail?: string;
+  bookerPhone?: string;
   bookerInfo?: { name?: string; email?: string; phone?: string };
   venue?: { _id?: string; name?: string; city?: string; address?: string };
   [key: string]: unknown;
@@ -42,6 +48,10 @@ export function BookingDetailPanel({
 }: {
   data: Record<string, unknown>;
 }) {
+  const userRole = (rawData as Record<string, unknown>).userRole as
+    | string
+    | undefined;
+  const isOwner = userRole === "owner";
   const data = rawData as unknown as BookingData;
   if (!data) return null;
 
@@ -137,14 +147,17 @@ export function BookingDetailPanel({
                 Payment Status
               </span>
               <Badge
-                variant="outline"
-                className={
-                  data.paymentReference
-                    ? "text-green-500 border-green-500/30"
-                    : ""
+                variant={
+                  STATUS_VARIANT[
+                    (data.paymentStatus as string)?.toUpperCase()
+                  ] ?? "outline"
                 }
+                className={cn(
+                  data.paymentStatus === "paid" &&
+                    "text-green-500 border-green-500/30",
+                )}
               >
-                {data.paymentReference ? "Completed" : "Pending"}
+                {(data.paymentStatus as string)?.toUpperCase() || "—"}
               </Badge>
             </div>
             {data.paymentReference && (
@@ -184,14 +197,18 @@ export function BookingDetailPanel({
                 </span>
               </div>
             )}
-            <div className="text-xs">
-              <span className="text-muted-foreground block uppercase tracking-wider mb-1">
-                Venue ID
-              </span>
-              <span className="font-mono bg-accent/50 px-2 py-1 rounded">
-                {data.venue?._id || data.venueId}
-              </span>
-            </div>
+            {!isOwner && (
+              <div className="text-xs">
+                <span className="text-muted-foreground block uppercase tracking-wider mb-1">
+                  Venue ID
+                </span>
+                <span className="font-mono bg-accent/50 px-2 py-1 rounded">
+                  {data.venue?.name
+                    ? `${data.venue.name} — ${data.venue?._id || data.venueId}`
+                    : data.venue?._id || data.venueId}
+                </span>
+              </div>
+            )}
           </div>
         </Card>
 
@@ -206,17 +223,22 @@ export function BookingDetailPanel({
                 Customer Name
               </span>
               <span className="font-medium text-foreground">
-                {data.bookerInfo?.name || "N/A"}
+                {(data.bookerName as string) || data.bookerInfo?.name || "N/A"}
               </span>
             </div>
-            {(data.bookerInfo?.email || data.bookerInfo?.phone) && (
+            {((data.bookerEmail as string) ||
+              (data.bookerPhone as string) ||
+              data.bookerInfo?.email ||
+              data.bookerInfo?.phone) && (
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-1">
                     Email
                   </span>
                   <span className="text-foreground">
-                    {data.bookerInfo?.email || "N/A"}
+                    {(data.bookerEmail as string) ||
+                      data.bookerInfo?.email ||
+                      "N/A"}
                   </span>
                 </div>
                 <div>
@@ -224,19 +246,33 @@ export function BookingDetailPanel({
                     Phone
                   </span>
                   <span className="text-foreground">
-                    {data.bookerInfo?.phone || "N/A"}
+                    {(data.bookerPhone as string) ||
+                      data.bookerInfo?.phone ||
+                      "N/A"}
                   </span>
                 </div>
               </div>
             )}
-            <div className="text-xs">
-              <span className="text-muted-foreground block uppercase tracking-wider mb-1">
-                User ID
-              </span>
-              <span className="font-mono bg-accent/50 px-2 py-1 rounded">
-                {data.userId}
-              </span>
-            </div>
+            {isOwner && data.user && (
+              <div className="text-xs text-muted-foreground">
+                Booked by{" "}
+                <span className="font-medium text-foreground">
+                  {(data.user as Record<string, unknown>)?.username as string}
+                </span>
+              </div>
+            )}
+            {!isOwner && (
+              <div className="text-xs">
+                <span className="text-muted-foreground block uppercase tracking-wider mb-1">
+                  User ID
+                </span>
+                <span className="font-mono bg-accent/50 px-2 py-1 rounded">
+                  {data.user
+                    ? `${(data.user as Record<string, unknown>).username as string} (${(data.user as Record<string, unknown>).email as string}) — ${data.userId}`
+                    : data.userId}
+                </span>
+              </div>
+            )}
           </div>
         </Card>
       </div>

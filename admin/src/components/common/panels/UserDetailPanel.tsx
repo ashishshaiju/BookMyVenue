@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { Mail, User, Shield } from "lucide-react";
+import { Mail, User, Shield, CalendarDays, Phone } from "lucide-react";
 
 interface UserData {
   _id: string;
@@ -42,7 +42,8 @@ export function UserDetailPanel({
           </div>
         </div>
         <Badge
-          className={`${statusVariant} border-none px-3 py-1 text-sm font-medium`}
+          variant={statusVariant}
+          className="border-none px-3 py-1 text-sm font-medium"
         >
           {data.status}
         </Badge>
@@ -59,7 +60,7 @@ export function UserDetailPanel({
               <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-1">
                 User ID
               </span>
-              <span className="font-mono bg-accent/50 px-2 py-1 rounded text-foreground">
+              <span className="font-mono bg-accent/50 px-2 py-1 rounded text-foreground break-all">
                 {data._id}
               </span>
             </div>
@@ -89,7 +90,8 @@ export function UserDetailPanel({
               <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-1">
                 Registered
               </span>
-              <span className="font-medium text-foreground">
+              <span className="font-medium text-foreground flex items-center gap-1">
+                <CalendarDays className="w-3.5 h-3.5 text-muted-foreground" />
                 {data.createdAt
                   ? new Date(data.createdAt).toLocaleDateString()
                   : "N/A"}
@@ -99,7 +101,8 @@ export function UserDetailPanel({
               <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-1">
                 Phone
               </span>
-              <span className="font-medium text-foreground">
+              <span className="font-medium text-foreground flex items-center gap-1">
+                <Phone className="w-3.5 h-3.5 text-muted-foreground" />
                 {data.phone || "N/A"}
               </span>
             </div>
@@ -116,7 +119,7 @@ export function UserDetailPanel({
               <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-1">
                 Email
               </span>
-              <span className="text-foreground">{data.email}</span>
+              <span className="text-foreground break-all">{data.email}</span>
             </div>
             {data.phone && (
               <div>
@@ -126,24 +129,6 @@ export function UserDetailPanel({
                 <span className="text-foreground">{data.phone}</span>
               </div>
             )}
-          </div>
-        </Card>
-
-        {/* Quick Actions */}
-        <Card className="p-5 space-y-3 bg-background/50 border-primary/20">
-          <h3 className="font-semibold text-foreground flex items-center gap-2">
-            Quick Actions
-          </h3>
-          <div className="flex flex-wrap gap-2">
-            <button
-              className="px-4 py-2 text-sm font-medium text-primary bg-primary/10 rounded-lg hover:bg-primary/20 transition-colors"
-              onClick={() => {
-                // Navigate to bookings filtered by this user
-                window.location.href = `/dashboard/bookings?userId=${data._id}`;
-              }}
-            >
-              View All Bookings
-            </button>
           </div>
         </Card>
       </div>

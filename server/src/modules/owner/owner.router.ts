@@ -632,4 +632,70 @@ router.post(
   controller.requestDeleteVenue
 );
 
+/**
+ * @openapi
+ * /owner/bookings/{bookingId}/mark-paid:
+ *   patch:
+ *     tags: [Owner]
+ *     summary: Mark an offline booking as paid
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: bookingId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Booking marked as paid
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Insufficient permissions
+ *       404:
+ *         description: Booking not found
+ */
+router
+  .route('/bookings/:bookingId/mark-paid')
+  .patch(
+    verifyAccessToken,
+    requirePermission(P.bookings.update),
+    ownerTenantMiddleware,
+    controller.markBookingAsPaid
+  );
+
+/**
+ * @openapi
+ * /owner/bookings/{bookingId}/cancel-pending:
+ *   patch:
+ *     tags: [Owner]
+ *     summary: Cancel a pending offline booking
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: bookingId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Pending offline booking cancelled
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Insufficient permissions
+ *       404:
+ *         description: Booking not found
+ */
+router
+  .route('/bookings/:bookingId/cancel-pending')
+  .patch(
+    verifyAccessToken,
+    requirePermission(P.bookings.update),
+    ownerTenantMiddleware,
+    controller.cancelPendingOfflineBooking
+  );
+
 export default router;

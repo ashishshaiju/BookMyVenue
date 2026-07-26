@@ -28,6 +28,40 @@ export function useAdminBookings(page: number, statusFilter: string) {
   );
 }
 
+export function useMarkBookingAsPaid(venueId: string) {
+  const queryClient = useQueryClient();
+  return useApiMutation(
+    ({ bookingId }: { bookingId: string }) => ({
+      method: "PATCH",
+      url: `${API_ENDPOINTS.OWNER_VENUE_BOOKINGS}/${venueId}/bookings/${bookingId}/mark-paid`,
+    }),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.OWNER_BOOKINGS(venueId),
+        });
+      },
+    },
+  );
+}
+
+export function useCancelPendingOfflineBooking(venueId: string) {
+  const queryClient = useQueryClient();
+  return useApiMutation(
+    ({ bookingId }: { bookingId: string }) => ({
+      method: "PATCH",
+      url: `${API_ENDPOINTS.OWNER_VENUE_BOOKINGS}/${venueId}/bookings/${bookingId}/cancel-pending`,
+    }),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.OWNER_BOOKINGS(venueId),
+        });
+      },
+    },
+  );
+}
+
 export function useCreateOfflineBooking() {
   const queryClient = useQueryClient();
   return useApiMutation<

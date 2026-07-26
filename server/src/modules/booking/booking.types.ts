@@ -1,5 +1,6 @@
 import type { Document, Types } from 'mongoose';
 import type { BookingStatusType } from '../../constants/booking.constants';
+import type { PaymentStatusType } from '../../constants/payment.constants';
 import type { IContractSnapshot } from './lock.types';
 
 export type BookingStatus = BookingStatusType;
@@ -19,6 +20,7 @@ export interface IBooking extends Document {
   price: number;
   paymentReference: string; // Razorpay payment_id
   status: BookingStatus;
+  paymentStatus: PaymentStatusType;
   guestCount?: number;
   eventType?: string;
   bookerInfo?: {
@@ -51,6 +53,7 @@ export interface AggregatedBooking {
   price: number;
   paymentReference: string;
   status: BookingStatusType;
+  paymentStatus: PaymentStatusType;
   guestCount?: number;
   eventType?: string;
   bookerInfo?: {

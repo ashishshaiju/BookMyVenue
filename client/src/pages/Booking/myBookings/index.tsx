@@ -68,12 +68,17 @@ const MyBookings = () => {
     );
   }, [bookingsData, activeTab, searchQuery]);
 
+  const activeBooking = useMemo(() => {
+    return bookingsData.upcoming.find((b) => b.uiStatus === 'in_progress') ?? null;
+  }, [bookingsData.upcoming]);
+
   const nextBooking = useMemo(() => {
+    if (activeBooking) return activeBooking;
     if (bookingsData.upcoming.length === 0) return null;
     return [...bookingsData.upcoming].sort(
       (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
     )[0];
-  }, [bookingsData.upcoming]);
+  }, [bookingsData.upcoming, activeBooking]);
 
   const renderSkeleton = () => (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -111,9 +116,14 @@ const MyBookings = () => {
           </div>
         </div>
 
-        {nextBooking && activeTab === BOOKING_UI_STATUS.UPCOMING && !isLoading && (
-          <NextBookingBanner nextBooking={nextBooking} />
-        )}
+        {nextBooking &&
+          (activeTab === BOOKING_UI_STATUS.UPCOMING || !!activeBooking) &&
+          !isLoading && (
+            <NextBookingBanner
+              nextBooking={nextBooking}
+              bannerType={activeBooking ? 'inProgress' : 'nextUp'}
+            />
+          )}
 
         <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
           <div className="flex p-1 bg-[var(--bg-tertiary)] border border-[var(--bg-grey)] rounded-2xl w-full md:w-auto overflow-x-auto hide-scrollbar">

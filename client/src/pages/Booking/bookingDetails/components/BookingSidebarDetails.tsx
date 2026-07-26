@@ -18,6 +18,20 @@ export function BookingSidebarDetails({ booking }: { booking: BookingDetailDTO }
             </span>
           </div>
           <div className="flex justify-between items-center text-sm">
+            <span className="text-[var(--text-secondary)]">Payment Status</span>
+            <span
+              className={`px-2 py-0.5 text-xs rounded-full font-medium ${
+                booking.paymentStatus === 'paid'
+                  ? 'bg-green-100 text-green-700'
+                  : booking.paymentStatus === 'pending'
+                    ? 'bg-yellow-100 text-yellow-700'
+                    : 'bg-gray-100 text-gray-600'
+              }`}
+            >
+              {(booking.paymentStatus || 'PAID').toUpperCase()}
+            </span>
+          </div>
+          <div className="flex justify-between items-center text-sm">
             <span className="text-[var(--text-secondary)]">Transaction ID</span>
             <span className="font-mono bg-[var(--bg-primary)] px-2 py-1 rounded text-xs">
               {booking.paymentReference}

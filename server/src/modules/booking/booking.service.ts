@@ -1,5 +1,6 @@
 import type { Types } from 'mongoose';
 import { BookingStatus, type BookingStatusType } from '../../constants/booking.constants';
+import { PaymentStatus } from '../../constants/payment.constants';
 import { logError, logInfo, logWarn } from '../../utils/logger';
 import { issueRefund } from '../../services/razorpay.service';
 import {
@@ -229,6 +230,7 @@ export async function processCapturedPayment(
         price: amountPaise / 100,
         paymentReference: paymentId,
         status: BookingStatus.CONFIRMED,
+        paymentStatus: PaymentStatus.PAID,
         guestCount: lock.guestCount,
         eventType: lock.eventType,
         bookerInfo: lock.bookerInfo,
