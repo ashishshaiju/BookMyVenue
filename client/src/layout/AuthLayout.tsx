@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
-import { FaBuilding, FaCalendarCheck, FaShieldAlt, FaUsers } from 'react-icons/fa';
+import { FaCalendarCheck, FaShieldAlt, FaUsers } from 'react-icons/fa';
+import bmvLogo from '@/assets/bmv-logo.png';
 
 interface AuthLayoutProps {
   title: string;
@@ -37,13 +38,9 @@ const AuthLayout = ({ title, subtitle, children, footer }: AuthLayoutProps) => {
       <div className="relative mx-auto flex min-h-screen max-w-7xl items-center justify-between px-6 py-10 lg:px-12">
         {/* Left Section */}
         <div className="hidden max-w-xl lg:block">
-          <div className="mb-10 flex h-20 w-20 items-center justify-center rounded-3xl bg-[var(--bg-secondary)] shadow-xl">
-            <FaBuilding className="text-4xl text-white" />
+          <div className="mb-10">
+            <img src={bmvLogo} alt="BookMyVenue" className="h-16 w-auto" />
           </div>
-
-          <h1 className="text-6xl font-bold tracking-tight text-[var(--text-primary)]">
-            BookMyVenue
-          </h1>
 
           <p className="mt-6 text-xl leading-8 text-[var(--text-secondary)]">
             Find and book the perfect venue for weddings, parties, corporate events and
@@ -74,9 +71,7 @@ const AuthLayout = ({ title, subtitle, children, footer }: AuthLayoutProps) => {
           <div className="rounded-[32px] border border-[var(--bg-grey)]/70 bg-[var(--bg-tertiary)]/80 p-8 shadow-2xl backdrop-blur-xl lg:p-10">
             {/* Mobile Logo */}
             <div className="mb-8 flex justify-center lg:hidden">
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[var(--bg-secondary)] shadow-lg">
-                <FaBuilding className="text-3xl text-white" />
-              </div>
+              <img src={bmvLogo} alt="BookMyVenue" className="h-12 w-auto" />
             </div>
 
             <div className="text-center lg:text-left">

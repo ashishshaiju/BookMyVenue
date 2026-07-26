@@ -8,6 +8,7 @@ import { validateEmailConfig } from './services/email.service';
 import { startEmailWorker } from './workers/email.worker';
 import { startBanExpiryWorker } from './workers/banExpiry.worker';
 import { startAutoSuspendWorker } from './workers/venueEditDeadline.worker';
+import { startBookingStatusWorker } from './workers/bookingStatus.worker';
 import { setupGracefulShutdown } from './utils/shutdownUtils';
 import { logInfo } from './utils/logger';
 import { verifyRbacSeed } from './services/roles.service';
@@ -25,6 +26,7 @@ async function startServer(): Promise<void> {
   startEmailWorker();
   startBanExpiryWorker();
   startAutoSuspendWorker();
+  startBookingStatusWorker();
   server = app.listen(PORT, '0.0.0.0', () => {
     logInfo(`Server started on port ${String(PORT)}`);
   });

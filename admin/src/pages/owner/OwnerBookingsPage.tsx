@@ -7,6 +7,8 @@ import { useModal } from "@/hooks/useModal";
 import {
   useOwnerBookings,
   useCreateOfflineBooking,
+  useMarkBookingAsPaid,
+  useCancelPendingOfflineBooking,
 } from "@/services/api/useBookings";
 import type { OfflineForm } from "@/types/ui";
 import { DataTable } from "@/components/ui/data-table";
@@ -39,6 +41,8 @@ export default function OwnerBookingsPage() {
   const { data, isLoading } = useOwnerBookings(venueId!, page);
 
   const offlineMutation = useCreateOfflineBooking();
+  const { mutate: markAsPaid } = useMarkBookingAsPaid(venueId!);
+  const { mutate: cancelPending } = useCancelPendingOfflineBooking(venueId!);
   const { success, error } = useToast();
   const { openModal } = useModal();
 
@@ -86,7 +90,11 @@ export default function OwnerBookingsPage() {
     );
   };
 
-  const columns = useOwnerBookingColumns({ openModal });
+  const columns = useOwnerBookingColumns({
+    openModal,
+    onMarkPaid: (id) => markAsPaid({ bookingId: id }),
+    onCancelPending: (id) => cancelPending({ bookingId: id }),
+  });
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">

@@ -4,6 +4,9 @@ import { ForbiddenError, NotFoundError, ValidationError } from '../../utils/erro
 import type { IBannedUser, BanScope } from './bannedUser.model';
 import { UserModel } from '../user/user.models';
 import { VenueModel } from '../venue/venue.model';
+import { enqueueEmailTask } from '../../services/email.repository';
+import { EmailIntent, EmailTaskStatus } from '../../constants/email.constants';
+import { logWarn } from '../../utils/logger';
 
 export async function banUser(
   adminId: string,
@@ -46,20 +49,35 @@ export async function banUser(
 
   const ban = await repo.createBan(userId, scope, reason, adminId, options);
 
-  // Send email notification
+  // Resolve optional venue name for the ban notification
   const venueName = options?.venueId
     ? await VenueModel.findById(options.venueId)
         .select('name')
         .lean()
         .then((v) => v?.name)
     : undefined;
-  const { emailService } = await import('../../services/email.service.js');
-  void emailService.sendUserBannedEmail(targetUser.email, {
-    scope,
-    reason,
-    expiresAt: options?.expiresAt ?? null,
-    venueName,
-  });
+
+  // Send email notification
+  try {
+    await enqueueEmailTask(
+      targetUser.email,
+      EmailIntent.USER_BANNED,
+      'Important: Your Account Access Has Been Restricted',
+      EmailTaskStatus.PENDING,
+      {
+        scope,
+        reason,
+        ...(options?.expiresAt ? { expiresAt: options.expiresAt.toISOString() } : {}),
+        ...(venueName ? { venueName } : {}),
+      }
+    );
+  } catch (err) {
+    logWarn('Failed to queue user banned email', {
+      module: 'bannedUser.service.ts/banUser',
+      userId,
+      error: (err as Error).message,
+    });
+  }
 
   // Log activity
   const { logModerationAction } = await import('./moderationActivity.service.js');
@@ -75,10 +93,23 @@ export async function liftBan(adminId: string, banRecordId: string): Promise<IBa
   }
 
   // Send email notification
-  const { emailService } = await import('../../services/email.service.js');
   const user = await UserModel.findById(updated.userId).select('email').lean();
   if (user?.email) {
-    void emailService.sendUserUnbannedEmail(user.email);
+    try {
+      await enqueueEmailTask(
+        user.email,
+        EmailIntent.USER_UNBANNED,
+        'Your Account Access Has Been Restored',
+        EmailTaskStatus.PENDING,
+        {}
+      );
+    } catch (err) {
+      logWarn('Failed to queue user unbanned email', {
+        module: 'bannedUser.service.ts/liftBan',
+        banRecordId,
+        error: (err as Error).message,
+      });
+    }
   }
 
   // Log activity
@@ -100,8 +131,21 @@ export async function liftAllBansForUser(adminId: string, userId: string): Promi
 
   if (count > 0) {
     // Send email notification
-    const { emailService } = await import('../../services/email.service.js');
-    void emailService.sendUserUnbannedEmail(targetUser.email);
+    try {
+      await enqueueEmailTask(
+        targetUser.email,
+        EmailIntent.USER_UNBANNED,
+        'Your Account Access Has Been Restored',
+        EmailTaskStatus.PENDING,
+        {}
+      );
+    } catch (err) {
+      logWarn('Failed to queue user unbanned email (lift all bans)', {
+        module: 'bannedUser.service.ts/liftAllBansForUser',
+        userId,
+        error: (err as Error).message,
+      });
+    }
 
     // Log activity
     const { logModerationAction } = await import('./moderationActivity.service.js');

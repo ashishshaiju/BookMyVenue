@@ -2,7 +2,7 @@ import { NotFoundError, ConflictError } from '../../utils/errors';
 import { buildPaginationMeta } from '../../utils/paginationUtils';
 import * as repo from './owner.repository';
 import type { offlineBookingSchema } from './owner.validator';
-import type { IBooking } from '../booking/booking.types';
+
 import type { z } from 'zod';
 import { fetchActiveConflicts } from '../booking/booking.repository';
 import { checkOverlap } from '../../utils/timeUtils';
@@ -33,7 +33,7 @@ export async function getVenueBookingsService(
   venueId: string,
   page: number,
   limit: number
-): Promise<{ bookings: IBooking[]; pagination: unknown }> {
+): Promise<{ bookings: Record<string, unknown>[]; pagination: unknown }> {
   const skip = (page - 1) * limit;
 
   const [bookings, totalCount] = await Promise.all([
@@ -201,6 +201,20 @@ export async function activateVenueService(venueId: string, userId: string): Pro
   ).exec();
   if (!updated) throw new NotFoundError('Venue not found');
   return updated;
+}
+
+export async function markBookingAsPaidService(bookingId: string): Promise<void> {
+  const updated = await repo.markBookingAsPaid(bookingId);
+  if (!updated) {
+    throw new NotFoundError('Booking not found or already paid');
+  }
+}
+
+export async function cancelPendingOfflineBookingService(bookingId: string): Promise<void> {
+  const updated = await repo.cancelPendingOfflineBooking(bookingId);
+  if (!updated) {
+    throw new NotFoundError('Booking not found or already processed');
+  }
 }
 
 export async function requestDeleteVenueService(

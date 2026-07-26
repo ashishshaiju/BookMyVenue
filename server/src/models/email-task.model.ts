@@ -18,6 +18,7 @@ export interface IEmailTask extends Document {
   retryAfter: Date;
   retries: number;
   lastError: string | null;
+  deleteAt: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -42,13 +43,14 @@ const EmailTaskSchema = new Schema<IEmailTask>(
     retryAfter: { type: Date, required: true },
     retries: { type: Number, default: 0 },
     lastError: { type: String, default: null },
+    deleteAt: { type: Date, required: true }, // TTL: completed → 15 min, pending/failed → 7 days
   },
   { timestamps: true }
 );
 
 // Compound index for fast polling
 EmailTaskSchema.index({ status: 1, lockedAt: 1, retryAfter: 1 });
-EmailTaskSchema.index({ createdAt: 1 }, { expireAfterSeconds: 15 * 60 });
+EmailTaskSchema.index({ deleteAt: 1 }, { expireAfterSeconds: 0 });
 
 export const EmailTaskModel = mongoose.model<IEmailTask>(
   'EmailTasks',

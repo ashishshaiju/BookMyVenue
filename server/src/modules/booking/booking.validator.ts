@@ -249,7 +249,7 @@ export const fetchMyBookingsQuerySchema = z.object({});
 export type FetchMyBookingsQueryDTO = z.infer<typeof fetchMyBookingsQuerySchema>;
 
 export const adminBookingFiltersSchema = z.object({
-  status: z.enum(['confirmed', 'pending', 'cancelled', 'completed']).optional(),
+  status: z.enum(['confirmed', 'pending', 'cancelled', 'completed', 'in_progress']).optional(),
   venueId: z
     .string()
     .trim()

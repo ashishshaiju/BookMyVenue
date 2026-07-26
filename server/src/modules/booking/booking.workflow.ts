@@ -386,7 +386,7 @@ export async function cancelBookingWorkflow(
 
       await enqueueEmailTask(
         customerEmail,
-        EmailIntent.ACCOUNT_NOTIFICATION,
+        EmailIntent.BOOKING_CANCELLATION,
         `Booking Cancelled – ${venueName}`,
         EmailTaskStatus.PENDING,
         {

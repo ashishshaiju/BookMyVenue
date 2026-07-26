@@ -31,9 +31,15 @@ function renderRoleGuard(mockReturn: object, allowedRoles: string[]) {
     <MemoryRouter initialEntries={["/admin"]}>
       <Routes>
         <Route element={<RoleGuard allowedRoles={allowedRoles} />}>
-          <Route path="/admin" element={<div data-testid="admin-content">Admin Panel</div>} />
+          <Route
+            path="/admin"
+            element={<div data-testid="admin-content">Admin Panel</div>}
+          />
         </Route>
-        <Route path="/unauthorized" element={<div data-testid="unauthorized-page">Unauthorized</div>} />
+        <Route
+          path="/unauthorized"
+          element={<div data-testid="unauthorized-page">Unauthorized</div>}
+        />
       </Routes>
     </MemoryRouter>,
   );
@@ -52,7 +58,12 @@ describe("RoleGuard", () => {
   it("should render outlet when user role is in allowed list", () => {
     renderRoleGuard(
       {
-        data: { _id: "1", name: "Admin", email: "admin@test.com", role: "admin" },
+        data: {
+          _id: "1",
+          name: "Admin",
+          email: "admin@test.com",
+          role: "admin",
+        },
         isLoading: false,
       },
       ["admin", "superAdmin"],
@@ -64,7 +75,12 @@ describe("RoleGuard", () => {
   it("should redirect to unauthorized when user role is not allowed", () => {
     renderRoleGuard(
       {
-        data: { _id: "2", name: "Owner", email: "owner@test.com", role: "owner" },
+        data: {
+          _id: "2",
+          name: "Owner",
+          email: "owner@test.com",
+          role: "owner",
+        },
         isLoading: false,
       },
       ["admin", "superAdmin"],
@@ -74,10 +90,7 @@ describe("RoleGuard", () => {
   });
 
   it("should redirect to unauthorized when profile is null", () => {
-    renderRoleGuard(
-      { data: null, isLoading: false },
-      ["admin"],
-    );
+    renderRoleGuard({ data: null, isLoading: false }, ["admin"]);
 
     expect(screen.getByTestId("unauthorized-page")).toBeInTheDocument();
   });

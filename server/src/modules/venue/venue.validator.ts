@@ -304,11 +304,15 @@ export const createVenueSchema = z
       }
     }
 
-    // Refundable policy: must have refund rules
-    if (data.cancellation.policy === 'refundable' && data.cancellation.refundRules.length === 0) {
+    // Time-based refund: must have at least one refund rule
+    if (
+      data.cancellation.policy === 'refundable' &&
+      data.cancellation.refundType === 'timeBasedRefund' &&
+      data.cancellation.refundRules.length === 0
+    ) {
       ctx.addIssue({
         code: 'custom',
-        message: 'At least one refund rule is required for refundable policy',
+        message: 'At least one refund rule is required for time-based refund policy',
         path: ['cancellation', 'refundRules'],
       });
     }

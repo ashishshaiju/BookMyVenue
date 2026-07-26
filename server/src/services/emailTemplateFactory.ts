@@ -21,7 +21,9 @@ function buildEmailWrapper(bodyContent: string): string {
                style="max-width:600px;background-color:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
           <tr>
             <td style="background-color:#1d4ed8;padding:32px 40px;text-align:center;">
-              <span style="font-size:24px;font-weight:700;color:#ffffff;letter-spacing:-0.5px;">${appName}</span>
+              <img src="${resendConfig.logoUrl}" alt="${appName}"
+                   style="height:40px;width:auto;display:inline-block;"
+                   width="auto" height="40" />
             </td>
           </tr>
           <tr>

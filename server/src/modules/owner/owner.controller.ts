@@ -252,6 +252,28 @@ export const activateVenue = async (req: Request, res: Response): Promise<void> 
   }
 };
 
+// PATCH /api/v1/owner/bookings/:bookingId/mark-paid
+export const markBookingAsPaid = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const bookingId = req.params.bookingId as string;
+    await service.markBookingAsPaidService(bookingId);
+    ResponseUtil.success(res, 'Booking marked as paid');
+  } catch (e) {
+    handleError(res, e, 'markBookingAsPaid');
+  }
+};
+
+// PATCH /api/v1/owner/bookings/:bookingId/cancel-pending
+export const cancelPendingOfflineBooking = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const bookingId = req.params.bookingId as string;
+    await service.cancelPendingOfflineBookingService(bookingId);
+    ResponseUtil.success(res, 'Pending offline booking cancelled');
+  } catch (e) {
+    handleError(res, e, 'cancelPendingOfflineBooking');
+  }
+};
+
 // POST /api/v1/owner/venue/:venueId/delete-request
 export const requestDeleteVenue = async (req: Request, res: Response): Promise<void> => {
   try {

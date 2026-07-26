@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'react-router';
 import { MdOutlineMeetingRoom } from 'react-icons/md';
 import { IoAddCircleOutline } from 'react-icons/io5';
+import bmvLogo from '@/assets/bmv-logo.png';
 
 const ListSidebar = () => {
   const location = useLocation();
@@ -11,8 +12,8 @@ const ListSidebar = () => {
     <>
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex flex-col fixed left-0 top-0 h-screen w-72 border-r border-[var(--bg-grey)] bg-[var(--bg-tertiary)] p-6 z-40">
-        <Link to="/" className="text-xl font-bold text-[var(--text-primary)] mb-10">
-          BookMyVenue
+        <Link to="/" className="mb-10">
+          <img src={bmvLogo} alt="BookMyVenue" className="h-8 w-auto" />
         </Link>
 
         <nav className="flex flex-col gap-3 mt-10">

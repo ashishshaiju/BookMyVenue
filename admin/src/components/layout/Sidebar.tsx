@@ -13,6 +13,7 @@ import {
   ActivitySquare,
   Settings,
 } from "lucide-react";
+import bmvLogo from "@/assets/bmv-logo.png";
 import { useApiQuery } from "@/hooks/useApi";
 import { QUERY_KEYS } from "@/config/queryKeys";
 import { API_ENDPOINTS } from "@/constants";
@@ -91,19 +92,19 @@ const NAV_CONFIG: NavItem[] = [
   },
   // admin
   {
-    label: "Global Bookings",
+    label: "Bookings",
     path: "/dashboard/bookings",
     icon: CalendarCheck,
     roles: [ROLES.ADMIN, ROLES.SUPER_ADMIN],
   },
   {
-    label: "Global Venues",
+    label: "Venues",
     path: "/dashboard/venues",
     icon: Building2,
     roles: [ROLES.ADMIN, ROLES.SUPER_ADMIN],
   },
   {
-    label: "Global Owners",
+    label: "Owners",
     path: "/dashboard/owners",
     icon: Users,
     roles: [ROLES.ADMIN, ROLES.SUPER_ADMIN],
@@ -174,11 +175,13 @@ export function Sidebar() {
   return (
     <div className="flex h-screen w-64 flex-col bg-[var(--sidebar-bg)] border-r border-[var(--sidebar-border)] text-[var(--sidebar-text)]">
       {/* Brand */}
-      <div className="flex h-20 items-center px-6">
-        <h1 className="text-xl font-bold text-white tracking-tight">
-          BookMyVenue
-        </h1>
-        <span className="ml-2 rounded-full bg-zinc-800 px-2 py-0.5 text-xs font-medium text-zinc-300">
+      <div className="flex h-20 items-center gap-3 px-6">
+        <img
+          src={bmvLogo}
+          alt="BookMyVenue"
+          className="h-8 w-auto bg-white rounded p-1"
+        />
+        <span className="rounded-full bg-zinc-800 px-2 py-0.5 text-xs font-medium text-zinc-300">
           Admin
         </span>
       </div>

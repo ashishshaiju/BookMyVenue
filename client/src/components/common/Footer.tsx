@@ -1,5 +1,6 @@
 import { Link, useLocation } from 'react-router';
 import { IoLogoFacebook, IoLogoTwitter, IoLogoInstagram, IoLogoLinkedin } from 'react-icons/io5';
+import bmvLogo from '@/assets/bmv-logo.png';
 
 const Footer = () => {
   const location = useLocation();
@@ -12,8 +13,8 @@ const Footer = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
             {/* Column 1: Brand */}
             <div>
-              <Link to="/" className="text-2xl font-bold text-[var(--bg-green)] mb-6 block">
-                BookMyVenue
+              <Link to="/" className="block mb-6">
+                <img src={bmvLogo} alt="BookMyVenue" className="h-9 w-auto" />
               </Link>
               <p className="text-[var(--text-secondary)] text-sm leading-relaxed mb-6">
                 Your premier destination for discovering and booking the perfect venues for any
@@ -158,7 +159,7 @@ const Footer = () => {
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:justify-between gap-8">
           {/* Brand */}
           <div className="max-w-sm">
-            <h2 className="text-xl font-semibold text-[var(--text-primary)]">BookMyVenue</h2>
+            <img src={bmvLogo} alt="BookMyVenue" className="h-8 w-auto" />
 
             <p className="mt-2 text-sm text-[var(--text-secondary)] leading-relaxed">
               Find and book the perfect venue for your events.

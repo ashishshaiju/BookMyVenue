@@ -14,7 +14,10 @@ mockInstance.interceptors = {
   },
   response: {
     use: vi.fn(
-      (success: (response: object) => object, error: (err: object) => Promise<object>) => {
+      (
+        success: (response: object) => object,
+        error: (err: object) => Promise<object>,
+      ) => {
         successHandler = success;
         errorHandler = error;
       },
@@ -103,7 +106,9 @@ describe("config axios", () => {
     createAxiosInstance();
 
     const error = new Error("Network failure");
-    await expect(errorHandler!(error as never)).rejects.toThrow("Network failure");
+    await expect(errorHandler!(error as never)).rejects.toThrow(
+      "Network failure",
+    );
   });
 
   it("should dispatch auth:logout event on 401 from refresh endpoint", async () => {
@@ -119,7 +124,9 @@ describe("config axios", () => {
       message: "Token expired",
     };
 
-    await expect(errorHandler!(axiosError as never)).rejects.toThrow("Token expired");
+    await expect(errorHandler!(axiosError as never)).rejects.toThrow(
+      "Token expired",
+    );
     expect(dispatchSpy).toHaveBeenCalledWith(
       expect.objectContaining({
         type: "auth:logout",
@@ -140,7 +147,9 @@ describe("config axios", () => {
       message: "Forbidden",
     };
 
-    await expect(errorHandler!(axiosError as never)).rejects.toThrow("Forbidden");
+    await expect(errorHandler!(axiosError as never)).rejects.toThrow(
+      "Forbidden",
+    );
     expect(dispatchSpy).toHaveBeenCalledWith(
       expect.objectContaining({
         type: "auth:forbidden",
@@ -150,7 +159,9 @@ describe("config axios", () => {
 
   it("should attempt token refresh on 401 from non-auth endpoint", async () => {
     mockInstance.mockResolvedValueOnce({ data: { success: true } });
-    mockInstance.post.mockResolvedValueOnce({ data: { accessToken: "new_token" } });
+    mockInstance.post.mockResolvedValueOnce({
+      data: { accessToken: "new_token" },
+    });
 
     const { createAxiosInstance } = await import("@/config/axios");
 

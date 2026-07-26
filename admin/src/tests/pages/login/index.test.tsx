@@ -39,7 +39,10 @@ function renderLoginPage() {
     <MemoryRouter initialEntries={["/login"]}>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/dashboard" element={<div data-testid="dashboard-page">Dashboard</div>} />
+        <Route
+          path="/dashboard"
+          element={<div data-testid="dashboard-page">Dashboard</div>}
+        />
       </Routes>
     </MemoryRouter>,
   );
@@ -57,7 +60,9 @@ describe("LoginPage", () => {
 
     expect(screen.getByLabelText("Email Address")).toBeInTheDocument();
     expect(screen.getByLabelText("Password")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /sign in/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /sign in/i }),
+    ).toBeInTheDocument();
   });
 
   it("should show loading state on button when isPending is true", () => {
