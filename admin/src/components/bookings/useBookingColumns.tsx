@@ -137,11 +137,14 @@ export function useBookingColumns({
     {
       accessorKey: "status",
       header: "Status",
-      cell: ({ row }: { row: { original: Booking } }) => (
-        <Badge variant={getStatusVariant(getDisplayStatus(row.original))}>
-          {getDisplayStatus(row.original).toUpperCase()}
-        </Badge>
-      ),
+      cell: ({ row }: { row: { original: Booking } }) => {
+        const displayStatus = getDisplayStatus(row.original) ?? "confirmed";
+        return (
+          <Badge variant={getStatusVariant(displayStatus)}>
+            {displayStatus.toUpperCase()}
+          </Badge>
+        );
+      },
     },
     {
       accessorKey: "totalPrice",
