@@ -8,8 +8,12 @@ import { BookingDetailPanel } from "@/components/common/panels/BookingDetailPane
 
 export function useOwnerBookingColumns({
   openModal,
+  onMarkPaid,
+  onCancelPending,
 }: {
   openModal: (opts: Omit<ActiveModal, "id">) => void;
+  onMarkPaid?: (bookingId: string) => void;
+  onCancelPending?: (bookingId: string) => void;
 }): ColumnDef<Booking, unknown>[] {
   return [
     {
@@ -25,7 +29,7 @@ export function useOwnerBookingColumns({
                 title: `Booking Details`,
                 size: "xl",
                 component: BookingDetailPanel,
-                data: row.original,
+                data: { ...row.original, userRole: "owner" },
                 actions: [],
               })
             }
@@ -66,7 +70,7 @@ export function useOwnerBookingColumns({
               title: `Booking Details`,
               size: "xl",
               component: BookingDetailPanel,
-              data: row.original,
+              data: { ...row.original, userRole: "owner" },
               actions: [],
             })
           }
@@ -102,6 +106,21 @@ export function useOwnerBookingColumns({
       ),
     },
     {
+      accessorKey: "paymentStatus",
+      header: "Payment",
+      cell: ({ row }) => (
+        <Badge
+          variant={
+            STATUS_VARIANT[
+              (row.original.paymentStatus as string)?.toUpperCase()
+            ] ?? "outline"
+          }
+        >
+          {(row.original.paymentStatus as string)?.toUpperCase() || "—"}
+        </Badge>
+      ),
+    },
+    {
       accessorKey: "status",
       header: "Status",
       cell: ({ row }) => {
@@ -116,6 +135,32 @@ export function useOwnerBookingColumns({
             {(displayStatus as string).toUpperCase()}
           </Badge>
         );
+      },
+    },
+    {
+      id: "actions",
+      header: "Actions",
+      cell: ({ row }) => {
+        const paymentStatus = row.original.paymentStatus as string;
+        if (paymentStatus === "pending") {
+          return (
+            <div className="flex gap-2">
+              <button
+                onClick={() => onMarkPaid?.(row.original._id)}
+                className="text-xs text-green-600 hover:underline"
+              >
+                Mark Paid
+              </button>
+              <button
+                onClick={() => onCancelPending?.(row.original._id)}
+                className="text-xs text-red-600 hover:underline"
+              >
+                Cancel
+              </button>
+            </div>
+          );
+        }
+        return null;
       },
     },
   ];

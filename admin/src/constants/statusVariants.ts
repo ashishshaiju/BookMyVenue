@@ -6,6 +6,7 @@ export const STATUS_VARIANT: Record<
   Confirmed: "default",
   CONFIRMED: "default",
   PAID: "default",
+  IN_PROGRESS: "default",
   visible: "default",
 
   PendingReview: "secondary",

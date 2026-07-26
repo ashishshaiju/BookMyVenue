@@ -72,6 +72,8 @@ const BookingDetails = () => {
     cancelTooltip = 'Cancellation is not available for past bookings';
   else if (uiStatus === BOOKING_UI_STATUS.CANCELLED)
     cancelTooltip = 'This booking is already cancelled';
+  else if (uiStatus === BOOKING_UI_STATUS.IN_PROGRESS)
+    cancelTooltip = 'This booking is currently active';
   else if (booking.cancellationPolicy === CANCELLATION_POLICIES.NON_REFUNDABLE)
     cancelTooltip = 'This venue has a non-refundable policy';
   else if (booking.cancellationRefundPct === 0) cancelTooltip = 'Cancellation window has passed';
@@ -99,9 +101,11 @@ const BookingDetails = () => {
                 className={`px-3 py-1 rounded-full text-xs font-bold ${
                   uiStatus === BOOKING_UI_STATUS.UPCOMING
                     ? 'bg-orange-100 text-orange-700 border border-orange-200 dark:bg-orange-950/30 dark:text-orange-400 dark:border-orange-900/50'
-                    : uiStatus === BOOKING_UI_STATUS.COMPLETED
-                      ? 'bg-green-100 text-green-700 border border-green-200 dark:bg-green-950/30 dark:text-green-400 dark:border-green-900/50'
-                      : 'bg-red-100 text-red-700 border border-red-200 dark:bg-red-950/30 dark:text-red-400 dark:border-red-900/50'
+                    : uiStatus === BOOKING_UI_STATUS.IN_PROGRESS
+                      ? 'bg-blue-100 text-blue-700 border border-blue-200 dark:bg-blue-950/30 dark:text-blue-400 dark:border-blue-900/50'
+                      : uiStatus === BOOKING_UI_STATUS.COMPLETED
+                        ? 'bg-green-100 text-green-700 border border-green-200 dark:bg-green-950/30 dark:text-green-400 dark:border-green-900/50'
+                        : 'bg-red-100 text-red-700 border border-red-200 dark:bg-red-950/30 dark:text-red-400 dark:border-red-900/50'
                 }`}
               >
                 {statusLabel}

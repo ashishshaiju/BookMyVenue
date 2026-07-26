@@ -2,6 +2,7 @@ export const BOOKING_UI_STATUS = {
   UPCOMING: 'upcoming',
   COMPLETED: 'completed',
   CANCELLED: 'cancelled',
+  IN_PROGRESS: 'in_progress',
 } as const;
 
 export const CANCELLATION_POLICIES = {

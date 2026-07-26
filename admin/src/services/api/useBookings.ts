@@ -37,7 +37,9 @@ export function useMarkBookingAsPaid(venueId: string) {
     }),
     {
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.OWNER_BOOKINGS(venueId) });
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.OWNER_BOOKINGS(venueId),
+        });
       },
     },
   );
@@ -52,7 +54,9 @@ export function useCancelPendingOfflineBooking(venueId: string) {
     }),
     {
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.OWNER_BOOKINGS(venueId) });
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.OWNER_BOOKINGS(venueId),
+        });
       },
     },
   );

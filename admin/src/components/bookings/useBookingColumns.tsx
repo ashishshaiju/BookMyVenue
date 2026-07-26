@@ -28,10 +28,7 @@ export function useBookingColumns({
   const isAdmin =
     profile?.role === ROLES.ADMIN || profile?.role === ROLES.SUPER_ADMIN;
 
-  const getDisplayStatus = (booking: Booking) => {
-    const uiStatus = booking.uiStatus ?? booking.status;
-    return uiStatus;
-  };
+  const getDisplayStatus = (booking: Booking) => booking.uiStatus;
 
   const getStatusVariant = (status: string) => {
     const statusKey = status.toUpperCase();
@@ -52,7 +49,7 @@ export function useBookingColumns({
                 title: `Booking Details`,
                 size: "xl",
                 component: BookingDetailPanel,
-                data: row.original,
+                data: { ...row.original, userRole: "admin" },
                 actions: [],
               });
             }}
@@ -138,7 +135,7 @@ export function useBookingColumns({
         new Date(row.original.date).toLocaleDateString(),
     },
     {
-      accessorKey: "uiStatus",
+      accessorKey: "status",
       header: "Status",
       cell: ({ row }: { row: { original: Booking } }) => (
         <Badge variant={getStatusVariant(getDisplayStatus(row.original))}>
@@ -156,6 +153,21 @@ export function useBookingColumns({
             ? (row.original.price as number).toLocaleString("en-IN")
             : "0"}
         </span>
+      ),
+    },
+    {
+      accessorKey: "paymentStatus",
+      header: "Payment",
+      cell: ({ row }: { row: { original: Booking } }) => (
+        <Badge
+          variant={
+            STATUS_VARIANT[
+              (row.original.paymentStatus as string)?.toUpperCase()
+            ] ?? "outline"
+          }
+        >
+          {(row.original.paymentStatus as string)?.toUpperCase() || "—"}
+        </Badge>
       ),
     },
     {

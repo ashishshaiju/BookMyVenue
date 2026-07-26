@@ -1,6 +1,7 @@
 import { Types, type ClientSession } from 'mongoose';
 import { buildPaginationMeta } from '../../utils/paginationUtils';
 import { BookingStatus, type BookingStatusType } from '../../constants/booking.constants';
+import { PaymentStatus, type PaymentStatusType } from '../../constants/payment.constants';
 import { LockModel } from './models/lock.model';
 import { BookingModel } from './models/booking.model';
 import { FailedBookingModel } from './models/failedBooking.model';
@@ -87,6 +88,7 @@ export interface AggregatedBooking {
   price: number;
   paymentReference: string;
   status: BookingStatusType;
+  paymentStatus?: PaymentStatusType;
   guestCount?: number;
   eventType?: string;
   bookerInfo?: {
@@ -132,14 +134,22 @@ export async function fetchMyBookings(userId: string): Promise<{
   const completed = [];
 
   for (const b of bookings) {
+    const bookingStart = new Date(`${b.date}T00:00:00`);
+    bookingStart.setMinutes(b.startTime);
     const bookingEnd = new Date(`${b.date}T00:00:00`);
     bookingEnd.setMinutes(b.endTime);
 
     let uiStatus: string;
     if (b.status === BookingStatus.CANCELLED) {
       uiStatus = 'cancelled';
+    } else if (b.status === BookingStatus.COMPLETED) {
+      uiStatus = 'completed';
+    } else if (b.status === BookingStatus.IN_PROGRESS) {
+      uiStatus = 'in_progress';
     } else if (bookingEnd < now) {
       uiStatus = 'completed';
+    } else if (bookingStart <= now && bookingEnd > now) {
+      uiStatus = 'in_progress';
     } else {
       uiStatus = 'upcoming';
     }
@@ -167,6 +177,8 @@ export async function fetchMyBookings(userId: string): Promise<{
       eventType: b.eventType,
       totalPrice: b.price,
       paymentMethod: b.paymentMethod,
+      status: b.status,
+      paymentStatus: b.paymentStatus,
       uiStatus,
     };
 
@@ -217,14 +229,22 @@ export async function fetchBookingById(
   if (!booking) return null;
 
   const now = new Date();
+  const bookingStart = new Date(`${booking.date}T00:00:00`);
+  bookingStart.setMinutes(booking.startTime);
   const bookingEnd = new Date(`${booking.date}T00:00:00`);
   bookingEnd.setMinutes(booking.endTime);
 
   let uiStatus: string;
   if (booking.status === BookingStatus.CANCELLED) {
     uiStatus = 'cancelled';
+  } else if (booking.status === BookingStatus.COMPLETED) {
+    uiStatus = 'completed';
+  } else if (booking.status === BookingStatus.IN_PROGRESS) {
+    uiStatus = 'in_progress';
   } else if (bookingEnd < now) {
     uiStatus = 'completed';
+  } else if (bookingStart <= now && bookingEnd > now) {
+    uiStatus = 'in_progress';
   } else {
     uiStatus = 'upcoming';
   }
@@ -252,6 +272,8 @@ export async function fetchBookingById(
     eventType: booking.eventType,
     totalPrice: booking.price,
     paymentMethod: booking.paymentMethod,
+    status: booking.status,
+    paymentStatus: booking.paymentStatus,
     uiStatus,
     address: booking.venue.address,
     contactPhone: booking.venue.contact.phone,
@@ -298,7 +320,11 @@ export async function fetchActiveConflicts(
   const locks = await LockModel.find(lockQuery)
     .session(options?.session ?? null)
     .lean();
-  const bookings = await BookingModel.find({ venueId: vId, date, status: BookingStatus.CONFIRMED })
+  const bookings = await BookingModel.find({
+    venueId: vId,
+    date,
+    status: { $in: [BookingStatus.CONFIRMED, BookingStatus.COMPLETED, BookingStatus.IN_PROGRESS] },
+  })
     .session(options?.session ?? null)
     .lean();
 
@@ -327,6 +353,7 @@ export interface CreateBookingData {
   price: number;
   paymentReference: string;
   status?: BookingStatusType;
+  paymentStatus?: PaymentStatusType;
   guestCount?: number;
   eventType?: string;
   bookerInfo?: {
@@ -352,6 +379,7 @@ export async function createBooking(data: CreateBookingData): Promise<IBooking> 
     price: data.price,
     paymentReference: data.paymentReference,
     status: data.status ?? BookingStatus.CONFIRMED,
+    paymentStatus: data.paymentStatus ?? PaymentStatus.PAID,
     guestCount: data.guestCount,
     eventType: data.eventType,
     bookerInfo: data.bookerInfo,
@@ -452,10 +480,21 @@ export async function findAllBookings(
     if (booking.status === 'cancelled') {
       return { ...booking, uiStatus: 'cancelled' as const };
     }
+    if (booking.status === 'completed') {
+      return { ...booking, uiStatus: 'completed' as const };
+    }
+    if (booking.status === 'in_progress') {
+      return { ...booking, uiStatus: 'in_progress' as const };
+    }
+    const eventStart = new Date(`${booking.date}T00:00:00`);
+    eventStart.setMinutes(booking.startTime);
     const eventEnd = new Date(`${booking.date}T00:00:00`);
     eventEnd.setMinutes(booking.endTime);
     if (eventEnd < now) {
-      return { ...booking, uiStatus: 'completed' as const };
+      return { ...booking, uiStatus: 'completed' as const, status: 'completed' as const };
+    }
+    if (eventStart <= now && eventEnd > now) {
+      return { ...booking, uiStatus: 'in_progress' as const, status: 'in_progress' as const };
     }
     return { ...booking, uiStatus: 'confirmed' as const };
   });
@@ -557,6 +596,7 @@ export async function claimBookingForCancellation(
     {
       $set: {
         status: BookingStatus.CANCELLED,
+        paymentStatus: PaymentStatus.REFUNDED,
         ...(reason ? { cancellationReason: reason } : {}),
       },
     },

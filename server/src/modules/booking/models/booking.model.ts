@@ -50,7 +50,14 @@ BookingSchema.index({ paymentStatus: 1 });
 
 BookingSchema.index(
   { venueId: 1, date: 1, startTime: 1, endTime: 1 },
-  { unique: true, partialFilterExpression: { status: { $in: [BookingStatus.CONFIRMED, BookingStatus.COMPLETED] } } }
+  {
+    unique: true,
+    partialFilterExpression: {
+      status: {
+        $in: [BookingStatus.CONFIRMED, BookingStatus.COMPLETED, BookingStatus.IN_PROGRESS],
+      },
+    },
+  }
 );
 
 export const BookingModel = mongoose.model<IBooking>('Bookings', BookingSchema, 'Bookings');
