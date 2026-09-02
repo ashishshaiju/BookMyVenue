@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import mongoose from 'mongoose';
+import type mongoose from 'mongoose';
 import { UserModel } from '../../src/modules/user/user.models';
 import { VenueModel } from '../../src/modules/venue/venue.model';
 import * as ownerService from '../../src/modules/owner/owner.service';
@@ -234,9 +234,9 @@ describe('Venue inactivity lifecycle', () => {
 
       const expected = new Date(inFiveDays);
       expected.setDate(expected.getDate() + 1);
-      expect(toLocalDateString(approved.inactivity!.blockedAfterDate!)).toBe(
-        toLocalDateString(expected)
-      );
+      const blockedAfter = approved.inactivity?.blockedAfterDate;
+      expect(blockedAfter).toBeInstanceOf(Date);
+      expect(toLocalDateString(blockedAfter as Date)).toBe(toLocalDateString(expected));
     });
   });
 

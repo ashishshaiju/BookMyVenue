@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import mongoose from 'mongoose';
+import type mongoose from 'mongoose';
 import { UserModel } from '../../src/modules/user/user.models';
 import { VenueModel } from '../../src/modules/venue/venue.model';
 import { closeVenuesPastWindDown } from '../../src/workers/venueInactivity.worker';

@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+import type mongoose from 'mongoose';
 import { RoleModel } from '../../src/models/role.model';
 import { PermissionModel } from '../../src/models/permission.model';
 import { RolePermissionModel } from '../../src/models/role-permission.model';
