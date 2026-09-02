@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import request from 'supertest';
-import mongoose from 'mongoose';
+import type mongoose from 'mongoose';
 import { app } from '../../../src/app';
 import { VenueModel } from '../../../src/modules/venue/venue.model';
 import { createSessionWithRole, type RoleSession } from '../../helpers/rbac.helper';
