@@ -56,9 +56,7 @@ describe('MyVenues page', () => {
     vi.clearAllMocks();
   });
 
-  it(
-    'refetches the venue list on mount so a newly created venue is not blank on return',
-    async () => {
+  it('refetches the venue list on mount so a newly created venue is not blank on return', async () => {
     const empty = { data: { data: { count: 0, venues: [] } } };
     const afterCreate = {
       data: {
@@ -101,7 +99,5 @@ describe('MyVenues page', () => {
     await waitFor(() => expect(mockRequest).toHaveBeenCalledTimes(2));
 
     expect(await screen.findByText('Grand Palace Hall')).toBeInTheDocument();
-    },
-    20000
-  );
+  }, 20000);
 });
